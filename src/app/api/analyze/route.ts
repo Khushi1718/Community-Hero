@@ -76,6 +76,7 @@ const getFallbackAnalysis = (hasGPS: boolean, timestamp?: number, cameraSource: 
   return {
     category: "Unverified - AI Unavailable",
     severity: "Medium" as const,
+    severityReason: "AI unavailable, defaulted to Medium",
     confidence: 0,
     department: "Miscellaneous",
     reasoningPoints: [
@@ -177,6 +178,7 @@ Return ONLY valid JSON.
   "issueType": "",
   "confidence": 0,
   "severity": "Low | Medium | High | Critical",
+  "severityReason": "",
   "description": "",
   "evidence": "",
   "secondaryIssues": [],
@@ -266,6 +268,7 @@ User's description: "${description || "(no description provided)"}"`;
     const finalResponse = {
       category: finalCategory,
       severity: finalSeverity,
+      severityReason: parsedData.severityReason || "Not provided by AI",
       confidence: parsedData.confidence,
       department: getDepartment(finalCategory),
       reasoningPoints,

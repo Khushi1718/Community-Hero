@@ -407,67 +407,101 @@ export default function ReportPage() {
       ]
     };
 
-    // Duplicate Detection Logic
-    let isDuplicateOf: string | undefined = undefined;
-    const allIssues = await getIssues();
-    const newLocCoords = parseLocation(location);
-    
-    if (newLocCoords) {
-      for (const existingIssue of allIssues) {
-        if (existingIssue.aiAnalysis.category === manualCategory) {
-          const timeDiffMs = finalIssue.timestamp - existingIssue.timestamp;
-          if (timeDiffMs <= 30 * 24 * 60 * 60 * 1000) {
-            const existingLocCoords = parseLocation(existingIssue.location);
-            if (existingLocCoords) {
-              const distance = getDistanceFromLatLonInMeters(
-                newLocCoords.lat, newLocCoords.lon, 
-                existingLocCoords.lat, existingLocCoords.lon
-              );
-              if (distance <= 100) {
-                isDuplicateOf = existingIssue.id;
-                setDuplicateWarningId(existingIssue.id);
-                break; // Found one
-              }
-            }
-          }
+    // Duplicate Detection Logic via Server (Prompt 4B Enhancement)
+    try {
+      const res = await fetch("/api/issues", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(finalIssue)
+      });
+
+      if (res.status === 409) {
+        // Backend detected duplicate via $nearSphere
+        const errData = await res.json();
+        if (errData.isDuplicate) {
+          setDuplicateWarningId(errData.duplicateWarningId);
+          setPendingIssue(finalIssue);
+          setIsSubmitting(false);
+          return; // Pause for override confirmation
         }
       }
-    }
 
-    finalIssue.isDuplicateOf = isDuplicateOf;
-    finalIssue.duplicateStatus = isDuplicateOf ? "Pending" : undefined;
+      if (!res.ok) {
+        throw new Error(`Failed to submit issue: ${res.status}`);
+      }
 
-    if (isDuplicateOf) {
-      setPendingIssue(finalIssue); // Pause for override confirmation
-    } else {
-      const savedIssue = await saveIssue(finalIssue);
-      if (savedIssue) setDraftIssue(savedIssue);
+      const savedIssue = await res.json();
+      setDraftIssue(savedIssue);
       setSuccess(true);
       setTimeout(() => setAssignmentStatus("assigned"), 2500); // Simulate finding
+      
+    } catch (error) {
+      console.error("Submission error:", error);
+      alert("Failed to submit issue. Please try again.");
     }
+
     setIsSubmitting(false);
   };
 
   const confirmDuplicate = async () => {
-    if (pendingIssue) {
-      const issueToSave = { ...pendingIssue, duplicateStatus: "Confirmed" as const };
-      const savedIssue = await saveIssue(issueToSave);
-      if (savedIssue) setDraftIssue(savedIssue);
-      setDuplicateWarningId(null);
-      setSuccess(true);
-      setTimeout(() => setAssignmentStatus("assigned"), 2500);
+    if (!pendingIssue || !duplicateWarningId) return;
+    setIsSubmitting(true);
+    
+    const finalIssue = {
+      ...pendingIssue,
+      isDuplicateOf: duplicateWarningId,
+      duplicateStatus: "Pending" as const
+    };
+
+    try {
+      const res = await fetch("/api/issues", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(finalIssue)
+      });
+      if (res.ok) {
+        const savedIssue = await res.json();
+        setDraftIssue(savedIssue);
+        setDuplicateWarningId(null);
+        setPendingIssue(null);
+        setSuccess(true);
+      }
+    } catch (e) {
+      console.error(e);
+      alert("Failed to confirm duplicate. Please try again.");
     }
+    setIsSubmitting(false);
   };
 
   const overrideDuplicate = async () => {
-    if (pendingIssue) {
-      const issueToSave = { ...pendingIssue, duplicateStatus: "Overridden" as const };
-      const savedIssue = await saveIssue(issueToSave);
-      if (savedIssue) setDraftIssue(savedIssue);
-      setDuplicateWarningId(null);
-      setSuccess(true);
-      setTimeout(() => setAssignmentStatus("assigned"), 2500);
+    if (!pendingIssue || !duplicateWarningId) return;
+    setIsSubmitting(true);
+    
+    const finalIssue = {
+      ...pendingIssue,
+      isDuplicateOf: duplicateWarningId,
+      duplicateStatus: "Overridden" as const
+    };
+
+    try {
+      const res = await fetch("/api/issues", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(finalIssue)
+      });
+      if (res.ok) {
+        const savedIssue = await res.json();
+        setDraftIssue(savedIssue);
+        setDuplicateWarningId(null);
+        setPendingIssue(null);
+        setSuccess(true);
+        setTimeout(() => setAssignmentStatus("assigned"), 2500);
+      }
+    } catch (e) {
+      console.error(e);
+      alert("Failed to override. Please try again.");
     }
+    setIsSubmitting(false);
   };
 
   const resetForm = () => {

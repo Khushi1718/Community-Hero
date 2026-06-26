@@ -3,6 +3,7 @@ import connectToDatabase from "@/lib/mongoose";
 import { Issue } from "@/models/Issue";
 import { TimelineEvent } from "@/models/TimelineEvent";
 import { User } from "@/models/User";
+import { Notification } from "@/models/Notification";
 
 // Helper to map V2 MongoDB Issue to V1 Frontend Issue format
 const mapToV1Format = async (issueDoc: any) => {
@@ -69,7 +70,10 @@ const mapToV1Format = async (issueDoc: any) => {
             attachments: e.attachments
         })),
     resolutionProof: issue.resolutionProof,
-    citizenFeedback: issue.citizenFeedback
+    citizenFeedback: issue.citizenFeedback,
+    materialRequests: issue.materialRequests || [],
+    evidences: issue.evidences || [],
+    resolutionVerification: issue.resolutionVerification
   };
 };
 
@@ -121,7 +125,11 @@ export async function GET(request: NextRequest) {
     
     if (citizenEmail) {
         // Case-insensitive email match for robustness
-        query.citizenEmail = { $regex: new RegExp(`^${citizenEmail.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'i') };
+        const emailRegex = new RegExp(`^${citizenEmail.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'i');
+        query.$or = [
+            { citizenEmail: emailRegex },
+            { upvotedBy: citizenEmail.trim() }
+        ];
     }
     
     if (status) {
@@ -171,11 +179,86 @@ export async function POST(request: NextRequest) {
         }
     }
 
+    // --- Duplicate Detection Logic (Geo-Spatial) ---
+    // If frontend already provided isDuplicateOf and wants to upvote
+    if (body.isDuplicateOf && body.duplicateStatus === "Pending") {
+      const existingIssue = await Issue.findById(body.isDuplicateOf);
+      if (existingIssue) {
+        if (!existingIssue.upvotedBy.includes(body.citizenEmail)) {
+           existingIssue.upvotedBy.push(body.citizenEmail);
+           existingIssue.upvotes = (existingIssue.upvotes || 0) + 1;
+           // Escalate priority if many upvotes
+           if (existingIssue.upvotes >= 3 && existingIssue.priority !== "P1_Critical") {
+              existingIssue.priority = "P1_Critical";
+           }
+           await existingIssue.save();
+        }
+        return NextResponse.json(mapToV1Format(existingIssue), { status: 200 });
+      }
+    } else if (coords[0] !== 0 && coords[1] !== 0 && body.duplicateStatus !== "Overridden") {
+      try {
+        // Perform $nearSphere search to detect duplicates
+        const duplicateMatches = await Issue.find({
+          "aiAnalysis.category": body.aiAnalysis?.category,
+          status: { $in: ["Reported", "Open", "Assigned", "In Progress", "WAITING_FOR_ORG"] },
+          location: {
+            $nearSphere: {
+              $geometry: { type: "Point", coordinates: coords },
+              $maxDistance: 50 // 50 meters
+            }
+          }
+        }).limit(1);
+
+        if (duplicateMatches.length > 0) {
+           // Return 409 Conflict with special payload so frontend can trigger override UI
+           return NextResponse.json({
+              error: "Possible duplicate detected",
+              isDuplicate: true,
+              duplicateWarningId: duplicateMatches[0].id
+           }, { status: 409 });
+        }
+      } catch (geoError) {
+        console.error("Geo-spatial duplicate detection failed, proceeding without it:", geoError);
+        // Fallback: Proceed with normal issue creation if geo query fails (e.g. index missing)
+      }
+    }
+
     let assignedToId: any = undefined;
     let assignedToName: string | undefined = undefined;
     let assignedDepartment = body.aiAnalysis?.department || "General";
     let assignedAdminId: any = undefined;
     let assignedAdminName: string | undefined = undefined;
+
+    // --- PROMPT 4B: Emergency Mode ---
+    const emergencyKeywords = ["gas leak", "fire", "electrical hazard", "road collapse", "flooding", "transformer", "live wire"];
+    const isEmergency = emergencyKeywords.some(kw => 
+      body.description?.toLowerCase().includes(kw) || 
+      body.aiAnalysis?.category?.toLowerCase().includes(kw)
+    );
+
+    let priority = body.aiAnalysis?.severity === "Critical" ? "P1_Critical" : body.aiAnalysis?.severity === "High" ? "P2_High" : "P3_Medium";
+    if (isEmergency) priority = "P1_Critical";
+
+    // --- PROMPT 4B: Smart Routing (Adopted Area Check) ---
+    // Look up if location exists inside an adopted area
+    let adoptedAreaId = undefined;
+    let adoptedOrgId = undefined;
+    let routeToOrg = false;
+
+    if (!isEmergency) {
+      const AdoptedArea = require("@/models/AdoptedArea").default;
+      // We do a loose regex search on the area name vs address or city
+      const adoptedAreas = await AdoptedArea.find({ status: "ADOPTED" });
+      for (const area of adoptedAreas) {
+        if (body.address?.toLowerCase().includes(area.name.toLowerCase()) || 
+            body.description?.toLowerCase().includes(area.name.toLowerCase())) {
+          adoptedAreaId = area._id.toString();
+          adoptedOrgId = area.organizationId;
+          routeToOrg = true;
+          break;
+        }
+      }
+    }
 
     // Attempt to auto-assign based on location and department with loose regex matching
     const deptPrefix = assignedDepartment.split(' ')[0].replace(/s$/i, ''); // e.g. "Roads" -> "Road"
@@ -191,7 +274,7 @@ export async function POST(request: NextRequest) {
       isAvailable: { $ne: false } // match true or missing (default true per schema)
     });
 
-    if (matchingStaff) {
+    if (matchingStaff && !routeToOrg) {
       assignedToId = matchingStaff._id;
       assignedToName = matchingStaff.name;
     }
@@ -212,18 +295,28 @@ export async function POST(request: NextRequest) {
       assignedAdminName = matchingAdmin.name;
     }
 
+    // SLA / Deadline Calculation
+    const now = Date.now();
+    let expectedTimeMs = now + (7 * 24 * 60 * 60 * 1000); // default 7 days
+    if (priority === "P1_Critical") expectedTimeMs = now + (24 * 60 * 60 * 1000); // 24 hours
+    else if (priority === "P2_High") expectedTimeMs = now + (48 * 60 * 60 * 1000); // 48 hours
+    else if (priority === "P3_Medium") expectedTimeMs = now + (7 * 24 * 60 * 60 * 1000); // 7 days
+    else expectedTimeMs = now + (14 * 24 * 60 * 60 * 1000); // 14 days
+
     const newIssue = await Issue.create({
       issueId,
       title: body.aiAnalysis?.category || "Reported Issue",
       description: body.description,
-      priority: body.aiAnalysis?.severity === "Critical" ? "P1_Critical" : body.aiAnalysis?.severity === "High" ? "P2_High" : "P3_Medium",
-      status: assignedToName ? "Assigned" : "Reported",
+      priority: priority,
+      status: routeToOrg ? "WAITING_FOR_ORG" : (assignedToName ? "Assigned" : "Reported"),
       citizenEmail: body.citizenEmail,
       assignedTo: assignedToId,
       assignedToName: assignedToName,
       assignedDepartment: assignedDepartment,
       assignedAdmin: assignedAdminId,
       assignedAdminName: assignedAdminName,
+      adoptedAreaId: adoptedAreaId,
+      isEmergency: isEmergency,
       location: {
           type: "Point",
           coordinates: coords,
@@ -238,54 +331,87 @@ export async function POST(request: NextRequest) {
           isFake: body.aiAnalysis?.trust?.status === "Suspicious",
           category: body.aiAnalysis?.category,
           department: body.aiAnalysis?.department,
-          severity: body.aiAnalysis?.severity
+          severity: body.aiAnalysis?.severity,
+          severityReason: body.aiAnalysis?.severityReason
       },
       verificationScore: body.aiAnalysis?.verificationScore || 0,
       cameraSource: body.aiAnalysis?.trust?.checks?.cameraSource || "Level 2 (Gallery Upload)",
       deviceInfo: body.deviceInfo,
-      browserInfo: body.browserInfo
+      browserInfo: body.browserInfo,
+      expectedCompletionTime: new Date(expectedTimeMs),
+      upvotes: 0,
+      upvotedBy: [body.citizenEmail]
     });
 
     // Create initial timeline event
     await TimelineEvent.create({
-        issueId: newIssue._id,
-        action: "Created",
-        comment: "Issue reported by citizen",
-        actorRole: "citizen",
-        timestamp: new Date(body.timestamp || Date.now())
+      issueId: newIssue._id,
+      action: "Reported",
+      actorName: "Citizen",
+      actorRole: "Citizen"
     });
-    
+
     if (assignedToName) {
-         await TimelineEvent.create({
-            issueId: newIssue._id,
-            action: "Assigned",
-            comment: `Auto-assigned to ${assignedToName} (${assignedDepartment})`,
-            actorRole: "system",
-            timestamp: new Date((body.timestamp || Date.now()) + 500)
-        });
-        
-        // Load Notification Model
-        const { Notification } = await import("@/models/Notification");
-        
-        // Notify Employee
+      await TimelineEvent.create({
+        issueId: newIssue._id,
+        action: "Assigned",
+        actorName: "System AI",
+        actorRole: "System",
+        comment: `Auto-assigned to ${assignedToName}`
+      });
+
+      await Notification.create({
+          userId: matchingStaff!.email,
+          issueId: issueId,
+          title: "New Auto-Assignment",
+          message: `You have been automatically assigned to a new issue: ${issueId}`,
+          type: "Assignment"
+      });
+      
+      // Notify Admin
+      if (matchingAdmin) {
         await Notification.create({
-            userId: matchingStaff!.email,
+            userId: matchingAdmin.email,
             issueId: issueId,
-            title: "New Auto-Assignment",
-            message: `You have been automatically assigned to a new issue: ${issueId}`,
+            title: "New Issue in Jurisdiction",
+            message: `A new issue (${issueId}) was reported and assigned to ${assignedToName}.`,
             type: "Assignment"
         });
-        
-        // Notify Admin
-        if (matchingAdmin) {
-          await Notification.create({
-              userId: matchingAdmin.email,
-              issueId: issueId,
-              title: "New Issue in Jurisdiction",
-              message: `A new issue (${issueId}) was reported and assigned to ${assignedToName}.`,
-              type: "Assignment"
-          });
-        }
+      }
+    }
+
+    if (routeToOrg) {
+      await TimelineEvent.create({
+        issueId: newIssue._id,
+        action: "Routed_To_Community",
+        actorName: "System AI",
+        actorRole: "System",
+        comment: `Issue occurred in Adopted Area. Routed to managing organization.`
+      });
+      // Ping Org via Notification
+      const orgDoc = await require("@/models/VolunteerOrganization").VolunteerOrganization.findById(adoptedOrgId);
+      if (orgDoc) {
+        await Notification.create({
+          userId: orgDoc.contactEmail,
+          orgId: adoptedOrgId,
+          type: "Org_Drive",
+          title: "New Issue in Adopted Area",
+          message: `An issue (${newIssue.title}) was reported in your adopted area. Please review and manage it within your response window.`
+        });
+      }
+    }
+
+    if (isEmergency && assignedAdminId) {
+      // Alert Admin
+      const adminDoc = await User.findById(assignedAdminId);
+      if (adminDoc) {
+        await Notification.create({
+          userId: adminDoc.email,
+          type: "System",
+          title: "CRITICAL EMERGENCY ALERT",
+          message: `An emergency issue (${newIssue.title}) has been detected. Employee ${assignedToName || 'has not been'} automatically assigned.`
+        });
+      }
     }
     
     // Create AI categorization event if it exists

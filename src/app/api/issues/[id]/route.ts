@@ -5,6 +5,7 @@ import { TimelineEvent } from "@/models/TimelineEvent";
 import { User } from "@/models/User";
 import { Notification } from "@/models/Notification";
 import { CommunityPost } from "@/models/CommunityPost";
+import { GoogleGenerativeAI } from "@google/generative-ai";
 
 type Props = { params: Promise<{ id: string }> };
 
@@ -12,7 +13,8 @@ type Props = { params: Promise<{ id: string }> };
 const VALID_TRANSITIONS: Record<string, string[]> = {
   "Reported":                    ["Verified", "Assigned", "Rejected", "Escalated"],
   "Verified":                    ["Assigned", "Rejected", "Escalated"],
-  "Assigned":                    ["Employee Accepted", "Rejected", "Transferred", "Escalated"],
+  "Assigned":                    ["Employee Accepted", "Rejected", "Transferred", "Escalated", "Community Drive Active"],
+  "Community Drive Active":      ["Assigned"],
   "Employee Accepted":           ["Travelling", "Rejected"],
   "Travelling":                  ["Reached Site"],
   "Reached Site":                ["Inspection Started"],
@@ -37,6 +39,7 @@ const VALID_TRANSITIONS: Record<string, string[]> = {
 // Admin/super_admin can override some transitions
 const ADMIN_OVERRIDE_TRANSITIONS: Record<string, string[]> = {
   "Reported":      ["Assigned", "Verified", "Rejected", "Closed", "Escalated"],
+  "Assigned":      ["Community Drive Active"],
   "Awaiting Admin Verification": ["Closed", "Rejected", "Work In Progress"],
   "Ready For Verification":      ["Completed", "Work In Progress"],
   "Awaiting Citizen Review":     ["Closed", "Rejected"],
@@ -58,8 +61,9 @@ const PROGRESS_MAP: Record<string, number> = {
   "Work In Progress": 70,
   "Paused": 70,
   "Ready For Verification": 85,
+  "Community Drive Active": 10,
   "Awaiting Admin Verification": 90,
-  "Completed": 95,
+  "Completed": 100,
   "Awaiting Citizen Review": 95,
   "Closed": 100,
 };
@@ -99,21 +103,24 @@ async function createCommunityPostIfNeeded(issue: any) {
   const afterImage = completionEvidence?.url || issue.resolutionProof?.imageBase64;
 
   await CommunityPost.create({
+    postType: "Municipal_Success",
     issueId: issue.issueId,
     issueRef: issue._id,
     title: issue.title,
     category: issue.aiAnalysis?.category,
-    beforeImageUrl: issue.imageUrl,
-    afterImageUrl: afterImage,
+    beforeImageUrls: issue.imageUrl ? [issue.imageUrl] : [],
+    afterImageUrls: afterImage ? [afterImage] : [],
     location: {
       address: issue.location.address,
       city: issue.location.city,
       state: issue.location.state
     },
     department: issue.assignedDepartment || "General",
-    reportedByName: issue.reportedByName || "Community Member",
+    departmentName: issue.assignedDepartment || "General",
+    employeeName: issue.assignedToName,
+    reportedByName: issue.isPublicRecognitionEnabled ? issue.reportedByName : "A Community Hero Citizen",
     resolvedByName: issue.assignedToName || "Community Hero Team",
-    resolutionSummary: completionEvidence?.caption || issue.resolutionProof?.notes || "Issue was resolved successfully by our team.",
+    resolutionSummary: completionEvidence?.caption || issue.resolutionProof?.notes || "Issue was resolved successfully by our municipal team.",
     reportedAt: issue.createdAt,
     resolvedAt: closedAt,
     completedAt: closedAt,
@@ -311,6 +318,66 @@ export async function PATCH(request: NextRequest, props: Props) {
           caption: body.resolutionProof.notes || "Completion photo",
           uploadedAt: new Date()
         });
+
+        // ── AI Resolution Verification ──
+        if (issue.imageUrl) {
+          try {
+            const apiKey = process.env.GEMINI_API_KEY;
+            if (apiKey) {
+              const genAI = new GoogleGenerativeAI(apiKey);
+              const model = genAI.getGenerativeModel({
+                model: "gemini-1.5-flash",
+                generationConfig: { temperature: 0.1, responseMimeType: "application/json" }
+              });
+
+              let beforeMime = "image/jpeg";
+              let beforeData = "";
+              if (issue.imageUrl.startsWith("data:")) {
+                const m = issue.imageUrl.match(/^data:([A-Za-z-+\\/]+);base64,(.+)$/);
+                if (m) { beforeMime = m[1]; beforeData = m[2]; }
+              } else if (issue.imageUrl.startsWith("http")) {
+                const r = await fetch(issue.imageUrl);
+                const ab = await r.arrayBuffer();
+                beforeData = Buffer.from(ab).toString("base64");
+                beforeMime = r.headers.get("content-type") || "image/jpeg";
+              }
+
+              let afterMime = "image/jpeg";
+              let afterData = "";
+              if (body.resolutionProof.imageBase64.startsWith("data:")) {
+                const m = body.resolutionProof.imageBase64.match(/^data:([A-Za-z-+\\/]+);base64,(.+)$/);
+                if (m) { afterMime = m[1]; afterData = m[2]; }
+              } else if (body.resolutionProof.imageBase64.startsWith("http")) {
+                const r = await fetch(body.resolutionProof.imageBase64);
+                const ab = await r.arrayBuffer();
+                afterData = Buffer.from(ab).toString("base64");
+                afterMime = r.headers.get("content-type") || "image/jpeg";
+              }
+
+              if (beforeData && afterData) {
+                const prompt = `You are evaluating a municipal repair. Compare the Before and After images. Has the issue been resolved? Return JSON: { "isResolved": boolean, "confidence": number (0-100), "reasoning": string }`;
+                const result = await model.generateContent([
+                  prompt,
+                  { inlineData: { data: beforeData, mimeType: beforeMime } },
+                  { inlineData: { data: afterData, mimeType: afterMime } }
+                ]);
+
+                let rawText = result.response.text();
+                if (rawText.includes("\`\`\`json")) rawText = rawText.split("\`\`\`json")[1].split("\`\`\`")[0].trim();
+                else if (rawText.includes("\`\`\`")) rawText = rawText.split("\`\`\`")[1].split("\`\`\`")[0].trim();
+                
+                const parsedData = JSON.parse(rawText);
+                issue.resolutionVerification = {
+                  isResolved: parsedData.isResolved || false,
+                  confidence: parsedData.confidence || 0,
+                  reasoning: parsedData.reasoning || "Failed to analyze."
+                };
+              }
+            }
+          } catch (error) {
+            console.error("AI Resolution Verification failed:", error);
+          }
+        }
       }
       // Only auto-set "Awaiting Admin Verification" if not explicitly setting status
       if (!body.status) {

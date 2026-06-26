@@ -67,6 +67,7 @@ export default function ReportDetailPage() {
                 <span className={`px-3 py-1 rounded-full text-xs font-bold shadow-sm ${
                   issue.status === 'Resolved' ? 'bg-green-100 text-green-700 border border-green-200' :
                   issue.status === 'In Progress' ? 'bg-blue-100 text-blue-700 border border-blue-200' :
+                  issue.status === 'Community Drive Active' ? 'bg-emerald-100 text-emerald-700 border border-emerald-200' :
                   issue.status === 'Rejected' ? 'bg-red-100 text-red-700 border border-red-200' :
                   'bg-slate-100 text-slate-700 border border-slate-200'
                 }`}>
@@ -103,6 +104,17 @@ export default function ReportDetailPage() {
                 <h3 className="text-sm font-bold text-slate-500 uppercase tracking-wider mb-2">Description</h3>
                 <p className="text-slate-700 bg-slate-50 p-4 rounded-xl border border-slate-100">{issue.description}</p>
               </div>
+              {issue.aiAnalysis?.severityReason && (
+                <div>
+                  <h3 className="text-sm font-bold text-red-500 uppercase tracking-wider mb-2 flex items-center gap-1">
+                    <AlertTriangle className="w-4 h-4" /> AI Severity Analysis
+                  </h3>
+                  <div className="text-red-900 bg-red-50 p-4 rounded-xl border border-red-100 text-sm font-medium">
+                    <span className="font-bold text-red-700 block mb-1">Reason:</span>
+                    {issue.aiAnalysis.severityReason}
+                  </div>
+                </div>
+              )}
               <div>
                 <h3 className="text-sm font-bold text-slate-500 uppercase tracking-wider mb-2">Location</h3>
                 <div className="flex items-center gap-2 text-slate-700 bg-slate-50 p-4 rounded-xl border border-slate-100">

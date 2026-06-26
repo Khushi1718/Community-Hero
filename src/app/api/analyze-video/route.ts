@@ -8,6 +8,7 @@ interface FrameResult {
   category: string;
   confidence: number;
   severity: string;
+  severityReason: string;
   description: string;
 }
 
@@ -16,6 +17,7 @@ interface VideoAnalysisResult {
   issueType: string;
   confidence: number;
   severity: string;
+  severityReason: string;
   summary: string;
   visibleFrames: number;
   totalFrames: number;
@@ -58,7 +60,7 @@ const generateFeedback = (confidence: number, visibleFrames: number, totalFrames
 };
 
 // ─── Aggregate frame results ──────────────────────────────────────────────────
-const aggregateResults = (frames: FrameResult[], totalFrames: number): Pick<VideoAnalysisResult, "issueType" | "confidence" | "severity" | "visibleFrames" | "recommendation" | "department"> => {
+const aggregateResults = (frames: FrameResult[], totalFrames: number): Pick<VideoAnalysisResult, "issueType" | "confidence" | "severity" | "severityReason" | "visibleFrames" | "recommendation" | "department"> => {
   const issueFrames = frames.filter(f => f.issueDetected && f.category !== "No Significant Civic Issue");
   const visibleFrames = issueFrames.length;
 
@@ -67,6 +69,7 @@ const aggregateResults = (frames: FrameResult[], totalFrames: number): Pick<Vide
       issueType: "No Significant Civic Issue",
       confidence: Math.round(frames.reduce((s, f) => s + f.confidence, 0) / frames.length) || 50,
       severity: "Low",
+      severityReason: "No significant civic issue detected in the video.",
       visibleFrames: 0,
       recommendation: "Unable to detect a significant civic issue. Please record again from a different angle.",
       department: "Miscellaneous",
@@ -87,9 +90,8 @@ const aggregateResults = (frames: FrameResult[], totalFrames: number): Pick<Vide
 
   // Severity: pick highest
   const severityOrder: Record<string, number> = { Critical: 4, High: 3, Medium: 2, Low: 1 };
-  const dominantSeverity = issueFrames
-    .map(f => f.severity)
-    .sort((a, b) => (severityOrder[b] || 0) - (severityOrder[a] || 0))[0];
+  const topFrame = issueFrames
+    .sort((a, b) => (severityOrder[b.severity] || 0) - (severityOrder[a.severity] || 0))[0];
 
   const deptMap: Record<string, string> = {
     "Pothole": "Roads Department",
@@ -117,9 +119,10 @@ const aggregateResults = (frames: FrameResult[], totalFrames: number): Pick<Vide
   return {
     issueType: dominantCategory,
     confidence: finalConfidence,
-    severity: dominantSeverity,
+    severity: topFrame.severity,
+    severityReason: topFrame.severityReason,
     visibleFrames,
-    recommendation: `Assign to ${deptMap[dominantCategory] || "Miscellaneous"} — ${dominantSeverity} priority.`,
+    recommendation: `Assign to ${deptMap[dominantCategory] || "Miscellaneous"} — ${topFrame.severity} priority.`,
     department: deptMap[dominantCategory] || "Miscellaneous",
   };
 };
@@ -184,9 +187,10 @@ export async function POST(req: Request) {
         frameIndex: i,
         issueDetected: isIssue,
         category: isIssue ? "Road Damage" : "No Significant Civic Issue",
-        confidence: isIssue ? 80 : 40,
+        confidence: isIssue ? 80 : 0,
         severity: isIssue ? "High" : "Low",
-        description: isIssue ? "Issue detected based on description fallback." : "No issue detected due to missing API key and description.",
+        severityReason: isIssue ? "API Unavailable - Default High" : "No issue detected due to missing API key and description.",
+        description: isIssue ? "Fallback analysis due to API limit" : "No issue detected due to missing API key and description.",
       }));
       const agg = aggregateResults(mockFrames, totalFrames);
       return NextResponse.json({
@@ -263,6 +267,7 @@ Return ONLY valid JSON.
   "issueType": "",
   "confidence": 0,
   "severity": "Low | Medium | High | Critical",
+  "severityReason": "",
   "description": "",
   "evidence": "",
   "secondaryIssues": [],
@@ -312,6 +317,7 @@ User's description: "${description || "(no description provided)"}"`;
           category: parsedData.issueDetected ? parsedData.issueType : "No Significant Civic Issue",
           confidence: parsedData.confidence,
           severity: parsedData.severity || "Low",
+          severityReason: parsedData.severityReason || "Not provided by AI",
           description: parsedData.description || "",
         });
       } catch (frameErr) {

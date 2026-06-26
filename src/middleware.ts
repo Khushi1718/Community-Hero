@@ -7,6 +7,7 @@ const isPublicRoute = createRouteMatcher([
   "/sign-in(.*)",
   "/sign-up(.*)",
   "/community(.*)",
+  "/volunteer-org/register(.*)",  // Registration is public
   "/api/auth/login(.*)",    // Our custom staff login endpoint
   "/api/users(.*)",         // Used by auth-context on every load
   "/api/issues(.*)",        // Public issue data
@@ -15,6 +16,8 @@ const isPublicRoute = createRouteMatcher([
   "/api/dashboard(.*)",
   "/api/community(.*)",
   "/api/copilot(.*)",
+  "/api/volunteer-org(.*)", // Org API — uses its own auth
+  "/api/volunteer-drives(.*)", // Drives API
 ]);
 
 // Staff routes — use our custom DB auth, NOT Clerk
@@ -23,6 +26,7 @@ const isStaffRoute = createRouteMatcher([
   "/admin(.*)",
   "/employee(.*)",
   "/super-admin(.*)",
+  "/volunteer-org/dashboard(.*)", // Org dashboard uses devBypass, not Clerk
 ]);
 
 export default clerkMiddleware(async (auth, request) => {

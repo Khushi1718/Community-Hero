@@ -1,5 +1,5 @@
 export type IssueStatus = "Reported" | "Verified" | "Assigned" | "Site Visit Scheduled" | "Employee Reached Site" | "Inspection Started" | "Inspection Completed" | "Work Started" | "Work In Progress" | "In Progress" | "Work Completed" | "Admin Verification" | "Awaiting Citizen Review" | "Closed" | "Reopened" | "Rejected" | "Escalated" | "Open" | "Resolved";
-export type UserRole = "super_admin" | "admin" | "employee" | "citizen";
+export type UserRole = "super_admin" | "admin" | "employee" | "citizen" | "volunteer_org";
 
 export interface AppUser {
   email: string;
@@ -26,6 +26,7 @@ export interface Issue {
   aiAnalysis: {
     category: string;
     severity: string;
+    severityReason?: string;
     reasoningPoints: string[];
     department: string;
     trust: {
@@ -46,6 +47,9 @@ export interface Issue {
   progressPercentage?: number;
   isDuplicateOf?: string;
   duplicateStatus?: "Pending" | "Confirmed" | "Overridden";
+  upvotes?: number;
+  upvotedBy?: string[];
+  isOverdue?: boolean;
   timeline: {
     event: string;
     timestamp: number;

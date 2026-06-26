@@ -33,6 +33,19 @@ export interface IUser extends Document {
   // Custom password for mock staff logins (since we use local auth for staff)
   password?: string;
   
+  // Prompt 3A: Community Info for Citizen
+  communityInfo?: {
+    volunteerHours: number;
+    organizationsJoined: number;
+    completedDrives: number;
+    attendancePercentage: number;
+    memberSince?: Date;
+    badges: string[];
+    certificates: string[];
+    points: number;
+    achievements: { name: string; unlockedAt: Date }[];
+  };
+  
   createdAt: Date;
   updatedAt: Date;
 }
@@ -62,7 +75,22 @@ const UserSchema = new Schema<IUser>(
     trustScore: { type: Number, default: 100 },
     performanceScore: { type: Number, default: 100 },
     
-    password: { type: String }
+    password: { type: String },
+    
+    communityInfo: {
+      volunteerHours: { type: Number, default: 0 },
+      organizationsJoined: { type: Number, default: 0 },
+      completedDrives: { type: Number, default: 0 },
+      attendancePercentage: { type: Number, default: 100 },
+      memberSince: { type: Date },
+      badges: [{ type: String }],
+      certificates: [{ type: String }],
+      points: { type: Number, default: 0 },
+      achievements: [{
+        name: { type: String, required: true },
+        unlockedAt: { type: Date, default: Date.now }
+      }]
+    }
   },
   { timestamps: true }
 );

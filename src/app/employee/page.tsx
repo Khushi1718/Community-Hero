@@ -254,13 +254,22 @@ export default function EmployeePage() {
       };
       if (action.requiresReason) body.rejectionReason = actionReason;
       if (action.requiresEvidence && actionEvidence) {
-        body.evidence = {
-          url: actionEvidence.url,
-          type: "image",
-          category: actionEvidence.category || "Completion",
-          isPublic: true,
-          caption: actionEvidence.caption || action.label,
-        };
+        if (action.nextStatus === "Ready For Verification" || action.nextStatus === "Completed") {
+          body.resolutionProof = {
+            imageBase64: actionEvidence.url,
+            notes: actionNote || actionEvidence.caption || action.label,
+            timeTaken: "N/A",
+            materialUsed: "N/A"
+          };
+        } else {
+          body.evidence = {
+            url: actionEvidence.url,
+            type: "image",
+            category: actionEvidence.category || "Completion",
+            isPublic: true,
+            caption: actionEvidence.caption || action.label,
+          };
+        }
       }
       if (action.requiresMaterial) {
         body.materialRequest = {
@@ -353,8 +362,8 @@ export default function EmployeePage() {
 
   // ── Derived data ─────────────────────────────────────────────────────────────
   const ACTIVE_STATUSES = ["Assigned", "Employee Accepted", "Travelling", "Reached Site", "Inspection Started", "Inspection Completed", "Waiting For Materials"];
-  const IN_PROGRESS_STATUSES = ["Work Started", "Work In Progress", "Paused"];
-  const COMPLETED_STATUSES = ["Repair Completed", "Awaiting Admin Verification", "Awaiting Citizen Review"];
+  const IN_PROGRESS_STATUSES = ["Work Started", "Work In Progress", "Paused", "Material Approved", "Awaiting Admin Verification", "Ready For Verification"];
+  const COMPLETED_STATUSES = ["Repair Completed", "Completed", "Awaiting Citizen Review"];
   const CLOSED_STATUSES = ["Closed", "Rejected"];
 
   const activeIssues = allIssues.filter(i => ACTIVE_STATUSES.includes(i.status));
@@ -817,6 +826,16 @@ export default function EmployeePage() {
                                           <option value="Medium">Medium</option>
                                           <option value="High">High (Blocking work)</option>
                                         </select>
+                                      </div>
+                                      <div>
+                                        <label className="block text-xs font-bold text-slate-700 mb-1">Reason / Note *</label>
+                                        <textarea 
+                                          value={actionNote} 
+                                          onChange={e => setActionNote(e.target.value)} 
+                                          placeholder="Why is this material needed?" 
+                                          className="w-full border border-slate-200 bg-white rounded-xl p-3 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-pink-500" 
+                                          rows={2} 
+                                        />
                                       </div>
                                     </div>
                                   )}

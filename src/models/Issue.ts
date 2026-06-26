@@ -36,6 +36,7 @@ export interface IIssue extends Document {
 
   reportedBy?: mongoose.Types.ObjectId;
   reportedByName?: string;
+  isPublicRecognitionEnabled?: boolean;
   citizenEmail?: string;
   deviceInfo?: string;
   browserInfo?: string;
@@ -82,6 +83,9 @@ export interface IIssue extends Document {
   transferredTo?: string;
   assistanceRequested?: boolean;
 
+  communityDriveId?: string;
+  employeeHoldReason?: string;
+
   aiAnalysis: {
     confidenceScore: number;
     urgencyScore: number;
@@ -90,6 +94,13 @@ export interface IIssue extends Document {
     category?: string;
     department?: string;
     severity?: string;
+    severityReason?: string;
+  };
+
+  resolutionVerification?: {
+    isResolved: boolean;
+    confidence: number;
+    reasoning: string;
   };
 
   verificationScore?: number;
@@ -105,6 +116,21 @@ export interface IIssue extends Document {
     rating: number;
     comment: string;
     submittedAt?: Date;
+  };
+
+  upvotes: number;
+  upvotedBy: string[];
+  isOverdue: boolean;
+
+  // Prompt 4B Additions
+  adoptedAreaId?: string;
+  isEmergency?: boolean;
+
+  // AI Resolution Verification
+  resolutionVerification?: {
+    isResolved: boolean;
+    confidence: number;
+    reasoning: string;
   };
 
   createdAt: Date;
@@ -153,6 +179,7 @@ const IssueSchema = new Schema<IIssue>(
 
     reportedBy: { type: Schema.Types.ObjectId, ref: "User" },
     reportedByName: { type: String },
+    isPublicRecognitionEnabled: { type: Boolean, default: false },
     citizenEmail: { type: String },
     deviceInfo: { type: String },
     browserInfo: { type: String },
@@ -197,6 +224,9 @@ const IssueSchema = new Schema<IIssue>(
     transferredTo: { type: String },
     assistanceRequested: { type: Boolean, default: false },
 
+    communityDriveId: { type: String },
+    employeeHoldReason: { type: String },
+
     aiAnalysis: {
       confidenceScore: { type: Number, default: 0 },
       urgencyScore: { type: Number, default: 0 },
@@ -205,6 +235,12 @@ const IssueSchema = new Schema<IIssue>(
       category: { type: String },
       department: { type: String },
       severity: { type: String }
+    },
+
+    resolutionVerification: {
+      isResolved: { type: Boolean },
+      confidence: { type: Number },
+      reasoning: { type: String }
     },
 
     verificationScore: { type: Number },
@@ -219,7 +255,14 @@ const IssueSchema = new Schema<IIssue>(
       rating: { type: Number, min: 1, max: 5 },
       comment: { type: String },
       submittedAt: { type: Date }
-    }
+    },
+
+    upvotes: { type: Number, default: 0 },
+    upvotedBy: { type: [String], default: [] },
+    isOverdue: { type: Boolean, default: false },
+
+    adoptedAreaId: { type: String },
+    isEmergency: { type: Boolean, default: false }
   },
   { timestamps: true }
 );

@@ -39,6 +39,7 @@ export default function LoginPage() {
           if (user.role === "super_admin") router.push("/super-admin");
           else if (user.role === "admin") router.push("/admin");
           else if (user.role === "employee") router.push("/employee");
+          else if (user.role === "volunteer_org") router.push("/volunteer-org/dashboard");
           else router.push("/");
         }, 100);
     } catch (err) {

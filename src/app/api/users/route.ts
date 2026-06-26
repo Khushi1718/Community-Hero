@@ -26,6 +26,30 @@ export async function GET(request: NextRequest) {
     
     // Never expose passwords in list/search responses
     const users = await User.find(query).select("-password").sort({ createdAt: -1 });
+    
+    // If exact email search yielded no users, check VolunteerOrganizations
+    if (users.length === 0 && email) {
+        const { VolunteerOrganization } = await import("@/models/VolunteerOrganization");
+        const orgs = await VolunteerOrganization.find({
+            contactEmail: { $regex: "^" + email.toLowerCase().trim() + "$", $options: "i" }
+        }).select("-password");
+        
+        if (orgs.length > 0) {
+            const orgUser = {
+                _id: orgs[0]._id,
+                email: orgs[0].contactEmail,
+                name: orgs[0].name,
+                role: "volunteer_org",
+                status: orgs[0].status === "SUSPENDED" ? "suspended" : "active",
+                department: orgs[0].type,
+                city: orgs[0].city,
+                state: orgs[0].state,
+                isAvailable: true
+            };
+            return NextResponse.json([orgUser]);
+        }
+    }
+    
     return NextResponse.json(users);
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });
