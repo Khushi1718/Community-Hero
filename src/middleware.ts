@@ -18,6 +18,11 @@ const isPublicRoute = createRouteMatcher([
   "/api/copilot(.*)",
   "/api/volunteer-org(.*)", // Org API — uses its own auth
   "/api/volunteer-drives(.*)", // Drives API
+  "/api/certificates(.*)",
+  "/api/generate-certificate(.*)",
+  "/api/analytics(.*)",
+  "/api/adopted-areas(.*)",
+  "/api/leaderboard(.*)",
 ]);
 
 // Staff routes — use our custom DB auth, NOT Clerk

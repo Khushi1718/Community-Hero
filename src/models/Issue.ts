@@ -126,12 +126,7 @@ export interface IIssue extends Document {
   adoptedAreaId?: string;
   isEmergency?: boolean;
 
-  // AI Resolution Verification
-  resolutionVerification?: {
-    isResolved: boolean;
-    confidence: number;
-    reasoning: string;
-  };
+
 
   createdAt: Date;
   updatedAt: Date;

@@ -7,6 +7,7 @@ import { VolunteerOrganization } from "@/models/VolunteerOrganization";
 import { User } from "@/models/User";
 import { CommunityPost } from "@/models/CommunityPost";
 import { processDriveGamification } from "@/lib/gamification";
+import { initiateCertificateGeneration } from "@/lib/certificates";
 
 type Props = { params: Promise<{ id: string }> };
 
@@ -103,15 +104,15 @@ export async function PATCH(request: NextRequest, props: Props) {
             }
         });
 
-        // Notify approved org
-        const approvedOrg = await VolunteerOrganization.findById(orgId);
-        if (approvedOrg) {
-             await Notification.create({
-                 userId: approvedOrg.contactEmail, orgId: orgId, type: "Drive_Org_Approved",
-                 title: "Drive Request Approved",
-                 message: `Your request to manage "${drive.title}" was approved by the admin.`
-             });
-        }
+         // Notify approved org
+         const approvedOrg = await VolunteerOrganization.findById(orgId);
+         if (approvedOrg) {
+              await Notification.create({
+                  userId: approvedOrg.contactEmail, orgId: orgId, type: "Drive_Org_Approved",
+                  title: "Drive Request Approved",
+                  message: `Your request to manage "${drive.title}" was approved by the admin. Please schedule the drive details.`
+              });
+         }
         break;
       }
 
@@ -136,6 +137,62 @@ export async function PATCH(request: NextRequest, props: Props) {
          const hasPending = drive.orgRequests?.some(r => r.status === "pending");
          if (!hasPending && drive.status === "ORG_PENDING_APPROVAL") {
              drive.status = "WAITING_FOR_ORG";
+         }
+         break;
+      }
+
+      case "update_capacity": {
+         const { requiredVolunteers, maxVolunteers } = body;
+         if (requiredVolunteers) drive.requiredVolunteers = requiredVolunteers;
+         if (maxVolunteers) drive.maxVolunteers = maxVolunteers;
+         break;
+      }
+
+      case "edit_drive": {
+         const { title, description, date, time, durationHours, instructions, meetingLocation } = body;
+         if (title) drive.title = title;
+         if (description) drive.description = description;
+         if (date) drive.date = new Date(date);
+         if (time) drive.time = time;
+         if (durationHours) drive.durationHours = durationHours;
+         if (instructions !== undefined) drive.instructions = instructions;
+         if (meetingLocation) drive.meetingLocation = meetingLocation;
+         break;
+      }
+
+      case "schedule_drive": {
+         if (drive.status !== "ORG_APPROVED") return NextResponse.json({ error: "Invalid status" }, { status: 400 });
+         
+         const { date, time, durationHours, requiredVolunteers, maxVolunteers, meetingLocation } = body;
+         drive.date = new Date(date);
+         drive.time = time;
+         drive.durationHours = durationHours;
+         drive.requiredVolunteers = requiredVolunteers;
+         drive.maxVolunteers = maxVolunteers;
+         drive.meetingLocation = meetingLocation;
+         drive.status = "VOLUNTEER_REG_OPEN";
+         
+         // Generate Community Post now that details are finalized
+         const CommunityPost = require('@/models/CommunityPost').CommunityPost;
+         const approvedOrg = await VolunteerOrganization.findById(drive.acceptedOrgId);
+         if (approvedOrg) {
+             await CommunityPost.create({
+                 postType: drive.issueId ? "Issue_Based" : "Self_Initiated",
+                 issueId: drive.issueId,
+                 driveId: drive._id,
+                 orgId: approvedOrg._id,
+                 orgName: approvedOrg.name,
+                 orgLogoUrl: approvedOrg.logoUrl,
+                 title: `Upcoming Volunteer Drive: ${drive.title}`,
+                 category: drive.category || drive.requiredOrgCategory,
+                 location: {
+                     address: drive.meetingLocation || "TBD",
+                     city: drive.city || approvedOrg.city,
+                     state: drive.state || approvedOrg.state
+                 },
+                 resolutionSummary: `${drive.description}\n\nJoin ${approvedOrg.name} on ${new Date(drive.date).toLocaleDateString("en-IN")} at ${drive.time}. We need ${drive.requiredVolunteers} volunteers to help!`,
+                 resolvedAt: new Date()
+             });
          }
          break;
       }
@@ -180,6 +237,11 @@ export async function PATCH(request: NextRequest, props: Props) {
              reasonForJoining, status: "pending", joinedAt: now,
              previousDrives, previousHours, attendancePercentage
          });
+         drive.joinedVolunteers = (drive.joinedVolunteers || 0) + 1;
+
+         if (drive.maxVolunteers && drive.joinedVolunteers >= drive.maxVolunteers) {
+             drive.status = "REG_CLOSED";
+         }
 
          // Notify Org of pending request
          const org = await VolunteerOrganization.findById(drive.acceptedOrgId);
@@ -205,15 +267,15 @@ export async function PATCH(request: NextRequest, props: Props) {
          const vol = drive.volunteers?.find(v => v.email === email);
          if (!vol) return NextResponse.json({ error: "Volunteer not found" }, { status: 404 });
          
-         if (drive.maxVolunteers && drive.joinedVolunteers >= drive.maxVolunteers) {
+         const approvedCount = drive.volunteers ? drive.volunteers.filter(v => v.status === "approved").length : 0;
+         if (drive.maxVolunteers && approvedCount >= drive.maxVolunteers) {
              return NextResponse.json({ error: "Cannot approve, capacity reached." }, { status: 400 });
          }
          
          vol.status = "approved";
-         drive.joinedVolunteers = (drive.joinedVolunteers || 0) + 1;
          
          // Check capacity post-approve
-         if (drive.maxVolunteers && drive.joinedVolunteers >= drive.maxVolunteers) {
+         if (drive.maxVolunteers && (approvedCount + 1) >= drive.maxVolunteers) {
              drive.status = "REG_CLOSED";
          }
          
@@ -225,12 +287,27 @@ export async function PATCH(request: NextRequest, props: Props) {
          break;
       }
       
+      case "close_volunteers": {
+         if (drive.status === "VOLUNTEER_REG_OPEN") {
+            drive.status = "REG_CLOSED";
+         }
+         break;
+      }
+      
       case "volunteer_reject": {
          const { email } = body;
          const vol = drive.volunteers?.find(v => v.email === email);
          if (!vol) return NextResponse.json({ error: "Volunteer not found" }, { status: 404 });
          
+         if (vol.status !== "rejected") {
+             drive.joinedVolunteers = Math.max(0, (drive.joinedVolunteers || 0) - 1);
+         }
          vol.status = "rejected";
+         
+         // Re-open if below capacity
+         if (drive.status === "REG_CLOSED" && (!drive.maxVolunteers || drive.joinedVolunteers < drive.maxVolunteers)) {
+             drive.status = "VOLUNTEER_REG_OPEN";
+         }
          
          await Notification.create({
              userId: vol.userId || vol.email, type: "System",
@@ -249,6 +326,50 @@ export async function PATCH(request: NextRequest, props: Props) {
          if (drive.status === "REG_CLOSED" && drive.maxVolunteers && drive.joinedVolunteers < drive.maxVolunteers) {
              drive.status = "VOLUNTEER_REG_OPEN";
          }
+         break;
+      }
+      
+      case "request_partner": {
+         const { targetOrgId, targetOrgName, requestingOrgName } = body;
+         drive.partnerRequests = drive.partnerRequests || [];
+         
+         if (drive.partnerRequests.some(pr => pr.orgId === targetOrgId)) {
+            return NextResponse.json({ error: "Request already sent to this organization." }, { status: 400 });
+         }
+         
+         drive.partnerRequests.push({ orgId: targetOrgId, orgName: targetOrgName, status: "pending", requestedAt: new Date() });
+         
+         // Fetch target org to get their contact email for notification
+         const targetOrg = await VolunteerOrganization.findById(targetOrgId);
+         if (targetOrg) {
+             await Notification.create({
+                 userId: targetOrg.contactEmail,
+                 orgId: targetOrg._id.toString(),
+                 type: "System",
+                 title: "New Partnership Request",
+                 message: `${requestingOrgName} has invited you to partner on their drive "${drive.title}". Check your dashboard.`
+             });
+         }
+         break;
+      }
+
+      case "accept_partner": {
+         const { orgId } = body;
+         const req = drive.partnerRequests?.find(pr => pr.orgId === orgId);
+         if (!req) return NextResponse.json({ error: "Request not found" }, { status: 404 });
+         
+         req.status = "approved";
+         drive.supportingOrgs = drive.supportingOrgs || [];
+         if (!drive.supportingOrgs.includes(orgId)) {
+             drive.supportingOrgs.push(orgId);
+         }
+         break;
+      }
+
+      case "reject_partner": {
+         const { orgId } = body;
+         const req = drive.partnerRequests?.find(pr => pr.orgId === orgId);
+         if (req) req.status = "rejected";
          break;
       }
 
@@ -343,6 +464,22 @@ export async function PATCH(request: NextRequest, props: Props) {
                  message: `Organization marked drive "${drive.title}" as complete. Please verify.`
              });
          }
+         
+         // If it is self-initiated, we can verify immediately
+         if (drive.isSelfInitiated) {
+            drive.status = "COMPLETED"; // Override pending if self-initiated
+         }
+         
+         break;
+      }
+
+      case "send_certificates": {
+         // Fallback manual trigger if needed
+         await initiateCertificateGeneration(drive);
+         // Ensure status is completed
+         if (drive.status !== "COMPLETED" && drive.status !== "VERIFIED") {
+             drive.status = "COMPLETED";
+         }
          break;
       }
 
@@ -369,6 +506,9 @@ export async function PATCH(request: NextRequest, props: Props) {
                  });
              }
          }
+         
+         // Generate and send certificates if not already sent
+         initiateCertificateGeneration(drive).catch(console.error);
 
          let issue = null;
          let beforeImageUrls: string[] = [];
@@ -461,6 +601,10 @@ export async function PATCH(request: NextRequest, props: Props) {
 
       default:
          return NextResponse.json({ error: "Unknown action" }, { status: 400 });
+    }
+
+    if (drive.isModified("status") && drive.status === "COMPLETED") {
+       await initiateCertificateGeneration(drive);
     }
 
     await drive.save();

@@ -48,6 +48,20 @@ export default function SuperAdminPage() {
   const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
   const [newAdminPassword, setNewAdminPassword] = useState("");
 
+  // Add Org Modal
+  const [isAddOrgModalOpen, setIsAddOrgModalOpen] = useState(false);
+  const [addOrgName, setAddOrgName] = useState("");
+  const [addOrgEmail, setAddOrgEmail] = useState("");
+  const [addOrgType, setAddOrgType] = useState("NGO");
+  const [addOrgPassword, setAddOrgPassword] = useState("");
+  const [addOrgState, setAddOrgState] = useState("");
+  const [addOrgCity, setAddOrgCity] = useState("");
+  const [addOrgAddress, setAddOrgAddress] = useState("");
+  const [addOrgContactPerson, setAddOrgContactPerson] = useState("");
+  const [addOrgPhone, setAddOrgPhone] = useState("");
+  const [addOrgDescription, setAddOrgDescription] = useState("");
+  const [addOrgSubmitting, setAddOrgSubmitting] = useState(false);
+
   useEffect(() => {
     if (!loading) {
       if (!appUser) {
@@ -108,6 +122,48 @@ export default function SuperAdminPage() {
     setNewDepartment("");
     setNewPassword("");
     loadData();
+  };
+
+  const handleAddOrganization = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!addOrgEmail || !addOrgName) return;
+    setAddOrgSubmitting(true);
+    try {
+        const res = await fetch("/api/volunteer-org", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                name: addOrgName,
+                type: addOrgType,
+                description: addOrgDescription,
+                contactEmail: addOrgEmail,
+                contactPersonName: addOrgContactPerson,
+                contactPhone: addOrgPhone,
+                state: addOrgState,
+                city: addOrgCity,
+                address: addOrgAddress,
+                password: addOrgPassword,
+                createdByAdmin: true,
+                adminEmail: appUser?.email,
+                adminName: appUser?.name,
+                adminRole: appUser?.role
+            })
+        });
+        if (res.ok) {
+            setIsAddOrgModalOpen(false);
+            setAddOrgName(""); setAddOrgEmail(""); setAddOrgPassword(""); setAddOrgDescription("");
+            setAddOrgCity(""); setAddOrgState(""); setAddOrgAddress("");
+            setAddOrgContactPerson(""); setAddOrgPhone("");
+            loadData();
+        } else {
+            const err = await res.json();
+            alert(err.error || "Failed to add organization");
+        }
+    } catch (e) {
+        alert("Error adding organization");
+    } finally {
+        setAddOrgSubmitting(false);
+    }
   };
 
   const handleCreateEmployee = async (e: React.FormEvent) => {
@@ -423,7 +479,10 @@ export default function SuperAdminPage() {
                 </div>
 
                 {/* Filters */}
-                <div className="flex flex-wrap gap-3">
+                <div className="flex flex-wrap gap-3 items-center">
+                  <button onClick={() => setIsAddOrgModalOpen(true)} className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2.5 rounded-xl text-sm font-bold flex items-center gap-2 transition-colors">
+                    <Plus className="w-4 h-4" /> Add Organization
+                  </button>
                   <div className="relative flex-1 min-w-[180px]">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                     <input type="text" value={orgSearch} onChange={e => setOrgSearch(e.target.value)}
@@ -793,6 +852,79 @@ export default function SuperAdminPage() {
                 <button onClick={() => setAiReportData(null)} className="mt-8 text-sm font-bold text-slate-500 hover:text-slate-700">Dismiss Report</button>
              </div>
           )}
+        </div>
+      )}      {/* Add Organization Modal */}
+      {isAddOrgModalOpen && (
+        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl animate-fade-in-up">
+            <div className="sticky top-0 bg-white/80 backdrop-blur-md px-6 py-4 border-b border-surface-100 flex justify-between items-center z-10">
+              <h2 className="text-xl font-black text-surface-900">Add Organization</h2>
+              <button onClick={() => setIsAddOrgModalOpen(false)} className="text-surface-400 hover:text-surface-600 bg-surface-50 hover:bg-surface-100 p-2 rounded-full transition-colors"><X className="w-5 h-5" /></button>
+            </div>
+            
+            <form onSubmit={handleAddOrganization} className="p-6 space-y-4">
+              <div className="bg-indigo-50 border border-indigo-100 p-4 rounded-xl mb-4 text-sm text-indigo-800">
+                <p>Organizations added here will be automatically marked as <strong>VERIFIED</strong>.</p>
+              </div>
+              
+              <div className="grid grid-cols-2 gap-4">
+                <div className="col-span-2">
+                  <label className="block text-xs font-bold text-surface-600 mb-1">Organization Name</label>
+                  <input required value={addOrgName} onChange={e=>setAddOrgName(e.target.value)} className="w-full border p-2.5 rounded-xl text-sm" placeholder="e.g. Green Earth NGO" />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-surface-600 mb-1">Email</label>
+                  <input required type="email" value={addOrgEmail} onChange={e=>setAddOrgEmail(e.target.value)} className="w-full border p-2.5 rounded-xl text-sm" />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-surface-600 mb-1">Type</label>
+                  <select required value={addOrgType} onChange={e=>setAddOrgType(e.target.value)} className="w-full border p-2.5 rounded-xl text-sm">
+                    <option value="NGO">NGO</option>
+                    <option value="NSS">NSS</option>
+                    <option value="NCC">NCC</option>
+                    <option value="Youth Club">Youth Club</option>
+                    <option value="RWA">RWA</option>
+                    <option value="Other">Other</option>
+                  </select>
+                </div>
+                <div className="col-span-2">
+                  <label className="block text-xs font-bold text-surface-600 mb-1">Description</label>
+                  <textarea required rows={2} value={addOrgDescription} onChange={e=>setAddOrgDescription(e.target.value)} className="w-full border p-2.5 rounded-xl text-sm resize-none" />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-surface-600 mb-1">State</label>
+                  <input required value={addOrgState} onChange={e=>setAddOrgState(e.target.value)} className="w-full border p-2.5 rounded-xl text-sm" />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-surface-600 mb-1">City</label>
+                  <input required value={addOrgCity} onChange={e=>setAddOrgCity(e.target.value)} className="w-full border p-2.5 rounded-xl text-sm" />
+                </div>
+                <div className="col-span-2">
+                  <label className="block text-xs font-bold text-surface-600 mb-1">Address</label>
+                  <input required value={addOrgAddress} onChange={e=>setAddOrgAddress(e.target.value)} className="w-full border p-2.5 rounded-xl text-sm" />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-surface-600 mb-1">Contact Person Name</label>
+                  <input required value={addOrgContactPerson} onChange={e=>setAddOrgContactPerson(e.target.value)} className="w-full border p-2.5 rounded-xl text-sm" />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-surface-600 mb-1">Phone</label>
+                  <input required value={addOrgPhone} onChange={e=>setAddOrgPhone(e.target.value)} className="w-full border p-2.5 rounded-xl text-sm" />
+                </div>
+                <div className="col-span-2">
+                  <label className="block text-xs font-bold text-surface-600 mb-1">Initial Password</label>
+                  <input required type="text" value={addOrgPassword} onChange={e=>setAddOrgPassword(e.target.value)} className="w-full border p-2.5 rounded-xl text-sm" placeholder="Set a secure password" />
+                </div>
+              </div>
+
+              <div className="pt-4 border-t border-surface-100 flex gap-3 justify-end">
+                <button type="button" onClick={() => setIsAddOrgModalOpen(false)} className="px-5 py-2.5 text-sm font-bold text-surface-600 hover:bg-surface-100 rounded-xl transition-colors">Cancel</button>
+                <button type="submit" disabled={addOrgSubmitting} className="px-5 py-2.5 text-sm font-bold bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl transition-colors flex items-center gap-2">
+                  {addOrgSubmitting ? "Creating..." : "Create Organization"}
+                </button>
+              </div>
+            </form>
+          </div>
         </div>
       )}
 

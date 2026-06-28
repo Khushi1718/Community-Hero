@@ -362,7 +362,7 @@ export default function EmployeePage() {
 
   // ── Derived data ─────────────────────────────────────────────────────────────
   const ACTIVE_STATUSES = ["Assigned", "Employee Accepted", "Travelling", "Reached Site", "Inspection Started", "Inspection Completed", "Waiting For Materials"];
-  const IN_PROGRESS_STATUSES = ["Work Started", "Work In Progress", "Paused", "Material Approved", "Awaiting Admin Verification", "Ready For Verification"];
+  const IN_PROGRESS_STATUSES = ["Work Started", "Work In Progress", "Paused", "Material Approved", "Material Requested", "Awaiting Admin Verification", "Ready For Verification"];
   const COMPLETED_STATUSES = ["Repair Completed", "Completed", "Awaiting Citizen Review"];
   const CLOSED_STATUSES = ["Closed", "Rejected"];
 

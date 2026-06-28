@@ -17,6 +17,7 @@ const CommunityFeedPreview = dynamic(() => import('@/components/landing/Communit
 const SecurityVerification = dynamic(() => import('@/components/landing/SecurityVerification'));
 const TechStack = dynamic(() => import('@/components/landing/TechStack'));
 const ImpactSection = dynamic(() => import('@/components/landing/ImpactSection'));
+const OrganizationRegistrationCTA = dynamic(() => import('@/components/landing/OrganizationRegistrationCTA'));
 const CoverageMap = dynamic(() => import('@/components/CoverageMap'), { ssr: false, loading: () => <div className="w-full h-[500px] flex items-center justify-center bg-slate-50 rounded-3xl animate-pulse text-green-600 font-bold">Loading Live Map...</div> });
 
 export default function Home() {
@@ -59,6 +60,7 @@ export default function Home() {
       </section>
 
       <PlatformAnalytics />
+      <OrganizationRegistrationCTA />
       <CommunityFeedPreview />
       <SecurityVerification />
       <TechStack />

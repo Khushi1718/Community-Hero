@@ -326,7 +326,7 @@ export async function PATCH(request: NextRequest, props: Props) {
             if (apiKey) {
               const genAI = new GoogleGenerativeAI(apiKey);
               const model = genAI.getGenerativeModel({
-                model: "gemini-1.5-flash",
+                model: "gemini-2.5-flash",
                 generationConfig: { temperature: 0.1, responseMimeType: "application/json" }
               });
 

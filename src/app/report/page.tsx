@@ -3,7 +3,7 @@
 import { useAuth } from "@/lib/auth-context";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useRef } from "react";
-import { Camera, MapPin, CheckCircle2, Sparkles, AlertTriangle, ShieldCheck, Clock, XCircle, Send, AlertOctagon, Video, Film, BarChart2, Zap, Info } from "lucide-react";
+import { Camera, MapPin, CheckCircle2, Sparkles, AlertTriangle, ShieldCheck, Clock, XCircle, Send, AlertOctagon, Video, Film, BarChart2, Zap, Info, Leaf } from "lucide-react";
 import { saveIssue, getIssues, Issue } from "@/lib/storage";
 import { EvidenceCapture, CaptureMetadata } from "@/components/EvidenceCapture";
 
@@ -465,10 +465,14 @@ export default function ReportPage() {
         setDuplicateWarningId(null);
         setPendingIssue(null);
         setSuccess(true);
+        setTimeout(() => setAssignmentStatus("assigned"), 2500);
+      } else {
+        const err = await res.json();
+        throw new Error(err.error || `Server error: ${res.status}`);
       }
-    } catch (e) {
+    } catch (e: any) {
       console.error(e);
-      alert("Failed to confirm duplicate. Please try again.");
+      alert(`Failed to confirm duplicate: ${e.message}`);
     }
     setIsSubmitting(false);
   };
@@ -496,10 +500,13 @@ export default function ReportPage() {
         setPendingIssue(null);
         setSuccess(true);
         setTimeout(() => setAssignmentStatus("assigned"), 2500);
+      } else {
+        const err = await res.json();
+        throw new Error(err.error || `Server error: ${res.status}`);
       }
-    } catch (e) {
+    } catch (e: any) {
       console.error(e);
-      alert("Failed to override. Please try again.");
+      alert(`Failed to override duplicate: ${e.message}`);
     }
     setIsSubmitting(false);
   };
@@ -536,7 +543,8 @@ export default function ReportPage() {
     <div className="min-h-screen bg-slate-50 text-slate-800 font-sans p-4 sm:p-8">
 
 
-      <main className="max-w-2xl mx-auto">
+      <main className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
+        <div className="lg:col-span-2 space-y-8">
         
         {/* State: AI Reject (Spam/Non-Civic) */}
         {isRejected && aiAnalysis ? (
@@ -848,8 +856,8 @@ export default function ReportPage() {
             )}
 
             <div className="flex items-center gap-4 mb-8">
-              <div className="w-12 h-12 bg-blue-50 rounded-xl flex items-center justify-center">
-                <Camera className="w-6 h-6 text-blue-600" />
+              <div className="w-12 h-12 bg-green-500 rounded-xl flex items-center justify-center shadow-md">
+                <Camera className="w-6 h-6 text-white" />
               </div>
               <div>
                 <h2 className="text-2xl font-bold text-slate-900">Raise an Issue</h2>
@@ -860,7 +868,7 @@ export default function ReportPage() {
             <form onSubmit={handleSubmit} className="space-y-6">
               {/* Camera / Video Trigger */}
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">Evidence Capture</label>
+                <label className="block text-sm font-bold text-slate-700 mb-2">Evidence Capture <span className="text-red-500">*</span></label>
                 {imageBase64 ? (
                   <div className="relative rounded-2xl overflow-hidden shadow-sm group">
                     {captureType === "video" ? (
@@ -894,90 +902,127 @@ export default function ReportPage() {
                     </div>
                   </div>
                 ) : (
-                  <button type="button" onClick={() => setShowCapture(true)} className="w-full border-2 border-dashed border-slate-200 rounded-2xl p-8 flex flex-col items-center justify-center hover:bg-blue-50 hover:border-blue-200 transition-colors group h-52">
-                    <div className="flex items-center gap-4 mb-4">
-                      <div className="w-14 h-14 bg-blue-100 text-blue-600 rounded-2xl flex items-center justify-center group-hover:scale-105 transition-transform">
-                        <Camera className="w-7 h-7" />
+                  <div className="w-full border-2 border-dashed border-green-200 bg-green-50/30 rounded-2xl p-6 flex flex-col md:flex-row items-center gap-6">
+                    <div className="flex-1 flex flex-col items-center justify-center border-r-0 md:border-r border-slate-200 pr-0 md:pr-6 pb-6 md:pb-0 border-b md:border-b-0">
+                      <div className="flex gap-4 mb-4 w-full justify-center">
+                         <button type="button" onClick={() => setShowCapture(true)} className="flex-1 bg-white border border-slate-200 shadow-sm rounded-xl py-4 flex flex-col items-center gap-2 hover:bg-slate-50 transition-transform active:scale-95">
+                            <Camera className="w-6 h-6 text-green-600" />
+                            <span className="font-bold text-xs text-slate-700">Take Photo</span>
+                         </button>
+                         <button type="button" onClick={() => setShowCapture(true)} className="flex-1 bg-white border border-slate-200 shadow-sm rounded-xl py-4 flex flex-col items-center gap-2 hover:bg-slate-50 transition-transform active:scale-95">
+                            <Video className="w-6 h-6 text-indigo-600" />
+                            <span className="font-bold text-xs text-slate-700">Record Video</span>
+                         </button>
                       </div>
-                      <div className="w-14 h-14 bg-violet-100 text-violet-600 rounded-2xl flex items-center justify-center group-hover:scale-105 transition-transform">
-                        <Video className="w-7 h-7" />
-                      </div>
+                      <p className="text-xs text-slate-400 font-medium">or drag and drop files here</p>
                     </div>
-                    <p className="text-slate-700 font-bold mb-1">Capture Photo or Video</p>
-                    <p className="text-slate-500 text-sm text-center">GPS & timestamp attached automatically. AI analyzes every frame of videos.</p>
-                  </button>
+                    <div className="flex-1 flex flex-col gap-4">
+                       <div className="flex items-center gap-3 text-sm text-slate-600 font-medium"><MapPin className="w-5 h-5 text-green-600"/> GPS & timestamp auto attached</div>
+                       <div className="flex items-center gap-3 text-sm text-slate-600 font-medium"><Sparkles className="w-5 h-5 text-green-600"/> AI analyzes every frame</div>
+                       <div className="flex items-center gap-3 text-sm text-slate-600 font-medium"><Film className="w-5 h-5 text-green-600"/> Supports JPG, PNG, MP4 (Max 50MB)</div>
+                    </div>
+                  </div>
                 )}
               </div>
 
               {/* Description */}
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">Description</label>
-                <textarea
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                  placeholder="E.g., Huge pothole on the main road, causing traffic issues."
-                  className="w-full bg-slate-50 border border-slate-200 rounded-xl py-3 px-4 text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all min-h-[100px]"
-                  required
-                />
+                <label className="block text-sm font-bold text-slate-700 mb-2">Description <span className="text-red-500">*</span></label>
+                <div className="relative">
+                  <textarea
+                    value={description}
+                    onChange={(e) => setDescription(e.target.value)}
+                    placeholder="E.g., Huge pothole on the main road, causing traffic issues."
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl py-3 px-4 text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all min-h-[120px]"
+                    maxLength={500}
+                    required
+                  />
+                  <div className="absolute bottom-3 right-3 text-xs text-slate-400 font-medium">
+                    {description.length} / 500
+                  </div>
+                </div>
               </div>
 
               {/* Location Fields */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">State</label>
-                  <input
-                    type="text"
-                    value={stateName}
-                    onChange={(e) => setStateName(e.target.value)}
-                    placeholder="e.g. Haryana"
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl py-3 px-4 text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    required
-                  />
+                  <label className="block text-sm font-bold text-slate-700 mb-2">State <span className="text-red-500">*</span></label>
+                  <div className="relative">
+                    <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                    <input
+                      type="text"
+                      value={stateName}
+                      onChange={(e) => setStateName(e.target.value)}
+                      placeholder="Select State"
+                      className="w-full bg-slate-50 border border-slate-200 rounded-xl py-3 pl-10 pr-4 text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-green-500"
+                      required
+                    />
+                  </div>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">City</label>
-                  <input
-                    type="text"
-                    value={cityName}
-                    onChange={(e) => setCityName(e.target.value)}
-                    placeholder="e.g. Rohtak"
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl py-3 px-4 text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    required
-                  />
+                  <label className="block text-sm font-bold text-slate-700 mb-2">City <span className="text-red-500">*</span></label>
+                  <div className="relative">
+                    <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                    <input
+                      type="text"
+                      value={cityName}
+                      onChange={(e) => setCityName(e.target.value)}
+                      placeholder="Select City"
+                      className="w-full bg-slate-50 border border-slate-200 rounded-xl py-3 pl-10 pr-4 text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-green-500"
+                      required
+                    />
+                  </div>
                 </div>
               </div>
               
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">Detailed Address / Colony</label>
-                <input
-                  type="text"
-                  value={address}
-                  onChange={(e) => setAddress(e.target.value)}
-                  placeholder="e.g. Hanuman Nagar, Street 4"
-                  className="w-full bg-slate-50 border border-slate-200 rounded-xl py-3 px-4 text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  required
-                />
+                <label className="block text-sm font-bold text-slate-700 mb-2">Detailed Address / Colony <span className="text-red-500">*</span></label>
+                <div className="relative">
+                  <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                  <input
+                    type="text"
+                    value={address}
+                    onChange={(e) => setAddress(e.target.value)}
+                    placeholder="E.g., Hanuman Nagar, Street 4, Near Green Park"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl py-3 pl-10 pr-4 text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-green-500"
+                    required
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-bold text-slate-700 mb-1">Location on Map <span className="text-red-500">*</span></label>
+                <p className="text-xs text-slate-500 mb-3">Mark the exact location of the issue</p>
+                
+                <div className="relative w-full h-32 bg-slate-100 rounded-xl overflow-hidden border border-slate-200 flex items-center justify-between p-4">
+                  <div className="absolute inset-0 opacity-40 bg-[url('https://maps.googleapis.com/maps/api/staticmap?center=New+York,NY&zoom=14&size=800x400&sensor=false')] bg-cover bg-center"></div>
+                  <div className="relative z-10 flex gap-2">
+                     <button type="button" className="bg-white text-green-700 border border-green-200 font-bold px-3 py-2 rounded-lg flex items-center gap-2 shadow-sm text-sm hover:bg-slate-50 transition-colors">
+                       <MapPin className="w-4 h-4"/> Use My Location
+                     </button>
+                  </div>
+                  <div className="relative z-10 w-8 flex flex-col">
+                     <button type="button" className="w-8 h-8 bg-white border border-slate-200 rounded-t-lg flex items-center justify-center text-slate-600 font-bold text-lg hover:bg-slate-50 shadow-sm">+</button>
+                     <button type="button" className="w-8 h-8 bg-white border border-slate-200 rounded-b-lg flex items-center justify-center text-slate-600 font-bold text-lg hover:bg-slate-50 shadow-sm border-t-0">-</button>
+                  </div>
+                  {/* Pin in the middle */}
+                  <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-10">
+                    <MapPin className="w-8 h-8 text-green-600 drop-shadow-md" fill="currentColor"/>
+                  </div>
+                </div>
               </div>
 
               {/* GPS Status */}
-              {gpsCoords ? (
-                <div className="bg-emerald-50 border border-emerald-200 p-4 rounded-xl flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <MapPin className="w-5 h-5 text-emerald-600" />
+              {!gpsCoords && (
+                <div className="bg-red-50 border border-red-200 p-4 rounded-xl flex items-start justify-between gap-3">
+                  <div className="flex gap-3">
+                    <AlertTriangle className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
                     <div>
-                      <p className="text-sm font-bold text-emerald-900">GPS Location Captured</p>
-                      <p className="text-xs text-emerald-700 font-mono">{gpsCoords.lat.toFixed(6)}, {gpsCoords.lng.toFixed(6)} {gpsCoords.acc ? `±${Math.round(gpsCoords.acc)}m` : ""}</p>
+                      <p className="text-sm font-bold text-red-800">GPS is Required</p>
+                      <p className="text-xs text-red-700 mt-1">To prevent false reports, GPS must be captured when you take the photo/video.<br/>Please enable your location services.</p>
                     </div>
                   </div>
-                  <CheckCircle2 className="w-5 h-5 text-emerald-600" />
-                </div>
-              ) : (
-                <div className="bg-red-50 border border-red-200 p-4 rounded-xl flex items-start gap-3">
-                  <MapPin className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
-                  <div>
-                    <p className="text-sm font-bold text-red-800">GPS Required</p>
-                    <p className="text-xs text-red-600 mt-1">To prevent false reports, GPS must be captured when you take the photo/video. Please enable location services.</p>
-                  </div>
+                  <div className="w-10 h-10 opacity-50 bg-[url('https://cdn-icons-png.flaticon.com/512/854/854878.png')] bg-contain bg-no-repeat bg-center mix-blend-multiply"></div>
                 </div>
               )}
 
@@ -996,15 +1041,50 @@ export default function ReportPage() {
               <button
                 type="submit"
                 disabled={isSubmitting || !location}
-                className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-medium py-4 rounded-xl transition-all shadow-[0_4px_14px_0_rgb(37,99,235,0.39)] hover:shadow-[0_6px_20px_rgba(37,99,235,0.23)] active:scale-[0.98] disabled:opacity-50 mt-4 flex items-center justify-center gap-2 group relative overflow-hidden"
+                className="w-full bg-[#4CAF50] hover:bg-[#43a047] text-white font-bold py-4 rounded-xl transition-all shadow-[0_4px_14px_0_rgba(76,175,80,0.39)] hover:shadow-[0_6px_20px_rgba(76,175,80,0.23)] active:scale-[0.98] disabled:opacity-50 mt-4 flex flex-col items-center justify-center gap-1 group relative overflow-hidden"
               >
                 <div className="absolute inset-0 bg-white/20 -translate-x-full group-hover:animate-[shimmer_1.5s_infinite]"></div>
-                <Sparkles className="w-5 h-5 mr-1" />
-                Submit & Analyze with Gemini
+                <div className="flex items-center gap-2">
+                  <Sparkles className="w-5 h-5" />
+                  <span>Submit & Analyze with Gemini</span>
+                </div>
+                <span className="text-[10px] font-medium text-white/80">AI will review your report and route it to the right authorities</span>
               </button>
             </form>
           </div>
         )}
+        </div>
+
+        {/* Right Column: Tips & Info */}
+        <div className="space-y-6">
+           <div className="bg-white border border-slate-200 p-6 rounded-3xl shadow-sm">
+             <h3 className="flex items-center gap-2 font-bold text-slate-800 mb-4"><Leaf className="w-5 h-5 text-green-600"/> Why Your Report Matters</h3>
+             <p className="text-sm text-slate-600 mb-6 leading-relaxed">
+               Your report helps create a cleaner, safer and better community for everyone.
+             </p>
+             <div className="w-full h-32 bg-[url('https://cdni.iconscout.com/illustration/premium/thumb/environment-care-illustration-download-in-svg-png-gif-file-formats--tree-saving-protection-plant-ecology-pack-nature-illustrations-3965561.png')] bg-contain bg-no-repeat bg-center opacity-80 mix-blend-multiply"></div>
+           </div>
+
+           <div className="bg-white border border-slate-200 p-6 rounded-3xl shadow-sm">
+             <h3 className="flex items-center gap-2 font-bold text-slate-800 mb-4"><Sparkles className="w-5 h-5 text-green-600"/> Tips for a Good Report</h3>
+             <ul className="space-y-3">
+               <li className="flex items-center gap-3 text-sm text-slate-600 font-medium"><CheckCircle2 className="w-4 h-4 text-green-500 shrink-0"/> Capture clear photos or videos</li>
+               <li className="flex items-center gap-3 text-sm text-slate-600 font-medium"><CheckCircle2 className="w-4 h-4 text-green-500 shrink-0"/> Ensure GPS is enabled</li>
+               <li className="flex items-center gap-3 text-sm text-slate-600 font-medium"><CheckCircle2 className="w-4 h-4 text-green-500 shrink-0"/> Provide accurate location</li>
+               <li className="flex items-center gap-3 text-sm text-slate-600 font-medium"><CheckCircle2 className="w-4 h-4 text-green-500 shrink-0"/> Add a detailed description</li>
+             </ul>
+           </div>
+
+           <div className="bg-white border border-slate-200 p-6 rounded-3xl shadow-sm">
+             <h3 className="flex items-center gap-2 font-bold text-slate-800 mb-4"><ShieldCheck className="w-5 h-5 text-green-700"/> We Ensure Trust & Transparency</h3>
+             <ul className="space-y-3">
+               <li className="flex items-center gap-3 text-sm text-slate-600 font-medium"><Zap className="w-4 h-4 text-green-600 shrink-0"/> AI verification to prevent fake reports</li>
+               <li className="flex items-center gap-3 text-sm text-slate-600 font-medium"><Send className="w-4 h-4 text-green-600 shrink-0"/> Auto-routing to the right department</li>
+               <li className="flex items-center gap-3 text-sm text-slate-600 font-medium"><Clock className="w-4 h-4 text-green-600 shrink-0"/> Status updates at every step</li>
+               <li className="flex items-center gap-3 text-sm text-slate-600 font-medium"><CheckCircle2 className="w-4 h-4 text-green-600 shrink-0"/> 100% Transparent process</li>
+             </ul>
+           </div>
+        </div>
 
         {showCapture && (
           <EvidenceCapture
@@ -1012,7 +1092,6 @@ export default function ReportPage() {
             onCancel={() => setShowCapture(false)}
           />
         )}
-
       </main>
     </div>
   );

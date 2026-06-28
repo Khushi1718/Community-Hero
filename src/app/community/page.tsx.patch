@@ -1,0 +1,7 @@
+--- /Users/khushi/Community_Hero/src/app/community/page.tsx
++++ /Users/khushi/Community_Hero/src/app/community/page.tsx
+@@ -5,3 +5,3 @@
+   CheckCircle, Search, ThumbsUp, HeartHandshake, Users, MapPin,
+-  AlertTriangle, CheckCircle2, Clock, Send, X, BarChart2, TrendingUp, Building2, Eye,
++  AlertTriangle, CheckCircle2, Clock, Send, X, BarChart2, TrendingUp, Building2, Eye, Leaf,
+   ChevronLeft, ChevronRight, MoreHorizontal, Bookmark, User, Calendar

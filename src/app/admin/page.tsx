@@ -46,6 +46,7 @@ interface Issue {
   deviceInfo?: string;
   browserInfo?: string;
   evidences?: { url: string; type?: string; category?: string; caption?: string; isPublic?: boolean }[];
+  materialRequests?: any[];
 }
 
 const STATUS_COLORS: Record<string, string> = {
@@ -74,7 +75,7 @@ export default function AdminPage() {
   const { appUser, role, loading, logoutMock } = useAuth();
   const router = useRouter();
 
-  type Tab = "home" | "live" | "resolved" | "materials" | "verify" | "employees" | "volunteer_orgs" | "community_drives" | "analytics" | "leaderboard" | "area_adoptions" | "audit_logs" | "health" | "heatmap";
+  type Tab = "home" | "live" | "resolved" | "materials" | "verify" | "employees" | "volunteer_orgs" | "community_drives" | "certificates" | "analytics" | "leaderboard" | "area_adoptions" | "audit_logs" | "health" | "heatmap";
   const [activeTab, setActiveTab] = useState<Tab>("home");
 
   const [allIssues, setAllIssues] = useState<Issue[]>([]);
@@ -97,20 +98,16 @@ export default function AdminPage() {
   const [drivesSubTab, setDrivesSubTab] = useState<"active" | "requests" | "verification" | "cancellations">("active");
   const [convertingIssue, setConvertingIssue] = useState<Issue | null>(null);
   
+  // Certificates
+  const [certificates, setCertificates] = useState<any[]>([]);
+  
   // Convert Drive Form State
   const [driveTitle, setDriveTitle] = useState("");
   const [driveDescription, setDriveDescription] = useState("");
   const [driveCategory, setDriveCategory] = useState("Cleanliness");
-  const [driveReqVol, setDriveReqVol] = useState(10);
-  
   // Analytics State
   const [analytics, setAnalytics] = useState<any>(null);
   const [leaderboard, setLeaderboard] = useState<any[]>([]);
-  const [driveMaxVol, setDriveMaxVol] = useState(20);
-  const [driveDate, setDriveDate] = useState("");
-  const [driveTime, setDriveTime] = useState("");
-  const [driveDuration, setDriveDuration] = useState(2);
-  const [driveMeetingLoc, setDriveMeetingLoc] = useState("");
   const [driveInstructions, setDriveInstructions] = useState("");
   const [driveReqOrgCat, setDriveReqOrgCat] = useState("Cleanliness");
   const [convertingLoading, setConvertingLoading] = useState(false);
@@ -165,7 +162,7 @@ export default function AdminPage() {
     if (!appUser) return;
     setIsRefreshing(true);
     try {
-      await Promise.all([loadIssues(), loadEmployees(), loadOrgs(), loadDrives(), loadAnalytics(), loadExtraData()]);
+      await Promise.all([loadIssues(), loadEmployees(), loadOrgs(), loadDrives(), loadCertificates(), loadAnalytics(), loadExtraData()]);
     } finally {
       setIsRefreshing(false);
     }
@@ -235,6 +232,11 @@ export default function AdminPage() {
       const drivesData = await res.json();
       setDrives(Array.isArray(drivesData) ? drivesData : []);
     }
+  };
+
+  const loadCertificates = async () => {
+    const res = await fetch("/api/certificates").catch(() => null);
+    if (res && res.ok) setCertificates(await res.json());
   };
 
   const loadAnalytics = async () => {
@@ -597,7 +599,7 @@ export default function AdminPage() {
                   <button 
                     onClick={() => {
                       setConvertingIssue(issue);
-                      setDriveTitle(issue.title || "");
+                      setDriveTitle(issue.aiAnalysis?.category ? issue.aiAnalysis.category + " Drive" : "");
                       setDriveDescription(issue.description || "");
                     }} 
                     disabled={["Work In Progress", "Travelling", "Reached Site", "Inspection Started", "Work Started"].includes(issue.status)}
@@ -665,6 +667,7 @@ export default function AdminPage() {
     { id: "employees", label: "Employees", icon: <UsersRound className="w-5 h-5" />, badge: employees.length },
     { id: "volunteer_orgs", label: "Organizations", icon: <Briefcase className="w-5 h-5" />, badge: orgs.filter((o: any) => o.status === "PENDING_VERIFICATION").length },
     { id: "community_drives", label: "Community Drives", icon: <Activity className="w-5 h-5" />, badge: drives.length },
+    { id: "certificates", label: "Certificates", icon: <Award className="w-5 h-5" /> },
     { id: "area_adoptions", label: "Area Adoptions", icon: <MapPin className="w-5 h-5" /> },
     { id: "analytics", label: "Platform Analytics", icon: <PieChart className="w-5 h-5" /> },
     { id: "heatmap", label: "Issue Heatmap", icon: <MapPin className="w-5 h-5" /> },
@@ -1491,6 +1494,104 @@ export default function AdminPage() {
           })()}
 
           {/* ════ COMMUNITY DRIVES TAB ════ */}
+          {/* ════ CERTIFICATES TAB ════ */}
+          {activeTab === "certificates" && (
+            <div className="space-y-6 animate-fade-in">
+              <div className="flex flex-col sm:flex-row gap-4 items-center justify-between">
+                <h3 className="text-xl font-black text-surface-900">Generated Certificates</h3>
+                <div className="relative w-full sm:w-auto">
+                  <Search className="w-4 h-4 text-surface-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                  <input
+                    type="text"
+                    placeholder="Search certificates..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="w-full sm:w-80 pl-10 pr-4 py-2 bg-white border border-surface-200 rounded-xl text-sm focus:ring-2 focus:ring-primary-500 focus:outline-none"
+                  />
+                </div>
+              </div>
+
+              <div className="bg-white border border-surface-200 rounded-2xl overflow-hidden shadow-sm">
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left text-sm whitespace-nowrap">
+                    <thead className="bg-surface-50 border-b border-surface-200 text-surface-500 font-bold uppercase tracking-wider text-[10px]">
+                      <tr>
+                        <th className="px-6 py-4">Certificate ID</th>
+                        <th className="px-6 py-4">Volunteer</th>
+                        <th className="px-6 py-4">Drive</th>
+                        <th className="px-6 py-4">Issued At</th>
+                        <th className="px-6 py-4">Status</th>
+                        <th className="px-6 py-4 text-right">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-surface-100">
+                      {certificates
+                        .filter(c => !searchQuery || c.volunteerName.toLowerCase().includes(searchQuery.toLowerCase()) || c.certificateId.toLowerCase().includes(searchQuery.toLowerCase()))
+                        .map(cert => (
+                        <tr key={cert.certificateId} className="hover:bg-surface-50/50 transition-colors">
+                          <td className="px-6 py-4 font-mono text-xs font-semibold text-primary-600">{cert.certificateId}</td>
+                          <td className="px-6 py-4">
+                            <p className="font-bold text-surface-900">{cert.volunteerName}</p>
+                            <p className="text-[10px] text-surface-500">{cert.volunteerEmail}</p>
+                          </td>
+                          <td className="px-6 py-4 font-medium text-surface-700 truncate max-w-[200px]">{cert.driveName || "Unknown Drive"}</td>
+                          <td className="px-6 py-4 text-surface-500">{new Date(cert.issuedAt || cert.createdAt).toLocaleDateString()}</td>
+                          <td className="px-6 py-4">
+                            <div className="flex flex-col gap-1">
+                              <span className={\`inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-[10px] font-black uppercase \${cert.status === 'Generated' || cert.status === 'Sent' ? 'bg-success-50 text-success-700 border border-success-100' : cert.status === 'Failed' ? 'bg-error-50 text-error-700 border border-error-100' : 'bg-warning-50 text-warning-700 border border-warning-100'}\`}>
+                                {cert.status === 'Generated' || cert.status === 'Sent' ? <CheckCircle2 className="w-3 h-3"/> : cert.status === 'Failed' ? <AlertTriangle className="w-3 h-3"/> : <Clock className="w-3 h-3"/>}
+                                {cert.status}
+                              </span>
+                              {cert.emailSent && (
+                                <span className="text-[9px] font-medium text-surface-400">Email sent {new Date(cert.emailSentAt).toLocaleDateString()}</span>
+                              )}
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 text-right">
+                            <div className="flex items-center justify-end gap-2">
+                              {cert.certificatePdfUrl && (
+                                <>
+                                  <a href={cert.certificatePdfUrl} download className="p-2 text-surface-400 hover:text-primary-600 hover:bg-primary-50 rounded-lg transition-colors" title="Download PDF"><Download className="w-4 h-4"/></a>
+                                  <a href={cert.certificateImageUrl} download className="p-2 text-surface-400 hover:text-info-600 hover:bg-info-50 rounded-lg transition-colors" title="Download Image"><Eye className="w-4 h-4"/></a>
+                                </>
+                              )}
+                              <button 
+                                onClick={async () => {
+                                  if(!confirm('Resend email to ' + cert.volunteerEmail + '?')) return;
+                                  try {
+                                    await fetch('/api/certificates', {
+                                      method: 'POST',
+                                      headers: {'Content-Type': 'application/json'},
+                                      body: JSON.stringify({ action: 'resend_email', certificateId: cert._id })
+                                    });
+                                    alert('Email resend triggered successfully.');
+                                    loadCertificates();
+                                  } catch (e) {
+                                    alert('Failed to resend email.');
+                                  }
+                                }}
+                                className="p-2 text-surface-400 hover:text-warning-600 hover:bg-warning-50 rounded-lg transition-colors" title="Resend Email"
+                              >
+                                <Send className="w-4 h-4"/>
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                      {certificates.length === 0 && (
+                        <tr>
+                          <td colSpan={6} className="px-6 py-12 text-center text-surface-500 font-medium">
+                            No certificates generated yet. Complete a drive to trigger generation.
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          )}
+
           {activeTab === "community_drives" && (
             <div className="space-y-6">
                <div className="flex items-center justify-between mb-4">
@@ -1797,14 +1898,8 @@ export default function AdminPage() {
                      title: driveTitle,
                      description: driveDescription,
                      category: driveCategory,
-                     date: driveDate,
-                     time: driveTime,
-                     durationHours: driveDuration,
-                     requiredVolunteers: driveReqVol,
-                     maxVolunteers: driveMaxVol,
-                     meetingLocation: driveMeetingLoc,
-                     instructions: driveInstructions,
-                     requiredOrgCategory: driveReqOrgCat
+                     requiredOrgCategory: driveReqOrgCat,
+                     instructions: driveInstructions
                    })
                  });
                  if (res.ok) {
@@ -1849,32 +1944,6 @@ export default function AdminPage() {
                    <select required value={driveReqOrgCat} onChange={e=>setDriveReqOrgCat(e.target.value)} className="w-full border p-2.5 rounded-xl text-sm">
                      <option>Cleanliness</option><option>Tree Plantation</option><option>Park Cleaning</option><option>Awareness Campaign</option>
                    </select>
-                 </div>
-                 <div>
-                   <label className="block text-xs font-bold text-surface-600 mb-1">Date</label>
-                   <input type="date" required value={driveDate} onChange={e=>setDriveDate(e.target.value)} className="w-full border p-2.5 rounded-xl text-sm" />
-                 </div>
-                 <div className="grid grid-cols-2 gap-2">
-                   <div>
-                     <label className="block text-xs font-bold text-surface-600 mb-1">Time</label>
-                     <input type="time" required value={driveTime} onChange={e=>setDriveTime(e.target.value)} className="w-full border p-2.5 rounded-xl text-sm" />
-                   </div>
-                   <div>
-                     <label className="block text-xs font-bold text-surface-600 mb-1">Duration (Hrs)</label>
-                     <input type="number" required min="1" value={driveDuration} onChange={e=>setDriveDuration(Number(e.target.value))} className="w-full border p-2.5 rounded-xl text-sm" />
-                   </div>
-                 </div>
-                 <div>
-                   <label className="block text-xs font-bold text-surface-600 mb-1">Required Volunteers</label>
-                   <input type="number" required min="1" value={driveReqVol} onChange={e=>setDriveReqVol(Number(e.target.value))} className="w-full border p-2.5 rounded-xl text-sm" />
-                 </div>
-                 <div>
-                   <label className="block text-xs font-bold text-surface-600 mb-1">Max Volunteers (Cap)</label>
-                   <input type="number" required min="1" value={driveMaxVol} onChange={e=>setDriveMaxVol(Number(e.target.value))} className="w-full border p-2.5 rounded-xl text-sm" />
-                 </div>
-                 <div className="col-span-2">
-                   <label className="block text-xs font-bold text-surface-600 mb-1">Meeting Location</label>
-                   <input required value={driveMeetingLoc} onChange={e=>setDriveMeetingLoc(e.target.value)} className="w-full border p-2.5 rounded-xl text-sm" placeholder="Exact spot to meet" />
                  </div>
                  <div className="col-span-2">
                    <label className="block text-xs font-bold text-surface-600 mb-1">Instructions for Organization</label>

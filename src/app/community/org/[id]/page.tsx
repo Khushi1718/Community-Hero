@@ -57,7 +57,7 @@ export default function OrgDetailsPage() {
       if (res.ok) {
          alert("Membership request submitted successfully!");
          setShowJoinModal(false);
-         router.push("/my-volunteering");
+         router.push("/profile");
       } else {
          const err = await res.json();
          alert(err.error || "Failed to join.");

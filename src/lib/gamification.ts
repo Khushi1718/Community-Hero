@@ -46,7 +46,7 @@ export async function processDriveGamification(drive: IVolunteerDrive) {
     // Generate AI message for all certificates in this drive
     let geminiMessage = "Thank you for your valuable contribution to the community.";
     try {
-      const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+      const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
       const prompt = `Generate a very short, 1-2 sentence appreciation message for volunteers who participated in a community drive. 
       The drive was categorized as ${drive.category}. Work performed: ${drive.workPerformed || 'general community service'}.
       Keep it professional, inspiring, and very concise.`;

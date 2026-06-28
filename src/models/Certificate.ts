@@ -1,25 +1,21 @@
 import mongoose, { Schema, Document } from "mongoose";
 
-export type CertificateType = "VOLUNTEER" | "ORG_EXCELLENCE";
-
 export interface ICertificate extends Document {
-  certificateId: string; // Unique, short readable ID like "CERT-12345"
-  type: CertificateType;
-  issuedToId: string; // User email or Org ID
-  issuedToType: "citizen" | "organization";
-  issuedToName: string;
-  driveId?: string;
+  certificateId: string;
+  volunteerEmail: string;
+  volunteerName: string;
+  driveId: mongoose.Types.ObjectId;
   driveName?: string;
-  issueId?: string;
-  orgId?: string;
+  orgId?: mongoose.Types.ObjectId;
   orgName?: string;
-  locationCity?: string;
-  hours?: number;
-  geminiMessage?: string;
-  qrCodeData: string; // Full URL or data to verify
-  verificationUrl: string;
-  isRevoked: boolean;
   issuedAt: Date;
+  certificatePdfUrl?: string;
+  certificateImageUrl?: string;
+  verificationToken: string;
+  status: "Pending" | "Generating" | "Generated" | "Sending" | "Sent" | "Failed" | "Retrying";
+  errorLog?: string;
+  emailSent: boolean;
+  emailSentAt?: Date;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -27,34 +23,32 @@ export interface ICertificate extends Document {
 const CertificateSchema = new Schema<ICertificate>(
   {
     certificateId: { type: String, required: true, unique: true },
-    type: { type: String, enum: ["VOLUNTEER", "ORG_EXCELLENCE"], required: true },
-    issuedToId: { type: String, required: true },
-    issuedToType: { type: String, enum: ["citizen", "organization"], required: true },
-    issuedToName: { type: String, required: true },
-    driveId: { type: String },
+    volunteerEmail: { type: String, required: true },
+    volunteerName: { type: String, required: true },
+    driveId: { type: Schema.Types.ObjectId, ref: "VolunteerDrive", required: true },
     driveName: { type: String },
-    issueId: { type: String },
-    orgId: { type: String },
+    orgId: { type: Schema.Types.ObjectId, ref: "VolunteerOrganization" },
     orgName: { type: String },
-    locationCity: { type: String },
-    hours: { type: Number },
-    geminiMessage: { type: String },
-    qrCodeData: { type: String, required: true },
-    verificationUrl: { type: String, required: true },
-    isRevoked: { type: Boolean, default: false },
     issuedAt: { type: Date, default: Date.now },
+    certificatePdfUrl: { type: String },
+    certificateImageUrl: { type: String },
+    verificationToken: { type: String, required: true, unique: true },
+    status: {
+      type: String,
+      enum: ["Pending", "Generating", "Generated", "Sending", "Sent", "Failed", "Retrying"],
+      default: "Pending",
+    },
+    errorLog: { type: String },
+    emailSent: { type: Boolean, default: false },
+    emailSentAt: { type: Date },
   },
   { timestamps: true }
 );
 
-CertificateSchema.index({ issuedToId: 1, type: 1 });
-CertificateSchema.index({ certificateId: 1 });
+// Indexes for faster lookups on Dashboard
+CertificateSchema.index({ driveId: 1 });
+CertificateSchema.index({ volunteerEmail: 1 });
+CertificateSchema.index({ verificationToken: 1 });
 
-if (mongoose.models.Certificate) {
-  delete mongoose.models.Certificate;
-}
+export const Certificate = mongoose.models.Certificate || mongoose.model<ICertificate>("Certificate", CertificateSchema);
 
-export const Certificate = mongoose.model<ICertificate>(
-  "Certificate",
-  CertificateSchema
-);

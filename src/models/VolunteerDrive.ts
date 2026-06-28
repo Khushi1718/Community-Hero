@@ -100,6 +100,14 @@ export interface IVolunteerDrive extends Document {
   volunteers?: IVolunteer[];
   driveTimeline?: IDriveTimeline[];
   isAttendanceLocked?: boolean;
+  
+  // Partner Requests (Prompt 5)
+  partnerRequests?: {
+    orgId: string;
+    orgName: string;
+    status: "pending" | "approved" | "rejected";
+    requestedAt: Date;
+  }[];
 
   // Status
   status: DriveStatus;
@@ -166,11 +174,11 @@ const VolunteerDriveSchema = new Schema<IVolunteerDrive>(
     state: { type: String, required: true },
     address: { type: String, required: true },
 
-    date: { type: Date, required: true },
-    time: { type: String, required: true },
+    date: { type: Date },
+    time: { type: String },
     durationHours: { type: Number },
 
-    requiredVolunteers: { type: Number, required: true, min: 1 },
+    requiredVolunteers: { type: Number, min: 1 },
     maxVolunteers: { type: Number },
     joinedVolunteers: { type: Number, default: 0 },
     instructions: { type: String },
@@ -220,6 +228,13 @@ const VolunteerDriveSchema = new Schema<IVolunteerDrive>(
       note: { type: String },
       imageUrl: { type: String },
       postedAt: { type: Date, default: Date.now }
+    }],
+
+    partnerRequests: [{
+      orgId: { type: String },
+      orgName: { type: String },
+      status: { type: String, enum: ["pending", "approved", "rejected"], default: "pending" },
+      requestedAt: { type: Date, default: Date.now }
     }],
 
     isAttendanceLocked: { type: Boolean, default: false },

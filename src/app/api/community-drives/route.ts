@@ -122,7 +122,9 @@ export async function GET(request: NextRequest) {
        // if orgId is provided, we might want drives they own OR drives they accepted
        query.$or = [
          { orgId: orgId }, 
-         { acceptedOrgId: orgId }
+         { acceptedOrgId: orgId },
+         { supportingOrgs: orgId },
+         { "partnerRequests.orgId": orgId }
        ];
     }
     if (issueId) query.issueId = issueId;
@@ -143,6 +145,55 @@ export async function POST(request: NextRequest) {
     await connectToDatabase();
     const body = await request.json();
 
+    if (body.isIndependentOrgDrive) {
+        // Independent Organization Drive
+        if (!body.orgId) return NextResponse.json({ error: "orgId is required for independent drives" }, { status: 400 });
+        
+        const org = await VolunteerOrganization.findById(body.orgId);
+        if (!org) return NextResponse.json({ error: "Organization not found" }, { status: 404 });
+
+        const drive = await VolunteerDrive.create({
+            title: body.title,
+            description: body.description,
+            category: body.category,
+            city: body.city || org.city,
+            state: body.state || org.state,
+            address: body.address || org.address,
+            date: new Date(body.date),
+            time: body.time,
+            durationHours: body.durationHours,
+            requiredVolunteers: body.requiredVolunteers,
+            maxVolunteers: body.maxVolunteers,
+            instructions: body.instructions,
+            meetingLocation: body.meetingLocation,
+            status: "VOLUNTEER_REG_OPEN", // Instantly open for volunteers
+            acceptedOrgId: org._id,
+            acceptedOrgName: org.name,
+            orgApprovedAt: new Date(),
+        });
+
+        const CommunityPost = require('@/models/CommunityPost').CommunityPost;
+        await CommunityPost.create({
+             postType: "Self_Initiated",
+             driveId: drive._id,
+             orgId: org._id,
+             orgName: org.name,
+             orgLogoUrl: org.logoUrl,
+             title: `Upcoming Volunteer Drive: ${drive.title}`,
+             category: drive.category,
+             location: {
+                 address: drive.meetingLocation || drive.address || "TBD",
+                 city: drive.city || org.city,
+                 state: drive.state || org.state
+             },
+             resolutionSummary: `${drive.description}\n\nJoin ${org.name} on ${new Date(drive.date).toLocaleDateString()} at ${drive.time}. We need ${drive.requiredVolunteers} volunteers to help!`,
+             resolvedAt: new Date()
+        });
+
+        return NextResponse.json(drive, { status: 201 });
+    }
+
+    // Admin-initiated Issue-Based Drive
     if (!body.issueId || !body.createdByAdmin) {
        return NextResponse.json({ error: "issueId and createdByAdmin are required" }, { status: 400 });
     }
@@ -166,11 +217,11 @@ export async function POST(request: NextRequest) {
       city: issue.location.city,
       state: issue.location.state,
       address: issue.location.address,
-      date: new Date(body.date),
-      time: body.time,
-      durationHours: body.durationHours,
-      requiredVolunteers: body.requiredVolunteers,
-      maxVolunteers: body.maxVolunteers,
+      ...(body.date && { date: new Date(body.date) }),
+      ...(body.time && { time: body.time }),
+      ...(body.durationHours && { durationHours: body.durationHours }),
+      ...(body.requiredVolunteers && { requiredVolunteers: body.requiredVolunteers }),
+      ...(body.maxVolunteers && { maxVolunteers: body.maxVolunteers }),
       instructions: body.instructions,
       meetingLocation: body.meetingLocation,
       requiredOrgCategory: body.requiredOrgCategory,

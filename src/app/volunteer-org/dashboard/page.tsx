@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState, useCallback } from "react";
 import {
   LayoutDashboard, Compass, Calendar, Users, ClipboardList,
-  MessageSquare, Trophy, UserCircle, Bell, Settings, LogOut,
+  MessageSquare, Trophy, UserCircle, Bell, Settings, LogOut, FileText,
   TrendingUp, Star, MapPin, Clock, ChevronRight, Search,
   Filter, CheckCircle2, AlertCircle, Building2, Menu, X,
   Shield, Activity, Zap, Heart, RefreshCw, Eye, Edit3,
@@ -101,8 +101,7 @@ const ALL_CATEGORIES = [
   "River Cleaning", "Public Health", "Waste Segregation", "Other"
 ];
 
-type Tab = "dashboard" | "drives" | "my-drives" | "volunteers" | "attendance" |
-  "community" | "achievements" | "profile" | "notifications" | "settings" | "members" | "join-requests" | "announcements" | "analytics" | "certificates" | "leaderboard" | "adopt-area";
+type Tab = "dashboard" | "drives" | "members" | "certificates" | "profile" | "notifications" | "settings";
 
 // ── Main Component ──────────────────────────────────────────────────────
 export default function VolunteerOrgDashboard() {
@@ -123,6 +122,7 @@ export default function VolunteerOrgDashboard() {
   const [selectedDrive, setSelectedDrive] = useState<Drive | null>(null);
   const [actionLoading, setActionLoading] = useState(false);
   const [showCompletionModal, setShowCompletionModal] = useState(false);
+  const [isEditCapacityModalOpen, setIsEditCapacityModalOpen] = useState(false);
   const [completionData, setCompletionData] = useState({
     workPerformed: "",
     hoursWorked: 0,
@@ -140,6 +140,11 @@ export default function VolunteerOrgDashboard() {
   const [driveCategoryFilter, setDriveCategoryFilter] = useState("All");
   const [driveStatusFilter, setDriveStatusFilter] = useState("All");
 
+  // Partner Flow
+  const [isAddPartnerModalOpen, setIsAddPartnerModalOpen] = useState(false);
+  const [availablePartners, setAvailablePartners] = useState<OrgProfile[]>([]);
+  const [fetchingPartners, setFetchingPartners] = useState(false);
+
   // Profile edit
   const [editMode, setEditMode] = useState(false);
   const [editForm, setEditForm] = useState<Partial<OrgProfile>>({});
@@ -148,6 +153,155 @@ export default function VolunteerOrgDashboard() {
   // Settings
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+
+  // Create Independent Drive
+  const [isCreateDriveModalOpen, setIsCreateDriveModalOpen] = useState(false);
+  const [driveTitle, setDriveTitle] = useState("");
+  const [driveDescription, setDriveDescription] = useState("");
+  const [driveCategory, setDriveCategory] = useState("Cleanliness");
+  const [driveDate, setDriveDate] = useState("");
+  const [driveTime, setDriveTime] = useState("");
+  const [driveDuration, setDriveDuration] = useState<number>(2);
+  const [driveReqVol, setDriveReqVol] = useState<number>(10);
+  const [driveMaxVol, setDriveMaxVol] = useState<number>(20);
+  const [driveMeetingLoc, setDriveMeetingLoc] = useState("");
+  const [driveInstructions, setDriveInstructions] = useState("");
+  const [driveCreating, setDriveCreating] = useState(false);
+
+  const handleCreateIndependentDrive = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!org) return;
+    setDriveCreating(true);
+    try {
+      const res = await fetch("/api/community-drives", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          isIndependentOrgDrive: true,
+          orgId: org._id,
+          title: driveTitle,
+          description: driveDescription,
+          category: driveCategory,
+          date: driveDate,
+          time: driveTime,
+          durationHours: driveDuration,
+          requiredVolunteers: driveReqVol,
+          maxVolunteers: driveMaxVol,
+          meetingLocation: driveMeetingLoc,
+          instructions: driveInstructions,
+        })
+      });
+      if (res.ok) {
+        setIsCreateDriveModalOpen(false);
+        setDriveTitle(""); setDriveDescription(""); setDriveMeetingLoc(""); setDriveInstructions("");
+        loadData(); // refresh drives
+      } else {
+        const err = await res.json();
+        alert(err.error || "Failed to create drive");
+      }
+    } catch (e) {
+      console.error(e);
+      alert("Error creating drive");
+    } finally {
+      setDriveCreating(false);
+    }
+  };
+
+  const [isScheduleDriveModalOpen, setIsScheduleDriveModalOpen] = useState(false);
+  const [scheduleLoading, setScheduleLoading] = useState(false);
+
+  const handleScheduleDrive = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedDrive) return;
+    setScheduleLoading(true);
+    try {
+      const res = await fetch(`/api/community-drives/${selectedDrive._id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "schedule_drive",
+          date: driveDate,
+          time: driveTime,
+          durationHours: driveDuration,
+          requiredVolunteers: driveReqVol,
+          maxVolunteers: driveMaxVol,
+          meetingLocation: driveMeetingLoc,
+        })
+      });
+      if (res.ok) {
+        setIsScheduleDriveModalOpen(false);
+        handleRefresh();
+        setSelectedDrive(null);
+      } else {
+        const err = await res.json();
+        alert(err.error || "Failed to schedule drive");
+      }
+    } catch (e) {
+      alert("Error scheduling drive");
+    } finally {
+      setScheduleLoading(false);
+    }
+  };
+
+  const [isEditDriveModalOpen, setIsEditDriveModalOpen] = useState(false);
+  const [editDriveLoading, setEditDriveLoading] = useState(false);
+
+  const handleEditDrive = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedDrive) return;
+    setEditDriveLoading(true);
+    try {
+      const res = await fetch(`/api/community-drives/${selectedDrive._id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "edit_drive",
+          title: driveTitle,
+          description: driveDescription,
+          date: driveDate,
+          time: driveTime,
+          durationHours: driveDuration,
+          meetingLocation: driveMeetingLoc,
+          instructions: driveInstructions
+        })
+      });
+      if (res.ok) {
+        setIsEditDriveModalOpen(false);
+        handleRefresh();
+        setSelectedDrive(null);
+      } else {
+        const err = await res.json();
+        alert(err.error || "Failed to edit drive");
+      }
+    } catch (e) {
+      alert("Error editing drive");
+    } finally {
+      setEditDriveLoading(false);
+    }
+  };
+
+  const openPartnerModal = async () => {
+     if (!org?.state) return alert("Organization state missing.");
+     setIsAddPartnerModalOpen(true);
+     setFetchingPartners(true);
+     try {
+        const res = await fetch(`/api/volunteer-org?state=${org.state}&status=VERIFIED`);
+        if (res.ok) {
+           const data = await res.json();
+           const others = data.filter((o: any) => o._id !== org._id);
+           setAvailablePartners(others);
+        } else {
+           const e = await res.json();
+           alert("Failed to fetch partners: " + (e.error || "Unknown error"));
+        }
+     } catch(e: any) {
+        alert("Network error: " + e.message);
+        console.error(e);
+     } finally {
+        setFetchingPartners(false);
+     }
+  };
+
   const [pwMsg, setPwMsg] = useState("");
 
   // ── Auth Guard ────────────────────────────────────────────────────────
@@ -405,18 +559,8 @@ export default function VolunteerOrgDashboard() {
   // ── Sidebar Nav ────────────────────────────────────────────────────────
   const navItems: { id: Tab; label: string; icon: React.ReactNode; badge?: number }[] = [
     { id: "dashboard", label: "Dashboard", icon: <LayoutDashboard className="w-4 h-4" /> },
-    { id: "drives", label: "Available Drives", icon: <Compass className="w-4 h-4" /> },
-    { id: "my-drives", label: "My Drives", icon: <Calendar className="w-4 h-4" /> },
-    { id: "adopt-area", label: "Adopt an Area", icon: <MapPin className="w-4 h-4" /> },
-    { id: "volunteers", label: "Drive Requests", icon: <Users className="w-4 h-4" /> },
-    { id: "join-requests", label: "Membership Requests", icon: <Shield className="w-4 h-4" /> },
-    { id: "members", label: "Member Directory", icon: <UserCircle className="w-4 h-4" /> },
-    { id: "announcements", label: "Announcements", icon: <MessageSquare className="w-4 h-4" /> },
-    { id: "attendance", label: "Attendance", icon: <ClipboardList className="w-4 h-4" /> },
-    { id: "community", label: "Community Posts", icon: <MessageSquare className="w-4 h-4" /> },
-    { id: "analytics", label: "Analytics", icon: <Activity className="w-4 h-4" /> },
-    { id: "leaderboard", label: "Leaderboard", icon: <Trophy className="w-4 h-4" /> },
-    { id: "achievements", label: "Achievements", icon: <Award className="w-4 h-4" /> },
+    { id: "drives", label: "Drives", icon: <Compass className="w-4 h-4" /> },
+    { id: "members", label: "Members", icon: <Users className="w-4 h-4" /> },
     { id: "certificates", label: "Certificates", icon: <CheckCircle2 className="w-4 h-4" /> },
     { id: "profile", label: "Profile", icon: <Settings className="w-4 h-4" /> },
     { id: "notifications", label: "Notifications", icon: <Bell className="w-4 h-4" />, badge: unreadCount },
@@ -659,502 +803,140 @@ export default function VolunteerOrgDashboard() {
             </div>
           )}
 
-          {/* ── AVAILABLE DRIVES ─────────────────────────────────────── */}
+          {/* ── DRIVES ─────────────────────────────────────── */}
           {activeTab === "drives" && (
-            <div className="space-y-5 animate-fade-in">
-              <div className="flex flex-col sm:flex-row gap-3">
-                <div className="relative flex-1">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                  <input
-                    type="text"
-                    placeholder="Search drives..."
-                    value={driveSearch}
-                    onChange={e => setDriveSearch(e.target.value)}
-                    className="w-full pl-9 pr-4 py-2.5 border border-slate-200 rounded-xl text-sm text-slate-900 bg-white focus:ring-2 focus:ring-emerald-500 focus:outline-none"
-                  />
-                </div>
-                <select
-                  value={driveCategoryFilter}
-                  onChange={e => setDriveCategoryFilter(e.target.value)}
-                  className="border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-900 bg-white focus:ring-2 focus:ring-emerald-500 focus:outline-none"
-                >
-                  <option value="All">All Categories</option>
-                  {ALL_CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
-                </select>
-                <select
-                  value={driveStatusFilter}
-                  onChange={e => setDriveStatusFilter(e.target.value)}
-                  className="border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-900 bg-white focus:ring-2 focus:ring-emerald-500 focus:outline-none"
-                >
-                  <option value="All">All Status</option>
-                  <option value="WAITING_FOR_ORG">Waiting for Organization</option>
-                  <option value="ORG_PENDING_APPROVAL">Pending Admin Approval</option>
-                </select>
-              </div>
-
-              {filteredDrives.length === 0 ? (
-                <div className="text-center py-20 bg-white rounded-2xl border border-slate-200">
-                  <Compass className="w-12 h-12 text-slate-200 mx-auto mb-4" />
-                  <h3 className="font-bold text-slate-700 mb-2">No Drives Available</h3>
-                  <p className="text-slate-400 text-sm">Available community drives in {org?.city} will appear here once posted by admins.</p>
-                </div>
-              ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {filteredDrives.map(drive => (
-                    <DriveCard 
-                       key={drive._id} 
-                       drive={drive} 
-                       onClick={() => setSelectedDrive(drive)}
-                    />
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* ── MY DRIVES ────────────────────────────────────────────── */}
-          {activeTab === "my-drives" && (
-            <div className="animate-fade-in">
-              {myDrives.length === 0 ? (
-                <EmptyState icon={<Calendar className="w-12 h-12" />} title="No Drives Yet" message="Your organization's drives will appear here after they are created and assigned." />
-              ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {myDrives.map(drive => (
-                     <DriveCard 
-                        key={drive._id} 
-                        drive={drive} 
-                        showOrg={false} 
-                        onClick={() => setSelectedDrive(drive)} 
-                     />
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* ── VOLUNTEERS ─────────────────────────────────────────── */}
-          {activeTab === "volunteers" && (
-            <div className="animate-fade-in">
-              <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
-                <div className="p-5 border-b border-slate-100 flex items-center justify-between">
-                  <div>
-                    <h2 className="font-bold text-slate-900">Volunteer Management</h2>
-                    <p className="text-xs text-slate-400 mt-0.5">Citizens who join your drives will appear here</p>
-                  </div>
-                  <span className="bg-blue-50 text-blue-600 text-xs font-bold px-3 py-1.5 rounded-full">Coming in Prompt 2</span>
-                </div>
-                <div className="overflow-x-auto">
-                  <table className="w-full text-sm">
-                    <thead className="bg-slate-50 border-b border-slate-200">
-                      <tr>
-                        {["Volunteer Name", "Phone", "Email", "Drive", "Attendance", "Certificate", "Hours"].map(h => (
-                          <th key={h} className="px-4 py-3 text-left text-xs font-bold text-slate-500 uppercase tracking-wide">{h}</th>
-                        ))}
-                      </tr>
-                    </thead>
-                    <tbody>
-                      <tr>
-                        <td colSpan={7} className="text-center py-16 text-slate-400">
-                          <Users className="w-10 h-10 mx-auto mb-3 text-slate-200" />
-                          <p className="font-medium">No volunteers yet</p>
-                          <p className="text-xs mt-1">Volunteers joining your drives will be listed here</p>
-                        </td>
-                      </tr>
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* ── ATTENDANCE ─────────────────────────────────────────── */}
-          {activeTab === "attendance" && (
-            <EmptyState
-              icon={<ClipboardList className="w-12 h-12" />}
-              title="Attendance Tracking"
-              message="Drive attendance records will appear here. This feature activates when volunteers join your drives (Prompt 2)."
-              badge="Coming in Prompt 2"
-            />
-          )}
-
-          {/* ── COMMUNITY POSTS ────────────────────────────────────── */}
-          {activeTab === "community" && (
-            <EmptyState
-              icon={<MessageSquare className="w-12 h-12" />}
-              title="Community Posts"
-              message="After completing drives, community posts showcasing your impact will automatically appear here. Keep doing great work!"
-              badge="Posts appear after drive completion"
-            />
-          )}
-
-          {/* ── ACHIEVEMENTS ────────────────────────────────────────── */}
-          {activeTab === "achievements" && (
             <div className="space-y-6 animate-fade-in">
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-                {[
-                  { label: "Completed Drives", value: completedDrives.length, icon: <CheckCircle2 className="w-6 h-6 text-emerald-600" />, color: "border-emerald-200 bg-emerald-50" },
-                  { label: "Total Volunteers", value: 0, icon: <Users className="w-6 h-6 text-blue-600" />, color: "border-blue-200 bg-blue-50" },
-                  { label: "Hours Contributed", value: 0, icon: <Clock className="w-6 h-6 text-amber-600" />, color: "border-amber-200 bg-amber-50" },
-                  { label: "Waste Collected (kg)", value: 0, icon: <Trash2 className="w-6 h-6 text-slate-600" />, color: "border-slate-200 bg-slate-50" },
-                  { label: "Trees Planted", value: 0, icon: <Leaf className="w-6 h-6 text-teal-600" />, color: "border-teal-200 bg-teal-50" },
-                  { label: "Community Rating", value: "—", icon: <Heart className="w-6 h-6 text-rose-600" />, color: "border-rose-200 bg-rose-50" },
-                  { label: "Trust Score", value: `${org?.trustScore ?? 50}/100`, icon: <Star className="w-6 h-6 text-amber-500" />, color: "border-amber-200 bg-amber-50" },
-                  { label: "Active Members", value: org?.activeMembers ?? 0, icon: <Award className="w-6 h-6 text-purple-600" />, color: "border-purple-200 bg-purple-50" },
-                ].map((item, i) => (
-                  <div key={i} className={`${item.color} border rounded-2xl p-5 text-center`}>
-                    <div className="flex justify-center mb-3">{item.icon}</div>
-                    <p className="text-2xl font-bold text-slate-900">{item.value}</p>
-                    <p className="text-xs text-slate-500 mt-1">{item.label}</p>
-                  </div>
-                ))}
+              <div className="flex justify-between items-center">
+                 <h2 className="text-2xl font-black text-slate-900">Manage Drives</h2>
+                 <button onClick={() => setIsCreateDriveModalOpen(true)} className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2.5 px-5 rounded-xl flex items-center gap-2 transition-colors shadow-sm">
+                   <Plus className="w-4 h-4" /> Create Independent Drive
+                 </button>
               </div>
 
-              {/* Trust score breakdown */}
-              <div className="bg-white rounded-2xl border border-slate-200 p-6">
-                <h3 className="font-bold text-slate-900 mb-4 flex items-center gap-2">
-                  <Star className="w-5 h-5 text-amber-500" /> Trust Score Breakdown
-                </h3>
-                <div className="flex items-center gap-4 mb-4">
-                  <div className="text-4xl font-bold text-slate-900">{org?.trustScore ?? 50}</div>
-                  <div className="flex-1">
-                    <div className="flex justify-between text-xs mb-1">
-                      <span className="text-slate-500">Current Score</span>
-                      <span className="text-slate-700 font-semibold">{org?.trustScore ?? 50}/100</span>
+              <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
+                 {/* Drive Requests (from Admin) */}
+                 <div>
+                    <h3 className="font-bold text-slate-900 mb-4 flex items-center gap-2">
+                       <Shield className="w-5 h-5 text-amber-500" /> Drive Requests (from Admin)
+                    </h3>
+                    {filteredDrives.length === 0 ? (
+                       <div className="bg-white border border-slate-200 rounded-2xl p-8 text-center">
+                          <Compass className="w-10 h-10 text-slate-200 mx-auto mb-3" />
+                          <p className="text-slate-500 text-sm font-medium">No available drive requests.</p>
+                       </div>
+                    ) : (
+                       <div className="space-y-4">
+                          {filteredDrives.map(drive => (
+                             <DriveCard key={drive._id} drive={drive} onClick={() => setSelectedDrive(drive)} />
+                          ))}
+                       </div>
+                    )}
+                 </div>
+
+                 {/* My Independent Drives & Partnerships */}
+                 <div className="space-y-8">
+                    {/* Partner Invitations */}
+                    {myDrives.some(d => d.partnerRequests?.some((pr: any) => pr.orgId === org?._id && pr.status === "pending")) && (
+                       <div>
+                          <h3 className="font-bold text-slate-900 mb-4 flex items-center gap-2">
+                             <Shield className="w-5 h-5 text-indigo-500" /> Partnership Invitations
+                          </h3>
+                          <div className="space-y-4">
+                             {myDrives.filter(d => d.partnerRequests?.some((pr: any) => pr.orgId === org?._id && pr.status === "pending")).map(drive => (
+                                <DriveCard key={drive._id} drive={drive} showOrg={false} onClick={() => setSelectedDrive(drive)} />
+                             ))}
+                          </div>
+                       </div>
+                    )}
+
+                    {/* My Drives */}
+                    <div>
+                       <h3 className="font-bold text-slate-900 mb-4 flex items-center gap-2">
+                          <Calendar className="w-5 h-5 text-emerald-500" /> My Drives & Supported Drives
+                       </h3>
+                       {myDrives.filter(d => !d.partnerRequests?.some((pr: any) => pr.orgId === org?._id && pr.status === "pending")).length === 0 ? (
+                          <div className="bg-white border border-slate-200 rounded-2xl p-8 text-center">
+                             <Calendar className="w-10 h-10 text-slate-200 mx-auto mb-3" />
+                             <p className="text-slate-500 text-sm font-medium">No active drives found.</p>
+                          </div>
+                       ) : (
+                          <div className="space-y-4">
+                             {myDrives.filter(d => !d.partnerRequests?.some((pr: any) => pr.orgId === org?._id && pr.status === "pending")).map(drive => (
+                                <DriveCard key={drive._id} drive={drive} showOrg={false} onClick={() => setSelectedDrive(drive)} />
+                             ))}
+                          </div>
+                       )}
                     </div>
-                    <div className="w-full bg-slate-100 rounded-full h-3">
-                      <div
-                        className="bg-gradient-to-r from-emerald-500 to-teal-500 h-3 rounded-full transition-all"
-                        style={{ width: `${org?.trustScore ?? 50}%` }}
-                      />
-                    </div>
-                  </div>
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
-                  <div className="bg-emerald-50 rounded-xl p-3">
-                    <p className="font-bold text-emerald-700 mb-1">📈 Increases when:</p>
-                    <ul className="space-y-0.5 text-emerald-600">
-                      <li>• Drives completed successfully</li>
-                      <li>• High volunteer attendance</li>
-                      <li>• Positive admin reviews</li>
-                      <li>• On-time completion</li>
-                    </ul>
-                  </div>
-                  <div className="bg-red-50 rounded-xl p-3">
-                    <p className="font-bold text-red-700 mb-1">📉 Decreases when:</p>
-                    <ul className="space-y-0.5 text-red-600">
-                      <li>• Drives are cancelled</li>
-                      <li>• Fake reports submitted</li>
-                      <li>• Missed deadlines</li>
-                      <li>• Incomplete work</li>
-                    </ul>
-                  </div>
-                </div>
+                 </div>
               </div>
             </div>
           )}
 
-          {/* ── MEMBERSHIP REQUESTS ────────────────────────────────────────── */}
-          {activeTab === "join-requests" && (
-             <div className="space-y-6 animate-fade-in">
-                <div className="bg-white rounded-2xl border border-slate-200 p-6">
-                   <h2 className="text-xl font-bold text-slate-900 mb-6 flex items-center gap-2">
-                      <Shield className="w-5 h-5 text-emerald-600"/> Membership Requests
-                   </h2>
-                   
-                   {(!org?.members || org.members.filter((m:any) => m.status === "pending").length === 0) ? (
-                      <div className="text-center py-12 bg-slate-50 rounded-2xl border border-slate-100">
-                         <Shield className="w-10 h-10 text-slate-300 mx-auto mb-3" />
-                         <p className="text-slate-500 font-medium">No pending membership requests.</p>
-                      </div>
-                   ) : (
-                      <div className="space-y-4">
-                         {org.members.filter((m:any) => m.status === "pending").map((member: any, idx: number) => (
-                            <div key={idx} className="bg-white border border-slate-200 rounded-2xl p-5 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 shadow-sm hover:shadow-md transition-shadow">
-                               <div className="flex-1">
-                                  <div className="flex items-center gap-2 mb-1">
-                                     <h3 className="font-bold text-slate-900 text-lg">{member.name}</h3>
-                                     <span className="text-[10px] bg-slate-100 text-slate-500 px-2 py-0.5 rounded font-bold">{member.age} yrs</span>
-                                  </div>
-                                  <p className="text-xs font-bold text-slate-500 mb-3">{member.email} • {member.phone}</p>
-                                  
-                                  <div className="bg-slate-50 rounded-xl p-3 mb-3 border border-slate-100 text-sm space-y-2">
-                                     <div><span className="font-bold text-slate-700">Skills:</span> {member.skills}</div>
-                                     <div><span className="font-bold text-slate-700">Availability:</span> {member.availability}</div>
-                                     <div><span className="font-bold text-slate-700">Motivation:</span> {member.motivation}</div>
-                                  </div>
-                                  
-                                  {/* Rich Citizen History */}
-                                  <div className="flex items-center gap-4 bg-emerald-50 rounded-xl p-3 border border-emerald-100 text-xs text-emerald-800">
-                                     <div className="flex items-center gap-1"><Trophy className="w-3.5 h-3.5"/> <b>{member.previousDrives || 0}</b> Completed Drives</div>
-                                     <div className="flex items-center gap-1"><Clock className="w-3.5 h-3.5"/> <b>{member.previousHours || 0}</b> Hours</div>
-                                     <div className="flex items-center gap-1"><CheckCircle2 className="w-3.5 h-3.5"/> <b>{member.attendancePercentage || 100}%</b> Attendance</div>
-                                  </div>
-                               </div>
-                               
-                               <div className="flex md:flex-col gap-2 w-full md:w-auto">
-                                  <button onClick={async () => {
-                                     try {
-                                        const res = await fetch(`/api/volunteer-org/${org._id}`, {
-                                           method: "PATCH", headers: {"Content-Type":"application/json"},
-                                           body: JSON.stringify({ action: "approve_member", email: member.email })
-                                        });
-                                        if (res.ok) loadData();
-                                     } catch {}
-                                  }} className="flex-1 md:flex-none px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-bold rounded-xl transition-all shadow-md active:scale-95 text-center">Approve</button>
-                                  <button onClick={async () => {
-                                     try {
-                                        const res = await fetch(`/api/volunteer-org/${org._id}`, {
-                                           method: "PATCH", headers: {"Content-Type":"application/json"},
-                                           body: JSON.stringify({ action: "reject_member", email: member.email })
-                                        });
-                                        if (res.ok) loadData();
-                                     } catch {}
-                                  }} className="flex-1 md:flex-none px-6 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-bold rounded-xl transition-all active:scale-95 text-center">Decline</button>
-                               </div>
-                            </div>
-                         ))}
-                      </div>
-                   )}
-                </div>
-             </div>
-          )}
-
-          {/* ── MEMBER DIRECTORY ────────────────────────────────────────── */}
+          {/* ── MEMBERS ─────────────────────────────────────────────── */}
           {activeTab === "members" && (
-             <div className="space-y-6 animate-fade-in">
-                <div className="bg-white rounded-2xl border border-slate-200 p-6">
-                   <h2 className="text-xl font-bold text-slate-900 mb-6 flex items-center gap-2">
-                      <Users className="w-5 h-5 text-blue-600"/> Member Directory
-                   </h2>
-                   
-                   {(!org?.members || org.members.filter((m:any) => m.status === "member").length === 0) ? (
-                      <div className="text-center py-12 bg-slate-50 rounded-2xl border border-slate-100">
-                         <Users className="w-10 h-10 text-slate-300 mx-auto mb-3" />
-                         <p className="text-slate-500 font-medium">You have no active members.</p>
+             <div className="space-y-8 animate-fade-in">
+                {/* Pending Requests */}
+                <div>
+                   <h2 className="text-xl font-black text-slate-900 mb-4">New Membership Requests</h2>
+                   {(!org?.members || org.members.filter(m => m.status === 'pending').length === 0) ? (
+                      <div className="bg-white border border-slate-200 rounded-2xl p-8 text-center">
+                         <Shield className="w-10 h-10 text-slate-200 mx-auto mb-3" />
+                         <p className="text-slate-500 text-sm font-medium">No new membership requests at the moment.</p>
                       </div>
                    ) : (
-                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                         {org.members.filter((m:any) => m.status === "member").map((member: any, idx: number) => (
-                            <div key={idx} className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm flex flex-col">
-                               <div className="flex items-center gap-3 mb-3">
-                                  <div className="w-10 h-10 bg-blue-100 text-blue-700 rounded-full flex items-center justify-center font-bold text-lg shrink-0">
-                                     {member.name.charAt(0).toUpperCase()}
-                                  </div>
-                                  <div>
-                                     <h3 className="font-bold text-slate-900 leading-tight">{member.name}</h3>
-                                     <p className="text-[10px] font-bold text-slate-500">{member.email}</p>
-                                  </div>
+                      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                         {org.members.filter(m => m.status === 'pending').map((m: any) => (
+                            <div key={m.email} className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
+                               <p className="font-bold text-slate-900">{m.name}</p>
+                               <p className="text-xs text-slate-500 mb-3">{m.email} • {m.phone}</p>
+                               <div className="bg-slate-50 p-3 rounded-xl mb-4">
+                                  <p className="text-[10px] font-bold text-slate-400 uppercase">Motivation</p>
+                                  <p className="text-xs text-slate-700 italic">"{m.motivation}"</p>
                                </div>
-                               
-                               <div className="text-xs text-slate-600 space-y-1 mb-4 flex-1">
-                                  <p><span className="font-bold text-slate-400">Phone:</span> {member.phone}</p>
-                                  <p><span className="font-bold text-slate-400">Joined:</span> {new Date(member.joinedAt).toLocaleDateString()}</p>
+                               <div className="flex gap-2">
+                                  <button onClick={async () => {
+                                     const res = await fetch(`/api/volunteer-org/${org._id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'approve_member', email: m.email }) });
+                                     if(res.ok) handleRefresh();
+                                  }} className="flex-1 bg-emerald-100 hover:bg-emerald-200 text-emerald-700 text-xs font-bold py-2 rounded-lg transition-colors">Approve</button>
+                                  <button onClick={async () => {
+                                     const res = await fetch(`/api/volunteer-org/${org._id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'reject_member', email: m.email }) });
+                                     if(res.ok) handleRefresh();
+                                  }} className="flex-1 bg-red-50 hover:bg-red-100 text-red-600 text-xs font-bold py-2 rounded-lg transition-colors">Reject</button>
                                </div>
-                               
-                               <button onClick={async () => {
-                                  if (!confirm("Are you sure you want to remove this member?")) return;
-                                  try {
-                                     const res = await fetch(`/api/volunteer-org/${org._id}`, {
-                                        method: "PATCH", headers: {"Content-Type":"application/json"},
-                                        body: JSON.stringify({ action: "remove_member", email: member.email })
-                                     });
-                                     if (res.ok) loadData();
-                                  } catch {}
-                               }} className="w-full py-2 bg-red-50 hover:bg-red-100 text-red-600 text-xs font-bold rounded-xl transition-colors text-center">
-                                  Remove Member
-                               </button>
                             </div>
                          ))}
                       </div>
                    )}
                 </div>
-             </div>
-          )}
 
-          {/* ── ANNOUNCEMENTS ────────────────────────────────────────────── */}
-          {activeTab === "announcements" && (
-             <div className="space-y-6 animate-fade-in">
-                <div className="bg-white rounded-2xl border border-slate-200 p-6">
-                   <h2 className="text-xl font-bold text-slate-900 mb-6 flex items-center gap-2">
-                      <MessageSquare className="w-5 h-5 text-purple-600"/> Announcements
-                   </h2>
-                   
-                   <form onSubmit={async (e) => {
-                      e.preventDefault();
-                      const fd = new FormData(e.currentTarget);
-                      const title = fd.get("title") as string;
-                      const message = fd.get("message") as string;
-                      const target = fd.get("target") as string;
-                      
-                      try {
-                         const res = await fetch(`/api/volunteer-org/${org?._id}`, {
-                            method: "PATCH", headers: {"Content-Type":"application/json"},
-                            body: JSON.stringify({ action: "post_announcement", title, message, target, postedBy: appUser?.name })
-                         });
-                         if (res.ok) {
-                            (e.target as HTMLFormElement).reset();
-                            loadData();
-                         }
-                      } catch {}
-                   }} className="mb-8 p-5 bg-slate-50 border border-slate-200 rounded-2xl">
-                      <h3 className="font-bold text-slate-900 mb-4">Post a New Announcement</h3>
-                      <div className="space-y-4">
-                         <div>
-                            <input name="title" required type="text" placeholder="Announcement Title" className="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-purple-500 outline-none" />
-                         </div>
-                         <div>
-                            <textarea name="message" required placeholder="Write your message here..." rows={3} className="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-purple-500 outline-none resize-none"></textarea>
-                         </div>
-                         <div>
-                            <select name="target" className="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-purple-500 outline-none">
-                               <option value="all_members">All Active Members</option>
-                               {myDrives.map(d => <option key={d._id} value={d._id}>Drive: {d.title}</option>)}
-                            </select>
-                         </div>
-                         <button type="submit" className="px-6 py-3 bg-purple-600 hover:bg-purple-700 text-white text-sm font-bold rounded-xl shadow-lg shadow-purple-600/20 active:scale-95 transition-all">
-                            Post Announcement
-                         </button>
-                      </div>
-                   </form>
-
-                   <div className="space-y-4">
-                      {(!org?.announcements || org.announcements.length === 0) ? (
-                         <div className="text-center py-8">
-                            <p className="text-slate-500 text-sm">No announcements posted yet.</p>
-                         </div>
-                      ) : (
-                         org.announcements.slice().reverse().map((ann: any, idx: number) => (
-                            <div key={idx} className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
-                               <div className="flex items-start justify-between mb-2">
-                                  <h3 className="font-bold text-slate-900">{ann.title}</h3>
-                                  <span className="text-[10px] font-bold text-slate-400">{new Date(ann.postedAt).toLocaleString()}</span>
-                               </div>
-                               <p className="text-sm text-slate-600 mb-3 whitespace-pre-wrap">{ann.message}</p>
-                               <div className="flex flex-wrap gap-2 text-[10px] font-bold">
-                                  <span className="bg-slate-100 text-slate-500 px-2 py-1 rounded">Target: {ann.target === "all_members" ? "All Members" : "Specific Drive"}</span>
-                                  <span className="bg-purple-50 text-purple-700 px-2 py-1 rounded border border-purple-100">Posted by {ann.postedBy}</span>
-                               </div>
-                            </div>
-                         ))
-                      )}
-                   </div>
-                </div>
-             </div>
-          )}
-
-          {/* ── ANALYTICS ─────────────────────────────────────────────── */}
-          {activeTab === "analytics" && (
-             <div className="space-y-6 animate-fade-in">
-                <div className="flex justify-between items-end mb-6">
-                   <div>
-                      <h2 className="text-2xl font-black text-slate-900">Impact Analytics</h2>
-                      <p className="text-slate-500 font-medium mt-1">Track your organization's verified impact over time.</p>
-                   </div>
-                   <button className="flex items-center gap-2 bg-white border border-slate-200 px-4 py-2 rounded-xl shadow-sm text-sm font-bold text-slate-700 hover:bg-slate-50">
-                      <Download className="w-4 h-4" /> Export Report
-                   </button>
-                </div>
-                
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                   <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-4">
-                      <div className="w-12 h-12 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center shrink-0"><Calendar className="w-6 h-6"/></div>
-                      <div>
-                         <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Drives Organized</p>
-                         <p className="text-2xl font-black text-slate-900">{analytics?.totalDrives || 0}</p>
-                      </div>
-                   </div>
-                   <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-4">
-                      <div className="w-12 h-12 bg-emerald-50 text-emerald-600 rounded-xl flex items-center justify-center shrink-0"><CheckCircle2 className="w-6 h-6"/></div>
-                      <div>
-                         <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Completion Rate</p>
-                         <p className="text-2xl font-black text-slate-900">{analytics?.totalDrives ? Math.round((analytics.completedDrives / analytics.totalDrives) * 100) : 0}%</p>
-                      </div>
-                   </div>
-                   <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-4">
-                      <div className="w-12 h-12 bg-amber-50 text-amber-600 rounded-xl flex items-center justify-center shrink-0"><Star className="w-6 h-6"/></div>
-                      <div>
-                         <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Average Rating</p>
-                         <p className="text-2xl font-black text-slate-900">{analytics?.avgRating || "N/A"}</p>
-                      </div>
-                   </div>
-                   <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-4">
-                      <div className="w-12 h-12 bg-purple-50 text-purple-600 rounded-xl flex items-center justify-center shrink-0"><Users className="w-6 h-6"/></div>
-                      <div>
-                         <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Retention Rate</p>
-                         <p className="text-2xl font-black text-slate-900">{analytics?.retentionRate || 0}%</p>
-                      </div>
-                   </div>
-                </div>
-
-                <div className="bg-white rounded-3xl border border-slate-200 shadow-sm p-6 lg:p-8">
-                   <h3 className="text-lg font-black text-slate-900 mb-6">Monthly Volunteer Engagement</h3>
-                   <div className="h-[300px] w-full">
-                      {analytics?.monthlyGrowth ? (
-                        <ResponsiveContainer width="100%" height="100%">
-                           <BarChart data={analytics.monthlyGrowth} margin={{ top: 5, right: 20, left: -20, bottom: 5 }}>
-                              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E2E8F0" />
-                              <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#64748B', fontSize: 12, fontWeight: 600 }} dy={10} />
-                              <YAxis axisLine={false} tickLine={false} tick={{ fill: '#64748B', fontSize: 12 }} />
-                              <RechartsTooltip cursor={{fill: '#F1F5F9'}} contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} />
-                              <Bar dataKey="volunteers" fill="#10B981" radius={[4, 4, 0, 0]} />
-                           </BarChart>
-                        </ResponsiveContainer>
-                      ) : (
-                        <div className="h-full flex items-center justify-center text-slate-400 font-bold">No engagement data available</div>
-                      )}
-                   </div>
-                </div>
-             </div>
-          )}
-
-          {/* ── LEADERBOARD ─────────────────────────────────────────────── */}
-          {activeTab === "leaderboard" && (
-             <div className="space-y-6 animate-fade-in">
-                <div className="flex justify-between items-end mb-6">
-                   <div>
-                      <h2 className="text-2xl font-black text-slate-900">Organization Leaderboard</h2>
-                      <p className="text-slate-500 font-medium mt-1">See how your impact compares to other organizations.</p>
-                   </div>
-                </div>
-                
-                <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
-                   <div className="divide-y divide-slate-100">
-                      {leaderboard.length > 0 ? leaderboard.map((item, index) => (
-                         <div key={item.id} className={`p-4 sm:p-6 flex items-center gap-4 hover:bg-slate-50 transition-colors ${item.id === org?._id ? "bg-emerald-50 hover:bg-emerald-50/80" : ""}`}>
-                            <div className="w-12 text-center shrink-0">
-                               {index < 3 ? (
-                                  <Trophy className={`w-8 h-8 mx-auto ${index === 0 ? "text-amber-400" : index === 1 ? "text-slate-300" : "text-amber-700"}`} />
-                               ) : (
-                                  <span className="text-xl font-black text-slate-400">#{item.rank}</span>
-                               )}
-                            </div>
-                            <div className="flex-1 min-w-0 flex items-center gap-4">
-                               {item.logo ? (
-                                  <img src={item.logo} className="w-10 h-10 rounded-full object-cover shrink-0" alt="logo" />
-                               ) : (
-                                  <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center shrink-0">
-                                     <Building2 className="w-5 h-5 text-slate-400" />
-                                  </div>
-                               )}
-                               <div>
-                                  <p className="font-bold text-slate-900 truncate flex items-center gap-2">
-                                     {item.name}
-                                     {item.id === org?._id && <span className="bg-emerald-100 text-emerald-700 text-[10px] px-2 py-0.5 rounded-full uppercase tracking-wider">You</span>}
-                                  </p>
-                                  <p className="text-xs text-slate-500 font-medium flex gap-3 mt-1">
-                                     <span>{item.drives} Drives</span>
-                                     <span>{item.trustScore} Trust</span>
-                                  </p>
-                               </div>
-                            </div>
-                            <div className="text-right shrink-0">
-                               <p className="text-xl font-black text-emerald-600">{item.impactScore}</p>
-                               <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Impact Score</p>
-                            </div>
-                         </div>
-                      )) : (
-                         <div className="p-12 text-center text-slate-400 font-bold">Leaderboard data unavailable</div>
-                      )}
+                {/* Active Members Directory */}
+                <div>
+                   <h2 className="text-xl font-black text-slate-900 mb-4">Active Members Directory</h2>
+                   <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
+                      <table className="w-full text-left text-sm">
+                         <thead className="bg-slate-50 border-b border-slate-200">
+                            <tr>
+                               <th className="px-6 py-4 font-bold text-slate-500 uppercase tracking-wider text-[10px]">Member</th>
+                               <th className="px-6 py-4 font-bold text-slate-500 uppercase tracking-wider text-[10px]">Contact</th>
+                               <th className="px-6 py-4 font-bold text-slate-500 uppercase tracking-wider text-[10px]">Skills</th>
+                               <th className="px-6 py-4 font-bold text-slate-500 uppercase tracking-wider text-[10px]">Joined</th>
+                            </tr>
+                         </thead>
+                         <tbody className="divide-y divide-slate-100">
+                            {(!org?.members || org.members.filter(m => m.status === 'member').length === 0) ? (
+                               <tr><td colSpan={4} className="px-6 py-8 text-center text-slate-400">No active members yet.</td></tr>
+                            ) : (
+                               org.members.filter(m => m.status === 'member').map((m: any) => (
+                                  <tr key={m.email} className="hover:bg-slate-50 transition-colors">
+                                     <td className="px-6 py-4 font-semibold text-slate-900">{m.name}</td>
+                                     <td className="px-6 py-4 text-slate-500">{m.email}<br/><span className="text-xs">{m.phone}</span></td>
+                                     <td className="px-6 py-4 text-slate-500 text-xs max-w-[200px] truncate">{m.skills}</td>
+                                     <td className="px-6 py-4 text-slate-500 text-xs">{new Date(m.joinedAt).toLocaleDateString()}</td>
+                                  </tr>
+                               ))
+                            )}
+                         </tbody>
+                      </table>
                    </div>
                 </div>
              </div>
@@ -1165,29 +947,82 @@ export default function VolunteerOrgDashboard() {
              <div className="space-y-6 animate-fade-in">
                 <div className="flex justify-between items-end mb-6">
                    <div>
-                      <h2 className="text-2xl font-black text-slate-900">Issued Certificates</h2>
-                      <p className="text-slate-500 font-medium mt-1">Digital certificates issued to volunteers from your drives.</p>
+                      <h2 className="text-2xl font-black text-slate-900">Issue Certificates</h2>
+                      <p className="text-slate-500 font-medium mt-1">Generate AI-powered certificates for completed drives and email them to volunteers.</p>
                    </div>
                 </div>
                 
-                <div className="bg-white rounded-3xl border border-slate-200 shadow-sm p-16 text-center">
-                   <CheckCircle2 className="w-16 h-16 text-slate-200 mx-auto mb-4" />
-                   <h3 className="text-xl font-black text-slate-900 mb-2">Automated Certificate Issuance</h3>
-                   <p className="text-slate-500 font-medium max-w-md mx-auto mb-6">
-                      Certificates are automatically generated and issued to volunteers who are marked as "Present" when a drive is completed and verified by an Admin.
-                   </p>
-                   <div className="flex justify-center gap-8">
-                      <div className="text-center">
-                         <p className="text-3xl font-black text-amber-500">{completedDrives.reduce((acc, d) => acc + (d.volunteers?.filter(v => v.attendance === "present")?.length || 0), 0)}</p>
-                         <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mt-1">Total Issued</p>
-                      </div>
-                      <div className="w-px bg-slate-200"></div>
-                      <div className="text-center">
-                         <p className="text-3xl font-black text-emerald-500">{org?.totalVolunteerHours || 0}</p>
-                         <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mt-1">Hours Verified</p>
-                      </div>
+                {completedDrives.length === 0 ? (
+                   <div className="bg-white rounded-3xl border border-slate-200 shadow-sm p-16 text-center">
+                      <CheckCircle2 className="w-16 h-16 text-slate-200 mx-auto mb-4" />
+                      <p className="text-slate-500 font-medium">Complete a drive with registered volunteers to issue certificates.</p>
                    </div>
-                </div>
+                ) : (
+                   <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                      {completedDrives.map(drive => {
+                         const approvedVolunteers = drive.volunteers?.filter(v => v.status === "approved") || [];
+                         return (
+                            <div key={drive._id} className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm flex flex-col">
+                               <div className="flex justify-between items-start mb-4">
+                                  <div>
+                                     <h3 className="text-base font-bold text-slate-900 line-clamp-1">{drive.title}</h3>
+                                     <p className="text-[10px] text-slate-500 mt-1 uppercase tracking-wider">{new Date(drive.date).toLocaleDateString()} • {drive.city}</p>
+                                  </div>
+                                  <span className="bg-emerald-100 text-emerald-700 text-[10px] font-bold px-2 py-0.5 rounded-full whitespace-nowrap">{approvedVolunteers.length} Approved</span>
+                               </div>
+
+                               {approvedVolunteers.length > 0 ? (
+                                  <div className="bg-slate-50 rounded-xl p-4 flex-1">
+                                     <h4 className="text-[10px] font-bold text-slate-500 uppercase mb-3">Eligible Volunteers</h4>
+                                     <div className="space-y-2">
+                                        {approvedVolunteers.map(v => (
+                                           <div key={v.email} className="flex justify-between items-center bg-white p-3 border border-slate-200 rounded-lg">
+                                              <div className="min-w-0 pr-2">
+                                                 <p className="text-sm font-semibold text-slate-900 truncate">{v.name}</p>
+                                                 <p className="text-[10px] text-slate-400 truncate">{v.email}</p>
+                                              </div>
+                                              <button onClick={async (e) => {
+                                                 const btn = e.currentTarget;
+                                                 btn.disabled = true;
+                                                 btn.innerHTML = "Generating & Sending...";
+                                                 try {
+                                                    const res = await fetch('/api/generate-certificate', {
+                                                       method: 'POST',
+                                                       headers: {'Content-Type': 'application/json'},
+                                                       body: JSON.stringify({ driveId: drive._id, volunteerEmail: v.email })
+                                                    });
+                                                    if(res.ok) {
+                                                       btn.innerHTML = "✓ Sent";
+                                                       btn.classList.replace("bg-indigo-600", "bg-emerald-100");
+                                                       btn.classList.replace("text-white", "text-emerald-700");
+                                                    } else {
+                                                       const data = await res.json();
+                                                       btn.innerHTML = "Failed";
+                                                       btn.disabled = false;
+                                                       alert("Error: " + data.error);
+                                                    }
+                                                 } catch(e: any) {
+                                                    btn.innerHTML = "Error";
+                                                    btn.disabled = false;
+                                                    alert("Network Error");
+                                                 }
+                                              }} className="bg-indigo-600 hover:bg-indigo-700 text-white text-[10px] font-bold px-3 py-1.5 rounded-lg transition-colors flex-shrink-0">
+                                                 Generate & Send
+                                              </button>
+                                           </div>
+                                        ))}
+                                     </div>
+                                  </div>
+                               ) : (
+                                  <div className="bg-slate-50 rounded-xl p-4 flex-1 flex items-center justify-center">
+                                     <p className="text-xs text-slate-400 italic text-center">No approved volunteers found.</p>
+                                  </div>
+                               )}
+                            </div>
+                         );
+                      })}
+                   </div>
+                )}
              </div>
           )}
 
@@ -1459,13 +1294,16 @@ export default function VolunteerOrgDashboard() {
                 <div className="grid grid-cols-3 gap-6">
                    {/* Main Info */}
                    <div className="col-span-2 space-y-6">
-                      <div>
-                        <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Description</h3>
-                        <p className="text-sm text-slate-700 leading-relaxed bg-slate-50 p-4 rounded-2xl">{selectedDrive.description}</p>
+                      <div className="bg-gradient-to-br from-slate-50 to-white border border-slate-100 p-5 rounded-2xl shadow-sm relative overflow-hidden">
+                        <div className="absolute top-0 right-0 w-32 h-32 bg-slate-100 rounded-full mix-blend-multiply opacity-50 -mr-10 -mt-10 blur-2xl"></div>
+                        <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3 flex items-center gap-2 relative z-10">
+                           <FileText className="w-4 h-4 text-slate-300" /> Description
+                        </h3>
+                        <p className="text-[15px] font-medium text-slate-700 leading-relaxed relative z-10 whitespace-pre-wrap">{selectedDrive.description}</p>
                       </div>
 
                       {/* Timeline Updates (My Drives only) */}
-                      {selectedDrive.orgName === org?.name && ["ORG_APPROVED", "VOLUNTEER_REG_OPEN", "REG_CLOSED", "DRIVE_IN_PROGRESS"].includes(selectedDrive.status) && (
+                      {(selectedDrive.orgId === org?._id || selectedDrive.acceptedOrgId === org?._id) && ["ORG_APPROVED", "VOLUNTEER_REG_OPEN", "REG_CLOSED", "DRIVE_IN_PROGRESS"].includes(selectedDrive.status) && (
                          <div>
                             <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Post Timeline Update</h3>
                             <form className="flex gap-2" onSubmit={async(e) => {
@@ -1502,6 +1340,71 @@ export default function VolunteerOrgDashboard() {
                            </div>
                         </div>
                       )}
+
+                     {/* Registered Volunteers */}
+                      {(selectedDrive.orgId === org?._id || selectedDrive.acceptedOrgId === org?._id) && selectedDrive.volunteers && selectedDrive.volunteers.length > 0 && (
+                         <div className="mt-8">
+                            <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">Registered Volunteers ({(selectedDrive.volunteers?.filter((v: any) => v.status !== 'rejected').length) || selectedDrive.joinedVolunteers}/{selectedDrive.maxVolunteers || selectedDrive.requiredVolunteers})</h3>
+                            <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
+                               <table className="w-full text-left border-collapse">
+                                  <thead>
+                                     <tr className="bg-slate-50 border-b border-slate-100 text-xs font-bold text-slate-500 uppercase tracking-wider">
+                                        <th className="p-4">Name</th>
+                                        <th className="p-4">Contact</th>
+                                        <th className="p-4">Status</th>
+                                        <th className="p-4 text-right">Actions</th>
+                                     </tr>
+                                  </thead>
+                                  <tbody>
+                                     {selectedDrive.volunteers.map((vol, i) => (
+                                        <tr key={i} className="border-b border-slate-50 last:border-0 hover:bg-slate-50/50">
+                                           <td className="p-4">
+                                              <p className="font-bold text-slate-900 text-sm">{vol.name}</p>
+                                              <p className="text-xs text-slate-500">Age: {vol.age}</p>
+                                           </td>
+                                           <td className="p-4 text-sm text-slate-600">
+                                              <p>{vol.email}</p>
+                                              <p>{vol.phone}</p>
+                                           </td>
+                                           <td className="p-4">
+                                              <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded-md ${vol.status === 'approved' ? 'bg-emerald-100 text-emerald-700' : vol.status === 'rejected' ? 'bg-red-100 text-red-700' : vol.status === 'present' ? 'bg-blue-100 text-blue-700' : 'bg-amber-100 text-amber-700'}`}>
+                                                 {vol.status}
+                                              </span>
+                                           </td>
+                                           <td className="p-4 text-right flex gap-2 justify-end">
+                                              {vol.status === 'pending' && (
+                                                 <>
+                                                   <button onClick={async() => {
+                                                      setActionLoading(true);
+                                                      try {
+                                                         const res = await fetch(`/api/community-drives/${selectedDrive._id}`, {
+                                                            method: "PATCH", headers: {"Content-Type":"application/json"},
+                                                            body: JSON.stringify({ action: "volunteer_approve", email: vol.email })
+                                                         });
+                                                         if (res.ok) { handleRefresh(); setSelectedDrive(null); }
+                                                         else { alert("Failed or capacity reached"); }
+                                                      } finally { setActionLoading(false); }
+                                                   }} className="text-xs font-bold bg-emerald-100 hover:bg-emerald-200 text-emerald-800 px-3 py-1.5 rounded-lg transition-colors">Approve</button>
+                                                   <button onClick={async() => {
+                                                      setActionLoading(true);
+                                                      try {
+                                                         const res = await fetch(`/api/community-drives/${selectedDrive._id}`, {
+                                                            method: "PATCH", headers: {"Content-Type":"application/json"},
+                                                            body: JSON.stringify({ action: "volunteer_reject", email: vol.email })
+                                                         });
+                                                         if (res.ok) { handleRefresh(); setSelectedDrive(null); }
+                                                      } finally { setActionLoading(false); }
+                                                   }} className="text-xs font-bold bg-red-100 hover:bg-red-200 text-red-800 px-3 py-1.5 rounded-lg transition-colors">Reject</button>
+                                                 </>
+                                              )}
+                                           </td>
+                                        </tr>
+                                     ))}
+                                  </tbody>
+                               </table>
+                            </div>
+                         </div>
+                      )}
                    </div>
 
                    {/* Sidebar Info */}
@@ -1515,7 +1418,7 @@ export default function VolunteerOrgDashboard() {
                       <div className="bg-amber-50 border border-amber-100 rounded-2xl p-4">
                          <h3 className="text-xs font-bold text-amber-800 uppercase tracking-wider mb-3 flex items-center gap-1"><Users className="w-4 h-4"/> Volunteers</h3>
                          <div className="flex items-end gap-1">
-                            <span className="text-2xl font-black text-amber-900">{selectedDrive.joinedVolunteers}</span>
+                            <span className="text-2xl font-black text-amber-900">{(selectedDrive.volunteers?.filter((v: any) => v.status !== 'rejected').length) || selectedDrive.joinedVolunteers}</span>
                             <span className="text-sm font-bold text-amber-700 mb-1">/ {selectedDrive.maxVolunteers || selectedDrive.requiredVolunteers}</span>
                          </div>
                          <p className="text-xs text-amber-700 mt-1">Required: {selectedDrive.requiredVolunteers}</p>
@@ -1544,19 +1447,43 @@ export default function VolunteerOrgDashboard() {
                             </div>
                          )}
 
-                         {selectedDrive.orgName === org?.name && (
-                            <button onClick={() => {
-                               const supportingOrgId = prompt("Enter the Organization ID of the partner:");
-                               const supportingOrgName = prompt("Enter the Organization Name:");
-                               if (supportingOrgId && supportingOrgName) {
-                                  fetch(`/api/community-drives/${selectedDrive._id}`, {
-                                     method: "PATCH", headers: {"Content-Type":"application/json"},
-                                     body: JSON.stringify({ action: "add_supporting_org", supportingOrgId, supportingOrgName })
-                                  }).then(() => { handleRefresh(); setSelectedDrive(null); });
-                               }
-                            }} className="w-full bg-emerald-200 hover:bg-emerald-300 text-emerald-900 font-bold py-2 rounded-xl text-xs transition-colors">
+                         {(selectedDrive.orgId === org?._id || selectedDrive.acceptedOrgId === org?._id) && (
+                            <button onClick={openPartnerModal} className="w-full bg-emerald-200 hover:bg-emerald-300 text-emerald-900 font-bold py-2 rounded-xl text-xs transition-colors mt-3">
                                Add Partner Org
                             </button>
+                         )}
+
+                         {/* Incoming Partner Request Actions */}
+                         {selectedDrive.partnerRequests?.some((pr: any) => pr.orgId === org?._id && pr.status === "pending") && (
+                            <div className="mt-4 space-y-2">
+                               <p className="text-xs font-bold text-emerald-800">You have been invited to partner!</p>
+                               <div className="flex gap-2">
+                                  <button onClick={async() => {
+                                     setActionLoading(true);
+                                     try {
+                                        await fetch(`/api/community-drives/${selectedDrive._id}`, {
+                                           method: "PATCH", headers: {"Content-Type":"application/json"},
+                                           body: JSON.stringify({ action: "accept_partner", orgId: org?._id })
+                                        });
+                                        handleRefresh(); setSelectedDrive(null);
+                                     } finally { setActionLoading(false); }
+                                  }} className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 rounded-xl text-xs transition-colors shadow-sm">
+                                     Accept Invite
+                                  </button>
+                                  <button onClick={async() => {
+                                     setActionLoading(true);
+                                     try {
+                                        await fetch(`/api/community-drives/${selectedDrive._id}`, {
+                                           method: "PATCH", headers: {"Content-Type":"application/json"},
+                                           body: JSON.stringify({ action: "reject_partner", orgId: org?._id })
+                                        });
+                                        handleRefresh(); setSelectedDrive(null);
+                                     } finally { setActionLoading(false); }
+                                  }} className="flex-1 bg-rose-100 hover:bg-rose-200 text-rose-700 font-bold py-2 rounded-xl text-xs transition-colors shadow-sm">
+                                     Decline
+                                  </button>
+                               </div>
+                            </div>
                          )}
                       </div>
                    </div>
@@ -1565,6 +1492,20 @@ export default function VolunteerOrgDashboard() {
 
              {/* Footer Actions */}
              <div className="bg-slate-50 border-t border-slate-100 p-6 flex flex-wrap gap-3 justify-end">
+                {(selectedDrive.orgId === org?._id || selectedDrive.acceptedOrgId === org?._id) && !['COMPLETED', 'CANCELLED'].includes(selectedDrive.status) && (
+                   <button onClick={() => {
+                      setDriveTitle(selectedDrive.title || "");
+                      setDriveDescription(selectedDrive.description || "");
+                      setDriveDate(selectedDrive.date ? new Date(selectedDrive.date).toISOString().split('T')[0] : "");
+                      setDriveTime(selectedDrive.time || "");
+                      setDriveDuration(selectedDrive.durationHours || 2);
+                      setDriveMeetingLoc(selectedDrive.meetingLocation || selectedDrive.address || "");
+                      setDriveInstructions(selectedDrive.instructions || "");
+                      setIsEditDriveModalOpen(true);
+                   }} className="bg-slate-100 hover:bg-slate-200 text-slate-800 text-sm font-bold px-6 py-3 rounded-xl transition-colors shadow-sm">
+                      Edit Details
+                   </button>
+                )}
                 {selectedDrive.status === "WAITING_FOR_ORG" && (
                    <button onClick={async() => {
                       setActionLoading(true);
@@ -1580,24 +1521,31 @@ export default function VolunteerOrgDashboard() {
                    </button>
                 )}
 
-                {selectedDrive.orgName === org?.name && selectedDrive.status === "ORG_APPROVED" && (
-                   <button onClick={async() => {
-                      setActionLoading(true);
-                      try {
-                        const res = await fetch(`/api/community-drives/${selectedDrive._id}`, {
-                           method: "PATCH", headers: {"Content-Type":"application/json"},
-                           body: JSON.stringify({ action: "open_volunteers" })
-                        });
-                        if (res.ok) { handleRefresh(); setSelectedDrive(null); }
-                      } finally { setActionLoading(false); }
-                   }} disabled={actionLoading} className="bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-bold px-6 py-3 rounded-xl transition-colors shadow-sm">
-                      Open Volunteer Registrations
+                {(selectedDrive.orgId === org?._id || selectedDrive.acceptedOrgId === org?._id) && selectedDrive.status === "ORG_APPROVED" && (
+                   <button onClick={() => {
+                     setDriveDate("");
+                     setDriveTime("");
+                     setDriveDuration(2);
+                     setDriveReqVol(10);
+                     setDriveMaxVol(20);
+                     setDriveMeetingLoc("");
+                     setIsScheduleDriveModalOpen(true);
+                   }} className="bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-bold px-6 py-3 rounded-xl transition-colors shadow-sm">
+                      Schedule Drive Details
                    </button>
                 )}
 
-                {selectedDrive.orgName === org?.name && selectedDrive.status === "VOLUNTEER_REG_OPEN" && (
-                   <button onClick={async() => {
-                      setActionLoading(true);
+                {(selectedDrive.orgId === org?._id || selectedDrive.acceptedOrgId === org?._id) && selectedDrive.status === "VOLUNTEER_REG_OPEN" && (
+                   <>
+                     <button onClick={() => {
+                        setDriveReqVol(selectedDrive.requiredVolunteers || 10);
+                        setDriveMaxVol(selectedDrive.maxVolunteers || 20);
+                        setIsEditCapacityModalOpen(true);
+                     }} className="bg-amber-100 hover:bg-amber-200 text-amber-800 text-sm font-bold px-6 py-3 rounded-xl transition-colors shadow-sm">
+                        Edit Capacity
+                     </button>
+                     <button onClick={async() => {
+                        setActionLoading(true);
                       try {
                         const res = await fetch(`/api/community-drives/${selectedDrive._id}`, {
                            method: "PATCH", headers: {"Content-Type":"application/json"},
@@ -1608,24 +1556,27 @@ export default function VolunteerOrgDashboard() {
                    }} disabled={actionLoading} className="bg-amber-600 hover:bg-amber-700 text-white text-sm font-bold px-6 py-3 rounded-xl transition-colors shadow-sm">
                       Close Registrations
                    </button>
+                   </>
                 )}
 
-                {selectedDrive.orgName === org?.name && selectedDrive.status === "REG_CLOSED" && (
-                   <button onClick={async() => {
-                      setActionLoading(true);
-                      try {
-                        const res = await fetch(`/api/community-drives/${selectedDrive._id}`, {
-                           method: "PATCH", headers: {"Content-Type":"application/json"},
-                           body: JSON.stringify({ action: "start_drive" })
-                        });
-                        if (res.ok) { handleRefresh(); setSelectedDrive(null); }
-                      } finally { setActionLoading(false); }
-                   }} disabled={actionLoading} className="bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold px-6 py-3 rounded-xl transition-colors shadow-sm">
-                      Start Drive
-                   </button>
+                {(selectedDrive.orgId === org?._id || selectedDrive.acceptedOrgId === org?._id) && selectedDrive.status === "REG_CLOSED" && (
+                   <div className="flex w-full">
+                      <button onClick={async() => {
+                         setActionLoading(true);
+                         try {
+                           const res = await fetch(`/api/community-drives/${selectedDrive._id}`, {
+                              method: "PATCH", headers: {"Content-Type":"application/json"},
+                              body: JSON.stringify({ action: "start_drive" })
+                           });
+                           if (res.ok) { handleRefresh(); setSelectedDrive(null); }
+                         } finally { setActionLoading(false); }
+                      }} disabled={actionLoading} className="flex-1 bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold px-6 py-3 rounded-xl transition-colors shadow-sm">
+                         Start Drive
+                      </button>
+                   </div>
                 )}
 
-                {selectedDrive.orgName === org?.name && selectedDrive.status === "DRIVE_IN_PROGRESS" && (
+                {(selectedDrive.orgId === org?._id || selectedDrive.acceptedOrgId === org?._id) && selectedDrive.status === "DRIVE_IN_PROGRESS" && (
                    <button onClick={() => {
                       setCompletionData({
                         workPerformed: "", hoursWorked: selectedDrive.durationHours || 0,
@@ -1639,7 +1590,7 @@ export default function VolunteerOrgDashboard() {
                 )}
 
                 {/* Cancel Drive Button */}
-                {selectedDrive.orgName === org?.name && ["ORG_APPROVED", "VOLUNTEER_REG_OPEN", "REG_CLOSED"].includes(selectedDrive.status) && (
+                {(selectedDrive.orgId === org?._id || selectedDrive.acceptedOrgId === org?._id) && ["ORG_APPROVED", "VOLUNTEER_REG_OPEN", "REG_CLOSED"].includes(selectedDrive.status) && (
                    <button onClick={async() => {
                       const reason = prompt("Enter reason for cancellation:");
                       if (!reason) return;
@@ -1731,92 +1682,301 @@ export default function VolunteerOrgDashboard() {
                              additionalNotes: completionData.additionalNotes
                          })
                       });
-                      if (res.ok) { handleRefresh(); setShowCompletionModal(false); setSelectedDrive(null); }
+                      if (res.ok) { 
+                         handleRefresh();
+                         setShowCompletionModal(false); 
+                         setSelectedDrive(null); 
+                         setActiveTab("certificates");
+                      }
                     } finally { setActionLoading(false); }
-                }} disabled={actionLoading} className="w-full bg-success-600 hover:bg-success-700 text-white font-bold py-3 rounded-xl shadow-sm mt-2 transition-colors">
+                }} disabled={actionLoading} className="w-full bg-success-600 hover:bg-success-700 text-white font-bold py-3 rounded-xl shadow-sm mt-4 transition-colors">
                    {actionLoading ? "Submitting..." : "Submit Proof & Complete"}
                 </button>
+                <p className="text-xs text-center text-slate-500 mt-4 px-4 leading-relaxed">
+                   <strong>Note:</strong> Once completed and verified, you will be able to generate and send official digital certificates to all volunteers from the <span className="font-semibold text-slate-700">Certificates</span> tab.
+                </p>
              </div>
            </div>
          </div>
       )}
-      {/* ── ADOPT AN AREA TAB ─────────────────────────────────────── */}
-      {activeTab === "adopt-area" && (
-        <div className="space-y-6 animate-fade-in">
-          <div className="flex justify-between items-end mb-6">
-            <div>
-              <h2 className="text-2xl font-black text-slate-900">Adopt a Public Area</h2>
-              <p className="text-slate-500 font-medium mt-1">Take responsibility for long-term maintenance of local spaces.</p>
+
+      {/* Create Independent Drive Modal */}
+      {isCreateDriveModalOpen && (
+        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl animate-fade-in-up">
+            <div className="sticky top-0 bg-white/80 backdrop-blur-md px-6 py-4 border-b border-surface-100 flex justify-between items-center z-10">
+              <h2 className="text-xl font-black text-surface-900">Create Independent Drive</h2>
+              <button onClick={() => setIsCreateDriveModalOpen(false)} className="text-surface-400 hover:text-surface-600 bg-surface-50 hover:bg-surface-100 p-2 rounded-full transition-colors"><X className="w-5 h-5" /></button>
             </div>
-            <button onClick={() => {
-              // Simple prompt or mock logic for submitting a request for area adoption
-              const areaName = prompt("Enter the name of the area (e.g., Downtown Park):");
-              const location = prompt("Enter the specific location/address:");
-              const reason = prompt("Why do you want to adopt this area?");
-              const duration = prompt("Duration (in months):", "6");
-              
-              if (areaName && location && reason && duration) {
-                fetch("/api/adopted-areas", {
-                  method: "POST",
-                  headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify({
-                    name: areaName,
-                    location,
-                    city: org?.city,
-                    reason,
-                    durationMonths: parseInt(duration),
-                    maintenancePlan: "Monthly community drives and weekly check-ins.",
-                    orgId: org?._id,
-                    orgName: org?.name
-                  })
-                }).then(() => handleRefresh());
-              }
-            }} className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 px-5 rounded-xl transition-colors shadow-sm flex items-center gap-2">
-              <Plus className="w-4 h-4" /> Request Adoption
-            </button>
-          </div>
-
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {myAdoptedAreas.map(area => (
-              <div key={area._id} className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
-                <div className="flex justify-between items-start mb-4">
-                  <div>
-                    <h3 className="font-bold text-lg text-slate-900">{area.name}</h3>
-                    <p className="text-sm text-slate-500 flex items-center gap-1 mt-1"><MapPin className="w-3.5 h-3.5"/>{area.location}</p>
-                  </div>
-                  <span className={`px-2 py-1 rounded text-[10px] font-black uppercase tracking-wider ${area.status === "ADOPTED" ? "bg-emerald-100 text-emerald-700" : area.status === "REJECTED" ? "bg-red-100 text-red-700" : "bg-amber-100 text-amber-700"}`}>
-                    {area.status}
-                  </span>
-                </div>
-                
-                <div className="space-y-3 mb-4">
-                  <div>
-                    <p className="text-[10px] font-bold text-slate-400 uppercase">Duration</p>
-                    <p className="text-sm font-semibold text-slate-700">{area.durationMonths} Months</p>
-                  </div>
-                  <div>
-                    <p className="text-[10px] font-bold text-slate-400 uppercase">Maintenance Plan</p>
-                    <p className="text-sm text-slate-700">{area.maintenancePlan}</p>
-                  </div>
-                </div>
-
-                {area.status === "ADOPTED" && (
-                  <div className="pt-4 border-t border-slate-100 flex gap-2">
-                    <button onClick={() => setActiveTab("drives")} className="flex-1 bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-700 text-sm font-bold py-2 rounded-xl transition-colors">
-                      Host Drive Here
-                    </button>
-                  </div>
-                )}
-              </div>
-            ))}
             
-            {myAdoptedAreas.length === 0 && (
-               <div className="col-span-1 lg:col-span-2 text-center py-16 bg-white rounded-3xl border border-slate-200 shadow-sm">
-                 <MapPin className="w-12 h-12 text-slate-200 mx-auto mb-4" />
-                 <h3 className="text-lg font-bold text-slate-700 mb-2">No Adopted Areas Yet</h3>
-                 <p className="text-slate-500 text-sm">Adopt a park, street, or public space to organize recurring drives and earn extra trust points.</p>
-               </div>
-            )}
+            <form onSubmit={handleCreateIndependentDrive} className="p-6 space-y-4">
+              <div className="bg-indigo-50 border border-indigo-100 p-4 rounded-xl mb-4 text-sm text-indigo-800">
+                <p><strong>Note:</strong> Since your organization is verified, creating a drive here will immediately open it for volunteer registration and publish a Community Post.</p>
+              </div>
+              
+              <div className="grid grid-cols-2 gap-4">
+                <div className="col-span-2">
+                  <label className="block text-xs font-bold text-surface-600 mb-1">Drive Title</label>
+                  <input required value={driveTitle} onChange={e=>setDriveTitle(e.target.value)} className="w-full border p-2.5 rounded-xl text-sm" placeholder="e.g. Weekend Lake Cleanup" />
+                </div>
+                <div className="col-span-2">
+                  <label className="block text-xs font-bold text-surface-600 mb-1">Description & Goal</label>
+                  <textarea required rows={3} value={driveDescription} onChange={e=>setDriveDescription(e.target.value)} className="w-full border p-2.5 rounded-xl text-sm resize-none" placeholder="Describe the purpose of this drive..." />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-surface-600 mb-1">Drive Category</label>
+                  <select required value={driveCategory} onChange={e=>setDriveCategory(e.target.value)} className="w-full border p-2.5 rounded-xl text-sm">
+                    {ALL_CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-surface-600 mb-1">Date</label>
+                  <input type="date" required value={driveDate} onChange={e=>setDriveDate(e.target.value)} className="w-full border p-2.5 rounded-xl text-sm" />
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <label className="block text-xs font-bold text-surface-600 mb-1">Time</label>
+                    <input type="time" required value={driveTime} onChange={e=>setDriveTime(e.target.value)} className="w-full border p-2.5 rounded-xl text-sm" />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-surface-600 mb-1">Duration (Hrs)</label>
+                    <input type="number" required min="1" value={driveDuration} onChange={e=>setDriveDuration(Number(e.target.value))} className="w-full border p-2.5 rounded-xl text-sm" />
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-surface-600 mb-1">Required Volunteers</label>
+                  <input type="number" required min="1" value={driveReqVol} onChange={e=>setDriveReqVol(Number(e.target.value))} className="w-full border p-2.5 rounded-xl text-sm" />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-surface-600 mb-1">Max Volunteers (Cap)</label>
+                  <input type="number" required min="1" value={driveMaxVol} onChange={e=>setDriveMaxVol(Number(e.target.value))} className="w-full border p-2.5 rounded-xl text-sm" />
+                </div>
+                <div className="col-span-2">
+                  <label className="block text-xs font-bold text-surface-600 mb-1">Meeting Location / Address</label>
+                  <input required value={driveMeetingLoc} onChange={e=>setDriveMeetingLoc(e.target.value)} className="w-full border p-2.5 rounded-xl text-sm" placeholder="Exact spot to meet" />
+                </div>
+                <div className="col-span-2">
+                  <label className="block text-xs font-bold text-surface-600 mb-1">Instructions for Volunteers</label>
+                  <input value={driveInstructions} onChange={e=>setDriveInstructions(e.target.value)} className="w-full border p-2.5 rounded-xl text-sm" placeholder="e.g. Bring extra gloves, wear comfortable shoes" />
+                </div>
+              </div>
+
+              <div className="pt-4 border-t border-surface-100 flex gap-3 justify-end">
+                <button type="button" onClick={() => setIsCreateDriveModalOpen(false)} className="px-5 py-2.5 text-sm font-bold text-surface-600 hover:bg-surface-100 rounded-xl transition-colors">Cancel</button>
+                <button type="submit" disabled={driveCreating} className="px-5 py-2.5 text-sm font-bold bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl transition-colors flex items-center gap-2">
+                  {driveCreating ? "Publishing..." : <><Globe className="w-4 h-4"/> Publish Independent Drive</>}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Schedule Drive Details Modal */}
+      {isScheduleDriveModalOpen && selectedDrive && (
+        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl w-full max-w-xl shadow-2xl animate-fade-in-up">
+            <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center">
+              <h2 className="text-xl font-bold text-slate-900">Schedule Drive</h2>
+              <button onClick={() => setIsScheduleDriveModalOpen(false)} className="text-slate-400 hover:text-slate-600"><X className="w-5 h-5" /></button>
+            </div>
+            <form onSubmit={handleScheduleDrive} className="p-6 space-y-4">
+              <div className="bg-indigo-50 text-indigo-800 p-4 rounded-xl text-sm font-medium mb-4">
+                Please provide the final scheduling and location details for "{selectedDrive.title}". Submitting this will open volunteer registrations and publish the drive to the Community Feed.
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-bold text-slate-600 mb-1">Date</label>
+                  <input type="date" required value={driveDate} onChange={e=>setDriveDate(e.target.value)} className="w-full border p-2.5 rounded-xl text-sm" />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-slate-600 mb-1">Time</label>
+                  <input type="time" required value={driveTime} onChange={e=>setDriveTime(e.target.value)} className="w-full border p-2.5 rounded-xl text-sm" />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-slate-600 mb-1">Duration (Hrs)</label>
+                  <input type="number" required min="1" value={driveDuration} onChange={e=>setDriveDuration(Number(e.target.value))} className="w-full border p-2.5 rounded-xl text-sm" />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-slate-600 mb-1">Required Volunteers</label>
+                  <input type="number" required min="1" value={driveReqVol} onChange={e=>setDriveReqVol(Number(e.target.value))} className="w-full border p-2.5 rounded-xl text-sm" />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-slate-600 mb-1">Max Volunteers (Cap)</label>
+                  <input type="number" required min="1" value={driveMaxVol} onChange={e=>setDriveMaxVol(Number(e.target.value))} className="w-full border p-2.5 rounded-xl text-sm" />
+                </div>
+                <div className="col-span-2">
+                  <label className="block text-xs font-bold text-slate-600 mb-1">Meeting Location / Address</label>
+                  <input required value={driveMeetingLoc} onChange={e=>setDriveMeetingLoc(e.target.value)} className="w-full border p-2.5 rounded-xl text-sm" placeholder="Exact spot to meet" />
+                </div>
+              </div>
+              <div className="pt-4 border-t border-slate-100 flex gap-3 justify-end">
+                <button type="button" onClick={() => setIsScheduleDriveModalOpen(false)} className="px-5 py-2.5 text-sm font-bold text-slate-600 hover:bg-slate-100 rounded-xl transition-colors">Cancel</button>
+                <button type="submit" disabled={scheduleLoading} className="px-5 py-2.5 text-sm font-bold bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl transition-colors">
+                  {scheduleLoading ? "Scheduling..." : "Schedule and Publish"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Capacity Modal */}
+      {isEditCapacityModalOpen && selectedDrive && (
+        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl w-full max-w-sm shadow-2xl animate-fade-in-up">
+            <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center">
+              <h2 className="text-xl font-bold text-slate-900">Edit Capacity</h2>
+              <button onClick={() => setIsEditCapacityModalOpen(false)} className="text-slate-400 hover:text-slate-600"><X className="w-5 h-5" /></button>
+            </div>
+            <form onSubmit={async (e) => {
+               e.preventDefault();
+               setActionLoading(true);
+               try {
+                  const res = await fetch(`/api/community-drives/${selectedDrive._id}`, {
+                     method: "PATCH", headers: {"Content-Type":"application/json"},
+                     body: JSON.stringify({ action: "update_capacity", requiredVolunteers: driveReqVol, maxVolunteers: driveMaxVol })
+                  });
+                  if (res.ok) { handleRefresh(); setIsEditCapacityModalOpen(false); setSelectedDrive(null); }
+               } finally { setActionLoading(false); }
+            }} className="p-6 space-y-4">
+              <div>
+                <label className="block text-xs font-bold text-slate-600 mb-1">Required Volunteers</label>
+                <input type="number" required min={selectedDrive.joinedVolunteers || 1} value={driveReqVol} onChange={e=>setDriveReqVol(Number(e.target.value))} className="w-full border p-2.5 rounded-xl text-sm" />
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-slate-600 mb-1">Max Volunteers (Cap)</label>
+                <input type="number" required min={driveReqVol} value={driveMaxVol} onChange={e=>setDriveMaxVol(Number(e.target.value))} className="w-full border p-2.5 rounded-xl text-sm" />
+              </div>
+              <div className="pt-4 flex gap-3 justify-end">
+                <button type="button" onClick={() => setIsEditCapacityModalOpen(false)} className="px-5 py-2.5 text-sm font-bold text-slate-600 hover:bg-slate-100 rounded-xl transition-colors">Cancel</button>
+                <button type="submit" disabled={actionLoading} className="px-5 py-2.5 text-sm font-bold bg-amber-600 hover:bg-amber-700 text-white rounded-xl transition-colors">
+                  {actionLoading ? "Saving..." : "Save Changes"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+      {/* ── Edit Drive Modal ── */}
+      {isEditDriveModalOpen && selectedDrive && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
+          <div className="bg-white rounded-3xl w-full max-w-lg shadow-2xl overflow-y-auto max-h-[90vh]">
+            <div className="p-6 border-b border-slate-100 flex justify-between items-center">
+              <div>
+                <h2 className="text-xl font-black text-slate-900">Edit Drive Details</h2>
+                <p className="text-sm text-slate-500">Update information for "{selectedDrive.title}"</p>
+              </div>
+              <button onClick={() => setIsEditDriveModalOpen(false)} className="p-2 text-slate-400 hover:text-slate-700 bg-slate-50 hover:bg-slate-100 rounded-full transition-colors"><X className="w-5 h-5"/></button>
+            </div>
+            
+            <form onSubmit={handleEditDrive} className="p-6 space-y-4">
+              <div>
+                <label className="text-xs font-bold text-slate-700 block mb-1">Drive Title</label>
+                <input required type="text" value={driveTitle} onChange={e=>setDriveTitle(e.target.value)} className="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-slate-500 focus:outline-none" />
+              </div>
+              
+              <div>
+                <label className="text-xs font-bold text-slate-700 block mb-1">Description</label>
+                <textarea required value={driveDescription} onChange={e=>setDriveDescription(e.target.value)} rows={4} className="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-slate-500 focus:outline-none resize-none"></textarea>
+              </div>
+              
+              <div className="grid grid-cols-3 gap-4">
+                 <div className="col-span-1">
+                   <label className="text-xs font-bold text-slate-700 block mb-1">Date</label>
+                   <input required type="date" value={driveDate} onChange={e=>setDriveDate(e.target.value)} className="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-slate-500 focus:outline-none" />
+                 </div>
+                 <div className="col-span-1">
+                   <label className="text-xs font-bold text-slate-700 block mb-1">Time</label>
+                   <input required type="time" value={driveTime} onChange={e=>setDriveTime(e.target.value)} className="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-slate-500 focus:outline-none" />
+                 </div>
+                 <div className="col-span-1">
+                   <label className="text-xs font-bold text-slate-700 block mb-1">Duration (Hrs)</label>
+                   <input required type="number" min="1" step="0.5" value={driveDuration} onChange={e=>setDriveDuration(Number(e.target.value))} className="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-slate-500 focus:outline-none" />
+                 </div>
+              </div>
+
+              <div>
+                <label className="text-xs font-bold text-slate-700 block mb-1">Meeting Location</label>
+                <input required type="text" value={driveMeetingLoc} onChange={e=>setDriveMeetingLoc(e.target.value)} className="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-slate-500 focus:outline-none" />
+              </div>
+
+              <div>
+                <label className="text-xs font-bold text-slate-700 block mb-1">Special Instructions (Optional)</label>
+                <textarea value={driveInstructions} onChange={e=>setDriveInstructions(e.target.value)} rows={2} className="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-slate-500 focus:outline-none resize-none" placeholder="E.g. Bring gloves and wear comfortable shoes..."></textarea>
+              </div>
+
+              <div className="pt-4 flex gap-3 justify-end">
+                <button type="button" onClick={() => setIsEditDriveModalOpen(false)} className="px-5 py-2.5 text-sm font-bold text-slate-600 hover:bg-slate-100 rounded-xl transition-colors">Cancel</button>
+                <button type="submit" disabled={editDriveLoading} className="px-5 py-2.5 text-sm font-bold bg-slate-900 hover:bg-slate-800 text-white rounded-xl transition-colors shadow-sm disabled:opacity-50">
+                  {editDriveLoading ? "Saving..." : "Save Changes"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Add Partner Modal */}
+      {isAddPartnerModalOpen && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
+          <div className="bg-white rounded-3xl w-full max-w-lg shadow-2xl overflow-y-auto max-h-[90vh]">
+            <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-emerald-50">
+              <div>
+                <h2 className="text-xl font-black text-emerald-900">Add Partner Organization</h2>
+                <p className="text-sm text-emerald-700">Invite organizations in your state to join this drive.</p>
+              </div>
+              <button onClick={() => setIsAddPartnerModalOpen(false)} className="p-2 text-emerald-600 hover:bg-emerald-100 rounded-full transition-colors"><X className="w-5 h-5"/></button>
+            </div>
+            
+            <div className="p-6 space-y-4">
+               {fetchingPartners ? (
+                  <div className="text-center py-8">
+                     <div className="w-8 h-8 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin mx-auto mb-3" />
+                     <p className="text-sm font-bold text-slate-500">Loading organizations in {org?.state}...</p>
+                  </div>
+               ) : availablePartners.length === 0 ? (
+                  <div className="text-center py-8 bg-slate-50 rounded-2xl">
+                     <p className="text-slate-500 text-sm font-bold">No verified organizations found in your state.</p>
+                  </div>
+               ) : (
+                  <div className="space-y-3">
+                     {availablePartners.map((partner, idx) => {
+                        const hasRequested = selectedDrive?.partnerRequests?.some(r => r.orgId === partner._id);
+                        const isAlreadyPartner = selectedDrive?.supportingOrgs?.includes(partner._id);
+                        return (
+                           <div key={idx} className="flex items-center justify-between p-4 bg-slate-50 rounded-2xl border border-slate-100">
+                              <div>
+                                 <h4 className="font-bold text-slate-900">{partner.name}</h4>
+                                 <p className="text-xs text-slate-500">{partner.city}, {partner.state} • {partner.type}</p>
+                              </div>
+                              <button 
+                                 disabled={hasRequested || isAlreadyPartner || actionLoading}
+                                 onClick={async() => {
+                                    setActionLoading(true);
+                                    try {
+                                       const res = await fetch(`/api/community-drives/${selectedDrive?._id}`, {
+                                          method: "PATCH", headers: {"Content-Type":"application/json"},
+                                          body: JSON.stringify({ action: "request_partner", targetOrgId: partner._id, targetOrgName: partner.name, requestingOrgName: org?.name })
+                                       });
+                                       if (res.ok) { handleRefresh(); setIsAddPartnerModalOpen(false); setSelectedDrive(null); alert("Partnership request sent!"); }
+                                       else { const e = await res.json(); alert(e.error); }
+                                    } finally { setActionLoading(false); }
+                                 }}
+                                 className={`px-4 py-2 rounded-xl text-xs font-bold transition-colors ${
+                                    isAlreadyPartner ? 'bg-slate-200 text-slate-500 cursor-not-allowed' :
+                                    hasRequested ? 'bg-amber-100 text-amber-700 cursor-not-allowed' :
+                                    'bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm'
+                                 }`}
+                              >
+                                 {isAlreadyPartner ? "Partnered" : hasRequested ? "Requested" : "Send Request"}
+                              </button>
+                           </div>
+                        );
+                     })}
+                  </div>
+               )}
+            </div>
           </div>
         </div>
       )}
@@ -1828,9 +1988,20 @@ export default function VolunteerOrgDashboard() {
 // ── Shared Components ───────────────────────────────────────────────────
 function DriveCard({ drive, showOrg = true, onClick }: { drive: Drive; showOrg?: boolean; onClick?: () => void }) {
   const statusColors: Record<string, string> = {
-    OPEN: "bg-emerald-100 text-emerald-700",
-    COMPLETED: "bg-blue-100 text-blue-700",
-    CANCELLED: "bg-red-100 text-red-700",
+    OPEN: "bg-emerald-500 text-white",
+    COMPLETED: "bg-blue-500 text-white",
+    CANCELLED: "bg-red-500 text-white",
+    WAITING_FOR_ORG: "bg-amber-500 text-white",
+    ORG_PENDING_APPROVAL: "bg-purple-500 text-white",
+  };
+
+  const CATEGORY_COLORS: Record<string, string> = {
+    "Cleanliness": "from-teal-400 to-emerald-500", 
+    "Tree Plantation": "from-green-400 to-emerald-600", 
+    "Plastic Collection": "from-cyan-400 to-blue-500",
+    "Animal Welfare": "from-amber-400 to-orange-500", 
+    "Awareness Campaign": "from-purple-400 to-indigo-500",
+    "Other": "from-slate-400 to-slate-500"
   };
 
   const CATEGORY_ICONS: Record<string, string> = {
@@ -1840,45 +2011,52 @@ function DriveCard({ drive, showOrg = true, onClick }: { drive: Drive; showOrg?:
     "Public Health": "🏥", "Waste Segregation": "🗂️", "Other": "⭐"
   };
 
+  const gradient = CATEGORY_COLORS[drive.category] || CATEGORY_COLORS["Other"];
+
+  const actualJoined = drive.volunteers ? drive.volunteers.filter((v: any) => v.status !== 'rejected').length : drive.joinedVolunteers;
+
   return (
-    <div onClick={onClick} className="bg-white rounded-2xl border border-slate-200 p-5 hover:shadow-md hover:border-emerald-200 transition-all cursor-pointer">
-      <div className="flex items-start justify-between gap-3 mb-3">
-        <div className="flex items-start gap-3">
-          <div className="text-2xl flex-shrink-0">{CATEGORY_ICONS[drive.category] || "⭐"}</div>
-          <div>
-            <h3 className="font-bold text-slate-900">{drive.title}</h3>
-            {showOrg && drive.orgName && <p className="text-xs text-slate-400 mt-0.5">by {drive.orgName}</p>}
-          </div>
-        </div>
-        <span className={`${statusColors[drive.status] || "bg-slate-100 text-slate-600"} text-xs font-bold px-2.5 py-1 rounded-full flex-shrink-0`}>
-          {drive.status}
-        </span>
+    <div onClick={onClick} className="bg-white rounded-2xl border border-slate-200 overflow-hidden hover:shadow-xl hover:shadow-indigo-500/10 hover:border-indigo-200 transition-all cursor-pointer flex flex-col h-full group">
+      {/* Banner */}
+      <div className={`h-24 w-full bg-gradient-to-r ${gradient} relative`}>
+         <div className="absolute top-3 right-3">
+            <span className={`${statusColors[drive.status] || "bg-slate-500 text-white"} text-[10px] font-black px-2.5 py-1 rounded-full shadow-sm uppercase tracking-wider`}>
+               {drive.status.replace(/_/g, " ")}
+            </span>
+         </div>
       </div>
+      
+      {/* Content */}
+      <div className="p-5 flex-1 flex flex-col relative">
+         <div className="absolute -top-10 left-5 w-16 h-16 bg-white rounded-2xl shadow-sm border border-slate-100 flex items-center justify-center text-3xl group-hover:-translate-y-1 transition-transform">
+            {CATEGORY_ICONS[drive.category] || "⭐"}
+         </div>
+         
+         <div className="mt-8 mb-3">
+            <h3 className="font-black text-slate-900 text-lg leading-tight mb-1 line-clamp-1">{drive.title}</h3>
+            {showOrg && drive.orgName && <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">by {drive.orgName}</p>}
+         </div>
 
-      <p className="text-sm text-slate-500 mb-4 line-clamp-2">{drive.description}</p>
+         <p className="text-xs text-slate-600 mb-4 line-clamp-2 flex-1 leading-relaxed">{drive.description}</p>
 
-      <div className="grid grid-cols-2 gap-2 text-xs text-slate-500 mb-4">
-        <div className="flex items-center gap-1.5">
-          <MapPin className="w-3.5 h-3.5 flex-shrink-0" />
-          <span className="truncate">{drive.city}, {drive.state}</span>
-        </div>
-        <div className="flex items-center gap-1.5">
-          <Calendar className="w-3.5 h-3.5 flex-shrink-0" />
-          <span>{new Date(drive.date).toLocaleDateString("en-IN")}</span>
-        </div>
-        <div className="flex items-center gap-1.5">
-          <Clock className="w-3.5 h-3.5 flex-shrink-0" />
-          <span>{drive.time}</span>
-        </div>
-        <div className="flex items-center gap-1.5">
-          <Users className="w-3.5 h-3.5 flex-shrink-0" />
-          <span>{drive.joinedVolunteers}/{drive.requiredVolunteers} volunteers</span>
-        </div>
-      </div>
-
-      <div className="flex items-center justify-between">
-        <span className="bg-slate-100 text-slate-600 text-[10px] font-bold px-2 py-0.5 rounded-full">{drive.category}</span>
-        <span className="text-slate-400 text-xs">{drive.address}</span>
+         <div className="bg-slate-50 rounded-xl p-3 grid grid-cols-2 gap-y-3 gap-x-2 text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+            <div className="flex items-center gap-2">
+               <MapPin className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+               <span className="truncate">{drive.city}</span>
+            </div>
+            <div className="flex items-center gap-2">
+               <Calendar className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+               <span className="truncate">{new Date(drive.date).toLocaleDateString("en-IN")}</span>
+            </div>
+            <div className="flex items-center gap-2">
+               <Clock className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+               <span>{drive.time}</span>
+            </div>
+            <div className="flex items-center gap-2">
+               <Users className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+               <span>{actualJoined}/{drive.maxVolunteers || drive.requiredVolunteers} Vols</span>
+            </div>
+         </div>
       </div>
     </div>
   );

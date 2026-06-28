@@ -348,7 +348,9 @@ export async function POST(request: NextRequest) {
       issueId: newIssue._id,
       action: "Reported",
       actorName: "Citizen",
-      actorRole: "Citizen"
+      actorRole: "citizen",
+      isPublic: true,
+      comment: "Issue reported by citizen."
     });
 
     if (assignedToName) {
@@ -356,7 +358,8 @@ export async function POST(request: NextRequest) {
         issueId: newIssue._id,
         action: "Assigned",
         actorName: "System AI",
-        actorRole: "System",
+        actorRole: "system",
+        isPublic: true,
         comment: `Auto-assigned to ${assignedToName}`
       });
 
