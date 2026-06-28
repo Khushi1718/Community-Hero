@@ -7,22 +7,22 @@ export default function WhyCommunityHero() {
     {
       title: "AI Triage & Anti-Spoofing",
       desc: "To combat duplicate complaints, our models cross-reference geospatial data. Hardcoded EXIF analysis and temporal validation prevent image spoofing and filter out manipulated media before it reaches city admins.",
-      image: "https://images.unsplash.com/photo-1596423735880-5c6a1e8a8df0?auto=format&fit=crop&q=80&w=800"
+      image: "/images/ai.png"
     },
     {
       title: "Verified Accountability",
       desc: "Tickets cannot be closed arbitrarily. Municipal employees must use in-app live camera capture to upload geofenced, timestamped 'After' photos from the exact location, proving the repair was genuinely completed.",
-      image: "https://images.unsplash.com/photo-1504328345606-18bbc8c9d7d1?auto=format&fit=crop&q=80&w=800"
+      image: "/images/verified.png"
     },
     {
       title: "Immutable Audit Logs",
       desc: "Every major state transition is securely tracked in immutable admin audit logs. This establishes a clear, auditable, public-facing timeline that helps bridge the trust gap between citizens and local government.",
-      image: "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?auto=format&fit=crop&q=80&w=800"
+      image: "/images/audit.png"
     },
     {
       title: "Encrypted Privacy & Routing",
       desc: "Citizen privacy is protected through end-to-end encrypted data transmission. Meanwhile, the platform leverages AI to securely assess and prioritize high-risk reports, escalating them to emergency teams.",
-      image: "https://images.unsplash.com/photo-1588684784732-c6f3964dbdd7?auto=format&fit=crop&q=80&w=800"
+      image: "/images/routing.png"
     }
   ];
 
