@@ -98,9 +98,7 @@ export function Navbar() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
         {/* Logo */}
         <div className="flex items-center gap-2 cursor-pointer" onClick={() => router.push("/")}>
-          <div className="w-8 h-8 bg-gradient-to-br from-green-600 to-green-500 rounded-lg flex items-center justify-center shadow-md">
-            <Shield className="w-4 h-4 text-white" />
-          </div>
+          <img src="/images/logo.png" alt="Community Hero Logo" className="w-8 h-8 object-contain" />
           <span className="font-bold text-slate-800 tracking-tight hidden sm:block">Community Hero</span>
         </div>
 

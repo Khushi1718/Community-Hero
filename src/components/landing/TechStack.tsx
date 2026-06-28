@@ -6,6 +6,7 @@ export default function TechStack() {
     { name: "React", category: "UI Library", color: "bg-blue-500 text-white" },
     { name: "TypeScript", category: "Language", color: "bg-blue-600 text-white" },
     { name: "MongoDB", category: "Database", color: "bg-green-600 text-white" },
+    { name: "Google Pub/Sub", category: "Gov Integration", color: "bg-blue-400 text-white" },
     { name: "Tailwind CSS", category: "Styling", color: "bg-sky-500 text-white" },
     { name: "Google Gemini", category: "AI Engine", color: "bg-purple-600 text-white" },
     { name: "Leaflet Maps", category: "Geospatial", color: "bg-emerald-500 text-white" },

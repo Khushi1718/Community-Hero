@@ -233,7 +233,7 @@ export async function generateSingleCertificate(certId: string, drive: any) {
     // Set viewport exactly to A4 landscape size
     await page.setViewport({ width: 1122, height: 793, deviceScaleFactor: 2 });
     
-    await page.setContent(html, { waitUntil: 'networkidle0' });
+    await page.setContent(html, { waitUntil: 'domcontentloaded' });
     
     const pdfFileName = `${cert.certificateId}.pdf`;
     const pngFileName = `${cert.certificateId}.png`;

@@ -23,6 +23,7 @@ const isPublicRoute = createRouteMatcher([
   "/api/analytics(.*)",
   "/api/adopted-areas(.*)",
   "/api/leaderboard(.*)",
+  "/api/webhooks(.*)",      // External webhooks
 ]);
 
 // Staff routes — use our custom DB auth, NOT Clerk
@@ -32,6 +33,7 @@ const isStaffRoute = createRouteMatcher([
   "/employee(.*)",
   "/super-admin(.*)",
   "/volunteer-org/dashboard(.*)", // Org dashboard uses devBypass, not Clerk
+  "/api/admin(.*)",               // Admin API routes bypass Clerk
 ]);
 
 export default clerkMiddleware(async (auth, request) => {

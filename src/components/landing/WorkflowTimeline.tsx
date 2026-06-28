@@ -1,17 +1,17 @@
 "use client";
 
-import { Smartphone, Brain, ShieldCheck, UserCog, Wrench, UploadCloud, CheckCircle, Rss } from "lucide-react";
+import { Smartphone, Brain, AlertTriangle, UserCog, Wrench, UploadCloud, CheckCircle, Rss } from "lucide-react";
 
 export default function WorkflowTimeline() {
   const steps = [
-    { icon: Smartphone, title: "Citizen Report", desc: "Report via mobile with GPS." },
-    { icon: Brain, title: "AI Verification", desc: "Auto-validation & tagging." },
-    { icon: ShieldCheck, title: "Admin Review", desc: "Jurisdiction routing." },
-    { icon: UserCog, title: "Assignment", desc: "Dispatched to worker." },
-    { icon: Wrench, title: "Field Work", desc: "On-site execution." },
-    { icon: UploadCloud, title: "Evidence", desc: "Post-repair photo." },
-    { icon: CheckCircle, title: "Approval", desc: "Admin signs off." },
-    { icon: Rss, title: "Community", desc: "Public feed post." },
+    { icon: Smartphone, title: "Report Live", desc: "Citizen submits issue live via app." },
+    { icon: Brain, title: "AI Analysis", desc: "Duplicate detection & image check." },
+    { icon: AlertTriangle, title: "AI Reasoning", desc: "Severity scoring & impact assessment." },
+    { icon: UserCog, title: "Auto-Assignment", desc: "Task routed to relevant department." },
+    { icon: Wrench, title: "Field Action", desc: "Employee executes related work." },
+    { icon: UploadCloud, title: "Publish Proof", desc: "Employee uploads timelines & proof." },
+    { icon: CheckCircle, title: "Verification", desc: "AI tests completion & Admin review." },
+    { icon: Rss, title: "Community Feed", desc: "Issue published to public feed." },
   ];
 
   return (
@@ -20,7 +20,7 @@ export default function WorkflowTimeline() {
       
       <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-20 max-w-3xl mx-auto">
-          <h2 className="text-sm font-black text-green-400 uppercase tracking-widest mb-4">How It Works</h2>
+          <h2 className="text-sm font-black text-green-400 uppercase tracking-widest mb-4">How Reporting Works</h2>
           <h3 className="text-3xl md:text-5xl font-black text-white leading-tight">
             The Lifecycle of Accountability
           </h3>

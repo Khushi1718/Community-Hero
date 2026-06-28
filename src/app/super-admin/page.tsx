@@ -247,107 +247,119 @@ export default function SuperAdminPage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 p-8">
-      <div className="max-w-6xl mx-auto">
-        <header className="flex justify-between items-center mb-8">
+    <div className="min-h-screen bg-[#F4F9F5] p-8">
+      
+      <div className="max-w-7xl mx-auto">
+        <header className="flex justify-between items-end mb-8 border-b border-emerald-200 pb-6">
           <div>
-            <h1 className="text-3xl font-black text-slate-900 flex items-center gap-3">
-              <Shield className="w-8 h-8 text-indigo-600" />
-              Super Admin Control Center
+            <h1 className="text-2xl font-black text-slate-900 uppercase tracking-tight">
+              <span className="text-emerald-700">STATE</span> CONTROL CENTER
             </h1>
-            <p className="text-slate-500 mt-2">Manage geographical administrators and global employees.</p>
+            <p className="text-slate-600 text-sm mt-1 font-medium">Global Jurisdiction & Platform Audit Management</p>
           </div>
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3">
             <button
               onClick={() => setIsPasswordModalOpen(true)}
-              className="flex items-center gap-2 bg-slate-100 hover:bg-slate-200 text-slate-600 px-3 py-1.5 rounded-lg text-sm font-bold border transition-colors hidden sm:flex"
+              className="bg-emerald-50 hover:bg-emerald-100 text-emerald-800 px-4 py-2 rounded text-[11px] uppercase tracking-wider font-bold border border-emerald-200 shadow-sm transition-colors"
             >
               Change Password
+            </button>
+            <button
+              onClick={() => router.push("/super-admin/settings/integrations")}
+              className="bg-teal-50 hover:bg-teal-100 text-teal-800 px-4 py-2 rounded text-[11px] uppercase tracking-wider font-bold border border-teal-200 shadow-sm transition-colors"
+            >
+              CRM Integrations
             </button>
             <button
               onClick={() => {
                 logoutMock();
                 router.push("/");
               }}
-              className="flex items-center gap-2 text-slate-500 hover:text-slate-800 transition-colors bg-slate-100 hover:bg-slate-200 px-3 py-1.5 rounded-lg text-sm font-medium"
+              className="bg-red-50 hover:bg-red-100 text-red-700 px-4 py-2 rounded text-[11px] uppercase tracking-wider font-bold border border-red-200 transition-colors"
             >
-              <LogOut className="w-4 h-4" />
+              Sign Out
             </button>
-            {activeTab === "admins" ? (
+            {activeTab === "admins" && (
                 <button 
-                onClick={() => setIsModalOpen(true)}
-                className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-6 rounded-xl flex items-center gap-2 transition-colors shadow-lg shadow-indigo-600/20"
+                onClick={() => {
+                  setNewCity("");
+                  setNewDepartment("");
+                  setIsModalOpen(true);
+                }}
+                className="bg-slate-900 hover:bg-slate-800 text-white font-bold py-2 px-4 rounded text-[11px] uppercase tracking-wider shadow-sm transition-colors"
                 >
-                <Plus className="w-5 h-5" /> Add New Admin
-                </button>
-            ) : (
-                <button 
-                onClick={() => setIsEmployeeModalOpen(true)}
-                className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 px-6 rounded-xl flex items-center gap-2 transition-colors shadow-lg shadow-emerald-600/20"
-                >
-                <Plus className="w-5 h-5" /> Add New Employee
+                + Add Admin
                 </button>
             )}
-            
+            {activeTab === "employees" && (
+                <button 
+                onClick={() => setIsEmployeeModalOpen(true)}
+                className="bg-slate-900 hover:bg-slate-800 text-white font-bold py-2 px-4 rounded text-[11px] uppercase tracking-wider shadow-sm transition-colors"
+                >
+                + Add Employee
+                </button>
+            )}
+            {activeTab === "area_adoptions" && (
+                <button 
+                onClick={() => {
+                   setNewCity("ALL");
+                   setNewDepartment("ALL");
+                   setIsModalOpen(true);
+                }}
+                className="bg-slate-900 hover:bg-slate-800 text-white font-bold py-2 px-4 rounded text-[11px] uppercase tracking-wider shadow-sm transition-colors"
+                >
+                + Add State Admin
+                </button>
+            )}
           </div>
         </header>
 
+
+        
         {/* Tabs */}
-        <div className="flex gap-3 mb-6 flex-wrap">
+        <div className="flex gap-2 mb-6 border-b border-emerald-100 pb-px">
             <button
                 onClick={() => setActiveTab("admins")}
-                className={`px-6 py-3 rounded-xl font-bold flex items-center gap-2 transition-colors ${activeTab === "admins" ? "bg-indigo-100 text-indigo-700" : "bg-white text-slate-500 hover:bg-slate-100 border border-slate-200"}`}
+                className={`px-5 py-2.5 text-[13px] font-bold uppercase tracking-wider transition-colors border-b-2 ${activeTab === "admins" ? "border-slate-800 text-slate-900 bg-slate-100/50" : "border-transparent text-slate-500 hover:text-slate-800 hover:bg-slate-50"}`}
             >
-                <UserCog className="w-5 h-5" /> Admins ({admins.length})
+                Admins ({admins.length})
             </button>
             <button
                 onClick={() => setActiveTab("employees")}
-                className={`px-6 py-3 rounded-xl font-bold flex items-center gap-2 transition-colors ${activeTab === "employees" ? "bg-emerald-100 text-emerald-700" : "bg-white text-slate-500 hover:bg-slate-100 border border-slate-200"}`}
+                className={`px-5 py-2.5 text-[13px] font-bold uppercase tracking-wider transition-colors border-b-2 ${activeTab === "employees" ? "border-slate-800 text-slate-900 bg-slate-100/50" : "border-transparent text-slate-500 hover:text-slate-800 hover:bg-slate-50"}`}
             >
-                <UserCircle className="w-5 h-5" /> Employees ({employees.length})
+                Employees ({employees.length})
             </button>
             <button
                 onClick={() => setActiveTab("volunteer_orgs")}
-                className={`px-6 py-3 rounded-xl font-bold flex items-center gap-2 transition-colors ${activeTab === "volunteer_orgs" ? "bg-teal-100 text-teal-700" : "bg-white text-slate-500 hover:bg-slate-100 border border-slate-200"}`}
+                className={`px-5 py-2.5 text-[13px] font-bold uppercase tracking-wider transition-colors border-b-2 ${activeTab === "volunteer_orgs" ? "border-slate-800 text-slate-900 bg-slate-100/50" : "border-transparent text-slate-500 hover:text-slate-800 hover:bg-slate-50"}`}
             >
-                <Briefcase className="w-5 h-5" /> Volunteer Orgs ({allOrgs.length})
-                {allOrgs.filter(o => o.status === "PENDING_VERIFICATION").length > 0 && (
-                  <span className="bg-amber-500 text-white text-[10px] font-black px-1.5 py-0.5 rounded-full">
-                    {allOrgs.filter(o => o.status === "PENDING_VERIFICATION").length}
-                  </span>
-                )}
+                Volunteer Orgs ({allOrgs.length})
             </button>
             <button
                 onClick={() => setActiveTab("area_adoptions")}
-                className={`px-6 py-3 rounded-xl font-bold flex items-center gap-2 transition-colors ${activeTab === "area_adoptions" ? "bg-purple-100 text-purple-700" : "bg-white text-slate-500 hover:bg-slate-100 border border-slate-200"}`}
+                className={`px-5 py-2.5 text-[13px] font-bold uppercase tracking-wider transition-colors border-b-2 ${activeTab === "area_adoptions" ? "border-slate-800 text-slate-900 bg-slate-100/50" : "border-transparent text-slate-500 hover:text-slate-800 hover:bg-slate-50"}`}
             >
-                <MapPin className="w-5 h-5" /> Area Adoptions ({adoptedAreas.length})
+                State Admins
             </button>
             <button
                 onClick={() => setActiveTab("audit_logs")}
-                className={`px-6 py-3 rounded-xl font-bold flex items-center gap-2 transition-colors ${activeTab === "audit_logs" ? "bg-amber-100 text-amber-700" : "bg-white text-slate-500 hover:bg-slate-100 border border-slate-200"}`}
+                className={`px-5 py-2.5 text-[13px] font-bold uppercase tracking-wider transition-colors border-b-2 ${activeTab === "audit_logs" ? "border-slate-800 text-slate-900 bg-slate-100/50" : "border-transparent text-slate-500 hover:text-slate-800 hover:bg-slate-50"}`}
             >
-                <Briefcase className="w-5 h-5" /> Audit Logs
+                Audit Logs
             </button>
             <button
                 onClick={() => setActiveTab("ai_report")}
-                className={`px-6 py-3 rounded-xl font-bold flex items-center gap-2 transition-colors ${activeTab === "ai_report" ? "bg-emerald-100 text-emerald-700" : "bg-white text-slate-500 hover:bg-slate-100 border border-slate-200"}`}
+                className={`px-5 py-2.5 text-[13px] font-bold uppercase tracking-wider transition-colors border-b-2 ${activeTab === "ai_report" ? "border-slate-800 text-slate-900 bg-slate-100/50" : "border-transparent text-slate-500 hover:text-slate-800 hover:bg-slate-50"}`}
             >
-                <TrendingUp className="w-5 h-5" /> AI Monthly Report
-            </button>
-            <button
-                onClick={() => setActiveTab("overdue_escalations")}
-                className={`px-6 py-3 rounded-xl font-bold flex items-center gap-2 transition-colors ${activeTab === "overdue_escalations" ? "bg-red-100 text-red-700" : "bg-white text-slate-500 hover:bg-slate-100 border border-slate-200"}`}
-            >
-                <AlertTriangle className="w-5 h-5" /> Overdue Escalations
+                AI Monthly Report
             </button>
         </div>
-
-        <div className="bg-white border border-slate-200 rounded-3xl shadow-sm overflow-hidden">
+<div className="bg-white border border-emerald-100 rounded-sm shadow-sm overflow-hidden">
           {activeTab === "admins" && (
               <table className="w-full text-left border-collapse">
                 <thead>
-                <tr className="bg-slate-50 border-b border-slate-200 text-slate-500 text-sm font-bold uppercase tracking-wider">
+                <tr className="bg-slate-50 border-b border-emerald-100 text-slate-500 text-sm font-bold uppercase tracking-wider">
                     <th className="p-4">Admin Details</th>
                     <th className="p-4">Jurisdiction State</th>
                     <th className="p-4">Jurisdiction City</th>
@@ -397,7 +409,7 @@ export default function SuperAdminPage() {
           {activeTab === "employees" && (
               <table className="w-full text-left border-collapse">
                 <thead>
-                <tr className="bg-slate-50 border-b border-slate-200 text-slate-500 text-sm font-bold uppercase tracking-wider">
+                <tr className="bg-slate-50 border-b border-emerald-100 text-slate-500 text-sm font-bold uppercase tracking-wider">
                     <th className="p-4">Employee Details</th>
                     <th className="p-4">Assigned State</th>
                     <th className="p-4">Assigned City</th>
@@ -466,12 +478,12 @@ export default function SuperAdminPage() {
                 {/* Analytics */}
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                   {[
-                    { label: "Total Orgs", value: stats.total, color: "bg-slate-50 border-slate-200", text: "text-slate-700" },
+                    { label: "Total Orgs", value: stats.total, color: "bg-slate-50 border-emerald-100", text: "text-slate-700" },
                     { label: "Pending", value: stats.pending, color: "bg-amber-50 border-amber-200", text: "text-amber-700" },
                     { label: "Verified", value: stats.verified, color: "bg-emerald-50 border-emerald-200", text: "text-emerald-700" },
                     { label: "Suspended", value: stats.suspended, color: "bg-red-50 border-red-200", text: "text-red-700" },
                   ].map(s => (
-                    <div key={s.label} className={`${s.color} border rounded-2xl p-4 text-center`}>
+                    <div key={s.label} className={`${s.color} border rounded-sm p-4 text-center`}>
                       <p className={`text-3xl font-black ${s.text}`}>{s.value}</p>
                       <p className="text-xs text-slate-500 mt-1">{s.label}</p>
                     </div>
@@ -480,23 +492,23 @@ export default function SuperAdminPage() {
 
                 {/* Filters */}
                 <div className="flex flex-wrap gap-3 items-center">
-                  <button onClick={() => setIsAddOrgModalOpen(true)} className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2.5 rounded-xl text-sm font-bold flex items-center gap-2 transition-colors">
+                  <button onClick={() => setIsAddOrgModalOpen(true)} className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2.5 rounded-sm text-sm font-bold flex items-center gap-2 transition-colors">
                     <Plus className="w-4 h-4" /> Add Organization
                   </button>
                   <div className="relative flex-1 min-w-[180px]">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                     <input type="text" value={orgSearch} onChange={e => setOrgSearch(e.target.value)}
                       placeholder="Search org name or email..."
-                      className="w-full pl-9 pr-3 py-2.5 border border-slate-200 rounded-xl text-sm text-slate-900 focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
+                      className="w-full pl-9 pr-3 py-2.5 border border-emerald-100 rounded-sm text-sm text-slate-900 focus:ring-2 focus:ring-indigo-500 focus:outline-none" />
                   </div>
                   <input type="text" value={orgStateFilter} onChange={e => setOrgStateFilter(e.target.value)}
                     placeholder="Filter by state"
-                    className="border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-900 focus:ring-2 focus:ring-indigo-500 focus:outline-none w-36" />
+                    className="border border-emerald-100 rounded-sm px-3 py-2.5 text-sm text-slate-900 focus:ring-2 focus:ring-indigo-500 focus:outline-none w-36" />
                   <input type="text" value={orgCityFilter} onChange={e => setOrgCityFilter(e.target.value)}
                     placeholder="Filter by city"
-                    className="border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-900 focus:ring-2 focus:ring-indigo-500 focus:outline-none w-36" />
+                    className="border border-emerald-100 rounded-sm px-3 py-2.5 text-sm text-slate-900 focus:ring-2 focus:ring-indigo-500 focus:outline-none w-36" />
                   <select value={orgStatusFilter} onChange={e => setOrgStatusFilter(e.target.value)}
-                    className="border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-900 focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                    className="border border-emerald-100 rounded-sm px-3 py-2.5 text-sm text-slate-900 focus:ring-2 focus:ring-indigo-500 focus:outline-none">
                     <option value="ALL">All Statuses</option>
                     <option value="PENDING_VERIFICATION">Pending</option>
                     <option value="VERIFIED">Verified</option>
@@ -506,7 +518,7 @@ export default function SuperAdminPage() {
                 </div>
 
                 {/* Org List */}
-                <div className="bg-white border border-slate-200 rounded-3xl overflow-hidden shadow-sm">
+                <div className="bg-white border border-emerald-100 rounded-sm overflow-hidden shadow-sm">
                   {filteredOrgs.length === 0 ? (
                     <div className="text-center py-16">
                       <Briefcase className="w-12 h-12 text-slate-200 mx-auto mb-3" />
@@ -517,7 +529,7 @@ export default function SuperAdminPage() {
                       {filteredOrgs.map((org: any) => (
                         <div key={org._id} className="p-5 hover:bg-slate-50 transition-colors">
                           <div className="flex flex-col sm:flex-row sm:items-start gap-4">
-                            <div className="w-12 h-12 rounded-2xl overflow-hidden bg-teal-100 flex-shrink-0 flex items-center justify-center border border-slate-200">
+                            <div className="w-12 h-12 rounded-sm overflow-hidden bg-teal-100 flex-shrink-0 flex items-center justify-center border border-emerald-100">
                               {org.logoUrl ? <img src={org.logoUrl} alt="" className="w-full h-full object-cover" /> : <Building2 className="w-6 h-6 text-teal-600" />}
                             </div>
                             <div className="flex-1 min-w-0">
@@ -541,30 +553,30 @@ export default function SuperAdminPage() {
                             <div className="flex flex-wrap gap-2">
                               {org.status === "PENDING_VERIFICATION" && (
                                 <button onClick={() => handleSuperOrgAction(org._id, "approved")} disabled={orgActionLoading}
-                                  className="flex items-center gap-1 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold px-3 py-1.5 rounded-xl disabled:opacity-50">
+                                  className="flex items-center gap-1 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold px-3 py-1.5 rounded-sm disabled:opacity-50">
                                   <CheckCircle2 className="w-3 h-3" /> Approve
                                 </button>
                               )}
                               {org.status === "PENDING_VERIFICATION" && (
                                 <button onClick={() => handleSuperOrgAction(org._id, "rejected", "Rejected by Super Admin")} disabled={orgActionLoading}
-                                  className="flex items-center gap-1 bg-red-50 hover:bg-red-100 text-red-700 border border-red-200 text-xs font-bold px-3 py-1.5 rounded-xl disabled:opacity-50">
+                                  className="flex items-center gap-1 bg-red-50 hover:bg-red-100 text-red-700 border border-red-200 text-xs font-bold px-3 py-1.5 rounded-sm disabled:opacity-50">
                                   <X className="w-3 h-3" /> Reject
                                 </button>
                               )}
                               {org.status === "VERIFIED" && (
                                 <button onClick={() => handleSuperOrgAction(org._id, "suspended", "Suspended by Super Admin")} disabled={orgActionLoading}
-                                  className="flex items-center gap-1 bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-200 text-xs font-bold px-3 py-1.5 rounded-xl disabled:opacity-50">
+                                  className="flex items-center gap-1 bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-200 text-xs font-bold px-3 py-1.5 rounded-sm disabled:opacity-50">
                                   <AlertTriangle className="w-3 h-3" /> Suspend
                                 </button>
                               )}
                               {org.status === "SUSPENDED" && (
                                 <button onClick={() => handleSuperOrgAction(org._id, "reactivated")} disabled={orgActionLoading}
-                                  className="flex items-center gap-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 text-xs font-bold px-3 py-1.5 rounded-xl disabled:opacity-50">
+                                  className="flex items-center gap-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 text-xs font-bold px-3 py-1.5 rounded-sm disabled:opacity-50">
                                   <RefreshCw className="w-3 h-3" /> Reactivate
                                 </button>
                               )}
                               <button onClick={() => { if (confirm(`Delete "${org.name}"? This cannot be undone.`)) handleSuperOrgAction(org._id, "delete"); }} disabled={orgActionLoading}
-                                className="flex items-center gap-1 bg-slate-100 hover:bg-red-50 text-slate-500 hover:text-red-600 text-xs font-bold px-3 py-1.5 rounded-xl disabled:opacity-50">
+                                className="flex items-center gap-1 bg-slate-100 hover:bg-red-50 text-slate-500 hover:text-red-600 text-xs font-bold px-3 py-1.5 rounded-sm disabled:opacity-50">
                                 <Trash2 className="w-3 h-3" /> Delete
                               </button>
                             </div>
@@ -609,7 +621,7 @@ export default function SuperAdminPage() {
       {/* Admin Modal */}
       {isModalOpen && (
         <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl w-full max-w-lg p-8 shadow-2xl animate-fade-in-up">
+          <div className="bg-white rounded-sm w-full max-w-lg p-8 shadow-2xl animate-fade-in-up">
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-2xl font-bold text-slate-800">Create Administrator</h2>
               <button onClick={() => setIsModalOpen(false)} className="text-slate-400 hover:text-slate-600"><X className="w-6 h-6" /></button>
@@ -617,26 +629,26 @@ export default function SuperAdminPage() {
             <form onSubmit={handleCreateAdmin} className="space-y-4">
               <div>
                 <label className="block text-sm font-bold text-slate-700 mb-1">Full Name</label>
-                <input required type="text" value={newName} onChange={e => setNewName(e.target.value)} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-slate-900" />
+                <input required type="text" value={newName} onChange={e => setNewName(e.target.value)} className="w-full bg-slate-50 border border-emerald-100 rounded-sm px-4 py-3 text-slate-900" />
               </div>
               <div>
                 <label className="block text-sm font-bold text-slate-700 mb-1">Clerk Account Email</label>
-                <input required type="email" value={newEmail} onChange={e => setNewEmail(e.target.value)} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-slate-900" />
+                <input required type="email" value={newEmail} onChange={e => setNewEmail(e.target.value)} className="w-full bg-slate-50 border border-emerald-100 rounded-sm px-4 py-3 text-slate-900" />
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-bold text-slate-700 mb-1">State</label>
-                  <input required type="text" value={newState} onChange={e => setNewState(e.target.value)} placeholder="e.g. Haryana" className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-slate-900" />
+                  <input required type="text" value={newState} onChange={e => setNewState(e.target.value)} placeholder="e.g. Haryana" className="w-full bg-slate-50 border border-emerald-100 rounded-sm px-4 py-3 text-slate-900" />
                 </div>
                 <div>
                   <label className="block text-sm font-bold text-slate-700 mb-1">City (Optional)</label>
-                  <input type="text" value={newCity} onChange={e => setNewCity(e.target.value)} placeholder="Leave blank for whole state" className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-slate-900" />
+                  <input type="text" value={newCity} onChange={e => setNewCity(e.target.value)} placeholder="Leave blank for whole state" className="w-full bg-slate-50 border border-emerald-100 rounded-sm px-4 py-3 text-slate-900" />
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-bold text-slate-700 mb-1">Department</label>
-                  <select required value={newDepartment} onChange={e => setNewDepartment(e.target.value)} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-slate-900">
+                  <select required value={newDepartment} onChange={e => setNewDepartment(e.target.value)} className="w-full bg-slate-50 border border-emerald-100 rounded-sm px-4 py-3 text-slate-900">
                     <option value="">Select Department...</option>
                     <option value="Roads Department">Roads Department</option>
                     <option value="Electricity Department">Electricity Department</option>
@@ -650,10 +662,10 @@ export default function SuperAdminPage() {
                 </div>
                 <div>
                   <label className="block text-sm font-bold text-slate-700 mb-1">Initial Password</label>
-                  <input required type="text" value={newPassword} onChange={e => setNewPassword(e.target.value)} placeholder="Assign a custom password" className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-slate-900" />
+                  <input required type="text" value={newPassword} onChange={e => setNewPassword(e.target.value)} placeholder="Assign a custom password" className="w-full bg-slate-50 border border-emerald-100 rounded-sm px-4 py-3 text-slate-900" />
                 </div>
               </div>
-              <button type="submit" className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-4 rounded-xl mt-4">
+              <button type="submit" className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-4 rounded-sm mt-4">
                 Create Admin Account
               </button>
             </form>
@@ -664,7 +676,7 @@ export default function SuperAdminPage() {
       {/* Employee Modal */}
       {isEmployeeModalOpen && (
         <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl w-full max-w-lg p-8 shadow-2xl animate-fade-in-up">
+          <div className="bg-white rounded-sm w-full max-w-lg p-8 shadow-2xl animate-fade-in-up">
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-2xl font-bold text-slate-800">Create Employee</h2>
               <button onClick={() => setIsEmployeeModalOpen(false)} className="text-slate-400 hover:text-slate-600"><X className="w-6 h-6" /></button>
@@ -672,7 +684,7 @@ export default function SuperAdminPage() {
             <form onSubmit={handleCreateEmployee} className="space-y-4">
               <div>
                 <label className="block text-sm font-bold text-slate-700 mb-1">Assign Under Admin</label>
-                <select required value={selectedAdminEmail} onChange={e => setSelectedAdminEmail(e.target.value)} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-slate-900">
+                <select required value={selectedAdminEmail} onChange={e => setSelectedAdminEmail(e.target.value)} className="w-full bg-slate-50 border border-emerald-100 rounded-sm px-4 py-3 text-slate-900">
                     <option value="">Select an Admin...</option>
                     {admins.map(a => (
                         <option key={a.email} value={a.email}>{a.name} ({a.department || "All"}) - {a.city ? `${a.city}, ` : ''}{a.state}</option>
@@ -682,17 +694,17 @@ export default function SuperAdminPage() {
               </div>
               <div>
                 <label className="block text-sm font-bold text-slate-700 mb-1">Employee Name</label>
-                <input required type="text" value={newEmpName} onChange={e => setNewEmpName(e.target.value)} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-slate-900" />
+                <input required type="text" value={newEmpName} onChange={e => setNewEmpName(e.target.value)} className="w-full bg-slate-50 border border-emerald-100 rounded-sm px-4 py-3 text-slate-900" />
               </div>
               <div>
                 <label className="block text-sm font-bold text-slate-700 mb-1">Login Email</label>
-                <input required type="email" value={newEmpEmail} onChange={e => setNewEmpEmail(e.target.value)} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-slate-900" />
+                <input required type="email" value={newEmpEmail} onChange={e => setNewEmpEmail(e.target.value)} className="w-full bg-slate-50 border border-emerald-100 rounded-sm px-4 py-3 text-slate-900" />
               </div>
               <div>
                 <label className="block text-sm font-bold text-slate-700 mb-1">Initial Password</label>
-                <input required type="text" value={newEmpPassword} onChange={e => setNewEmpPassword(e.target.value)} placeholder="Assign a custom password" className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-slate-900" />
+                <input required type="text" value={newEmpPassword} onChange={e => setNewEmpPassword(e.target.value)} placeholder="Assign a custom password" className="w-full bg-slate-50 border border-emerald-100 rounded-sm px-4 py-3 text-slate-900" />
               </div>
-              <button type="submit" className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-4 rounded-xl mt-4">
+              <button type="submit" className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-4 rounded-sm mt-4">
                 Create Employee Account
               </button>
             </form>
@@ -703,7 +715,7 @@ export default function SuperAdminPage() {
       {/* Change Password Modal */}
       {isPasswordModalOpen && (
         <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl w-full max-w-sm p-8 shadow-2xl animate-fade-in-up">
+          <div className="bg-white rounded-sm w-full max-w-sm p-8 shadow-2xl animate-fade-in-up">
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-xl font-bold text-slate-800">Change Password</h2>
               <button onClick={() => setIsPasswordModalOpen(false)} className="text-slate-400 hover:text-slate-600"><X className="w-5 h-5" /></button>
@@ -716,55 +728,50 @@ export default function SuperAdminPage() {
                   required
                   value={newAdminPassword}
                   onChange={e => setNewAdminPassword(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-900"
+                  className="w-full bg-slate-50 border border-emerald-100 rounded-sm px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-900"
                 />
               </div>
-              <button type="submit" className="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold py-3 rounded-xl transition-colors">
+              <button type="submit" className="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold py-3 rounded-sm transition-colors">
                 Update Password
               </button>
             </form>
           </div>
         </div>
       )}
+      
       {/* Area Adoptions Tab */}
       {activeTab === "area_adoptions" && (
-        <div className="bg-white border border-slate-200 rounded-3xl shadow-sm overflow-hidden p-6 animate-fade-in">
-          <h2 className="text-xl font-bold text-slate-900 mb-4 flex items-center gap-2"><MapPin className="w-5 h-5 text-purple-600" /> Global Area Adoptions</h2>
+        <div className="bg-white border border-emerald-200 rounded-sm shadow-sm overflow-hidden">
+          <div className="p-4 border-b border-emerald-100 bg-emerald-50 flex justify-between items-center">
+             <h2 className="text-sm font-bold text-slate-800 uppercase tracking-wider">State-Level Administrators (Global Adoptions)</h2>
+          </div>
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
               <thead>
-                <tr className="bg-slate-50 border-y border-slate-200 text-xs uppercase text-slate-500 font-bold">
-                  <th className="p-4">Area Name</th>
-                  <th className="p-4">Location</th>
+                <tr className="bg-white border-b border-emerald-200 text-slate-500 text-[11px] font-bold uppercase tracking-wider">
+                  <th className="p-4">Admin Details</th>
+                  <th className="p-4">Jurisdiction State</th>
+                  <th className="p-4">Coverage</th>
                   <th className="p-4">Status</th>
-                  <th className="p-4">Duration</th>
-                  <th className="p-4">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100">
-                {adoptedAreas.map(area => (
-                  <tr key={area._id} className="hover:bg-slate-50">
-                    <td className="p-4 font-bold text-slate-800">{area.name}</td>
-                    <td className="p-4 text-slate-600">{area.location}, {area.city}</td>
+              <tbody>
+                {admins.filter(a => a.city === "ALL" && a.department === "ALL").length === 0 ? (
+                  <tr>
+                    <td colSpan={4} className="p-8 text-center text-slate-500 text-sm">No State Admins found. Click '+ Add State Admin' to create one.</td>
+                  </tr>
+                ) : admins.filter(a => a.city === "ALL" && a.department === "ALL").map(admin => (
+                  <tr key={admin.email} className="border-b border-emerald-100 hover:bg-emerald-50/30 transition-colors">
                     <td className="p-4">
-                      <span className={`px-2 py-1 rounded text-xs font-bold ${area.status === "ADOPTED" ? "bg-emerald-100 text-emerald-700" : area.status === "REJECTED" ? "bg-red-100 text-red-700" : "bg-amber-100 text-amber-700"}`}>
-                        {area.status}
-                      </span>
+                      <div className="font-bold text-slate-900 text-sm">{admin.name}</div>
+                      <div className="text-slate-500 text-xs">{admin.email}</div>
                     </td>
-                    <td className="p-4 text-slate-600">{area.durationMonths} Months</td>
+                    <td className="p-4 font-medium text-slate-700">{admin.state}</td>
                     <td className="p-4">
-                      {area.status === "PENDING" && (
-                        <div className="flex gap-2">
-                          <button onClick={async () => {
-                            await fetch(`/api/adopted-areas/${area._id}`, { method: "PATCH", headers: {"Content-Type":"application/json"}, body: JSON.stringify({ status: "ADOPTED", adminEmail: appUser.email, adminRole: "super_admin" }) });
-                            loadData();
-                          }} className="bg-emerald-600 text-white px-3 py-1 rounded font-bold text-xs">Approve</button>
-                          <button onClick={async () => {
-                            await fetch(`/api/adopted-areas/${area._id}`, { method: "PATCH", headers: {"Content-Type":"application/json"}, body: JSON.stringify({ status: "REJECTED", adminEmail: appUser.email, adminRole: "super_admin" }) });
-                            loadData();
-                          }} className="bg-red-50 text-red-700 border border-red-200 px-3 py-1 rounded font-bold text-xs">Reject</button>
-                        </div>
-                      )}
+                      <span className="bg-green-100 text-green-800 text-[10px] font-bold px-2 py-1 rounded">ALL CITIES & DEPTS</span>
+                    </td>
+                    <td className="p-4">
+                      <span className="bg-emerald-100 text-emerald-800 text-[10px] font-bold px-2 py-1 rounded">ACTIVE</span>
                     </td>
                   </tr>
                 ))}
@@ -773,41 +780,9 @@ export default function SuperAdminPage() {
           </div>
         </div>
       )}
-
-      {/* Audit Logs Tab */}
-      {activeTab === "audit_logs" && (
-        <div className="bg-white border border-slate-200 rounded-3xl shadow-sm overflow-hidden p-6 animate-fade-in">
-          <h2 className="text-xl font-bold text-slate-900 mb-4 flex items-center gap-2"><Briefcase className="w-5 h-5 text-amber-600" /> Global Audit Logs</h2>
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="bg-slate-50 border-y border-slate-200 text-xs uppercase text-slate-500 font-bold">
-                  <th className="p-4">Timestamp</th>
-                  <th className="p-4">Action Type</th>
-                  <th className="p-4">Actor</th>
-                  <th className="p-4">Target ID</th>
-                  <th className="p-4">Status</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                {auditLogs.map((log: any) => (
-                  <tr key={log._id} className="hover:bg-slate-50">
-                    <td className="p-4 text-sm text-slate-500">{new Date(log.createdAt).toLocaleString()}</td>
-                    <td className="p-4 text-sm font-bold text-slate-800">{log.actionType}</td>
-                    <td className="p-4 text-sm text-slate-600">{log.actorEmail} <span className="text-[10px] bg-slate-100 px-2 rounded text-slate-400 uppercase">{log.actorRole}</span></td>
-                    <td className="p-4 text-sm text-slate-500 font-mono">{log.targetEntityId}</td>
-                    <td className="p-4 text-sm font-bold text-emerald-600">{log.status}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      )}
-
-      {/* AI Report Tab */}
+{/* AI Report Tab */}
       {activeTab === "ai_report" && (
-        <div className="bg-white border border-slate-200 rounded-3xl shadow-sm p-6 animate-fade-in">
+        <div className="bg-white border border-emerald-100 rounded-sm shadow-sm p-6 animate-fade-in">
           <h2 className="text-xl font-bold text-slate-900 mb-4 flex items-center gap-2"><TrendingUp className="w-5 h-5 text-emerald-600" /> AI Monthly Impact Report</h2>
           <p className="text-slate-600 mb-6">Generate an AI-powered summary of platform health, municipal performance, and volunteer engagement.</p>
           
@@ -831,11 +806,11 @@ export default function SuperAdminPage() {
                  });
                  setAiReportGenerating(false);
                }, 2000);
-             }} className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 px-6 rounded-xl transition-colors">
+             }} className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 px-6 rounded-sm transition-colors">
                {aiReportGenerating ? "Generating Report..." : "Generate Report with Google Gemini"}
              </button>
           ) : (
-             <div className="bg-slate-50 border border-slate-200 rounded-2xl p-6">
+             <div className="bg-slate-50 border border-emerald-100 rounded-sm p-6">
                 <h3 className="text-2xl font-black text-slate-900 mb-2">{aiReportData.title}</h3>
                 <p className="text-sm text-slate-500 mb-6">Generated on {aiReportData.date}</p>
                 
@@ -856,29 +831,29 @@ export default function SuperAdminPage() {
       )}      {/* Add Organization Modal */}
       {isAddOrgModalOpen && (
         <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl animate-fade-in-up">
+          <div className="bg-white rounded-sm w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl animate-fade-in-up">
             <div className="sticky top-0 bg-white/80 backdrop-blur-md px-6 py-4 border-b border-surface-100 flex justify-between items-center z-10">
               <h2 className="text-xl font-black text-surface-900">Add Organization</h2>
               <button onClick={() => setIsAddOrgModalOpen(false)} className="text-surface-400 hover:text-surface-600 bg-surface-50 hover:bg-surface-100 p-2 rounded-full transition-colors"><X className="w-5 h-5" /></button>
             </div>
             
             <form onSubmit={handleAddOrganization} className="p-6 space-y-4">
-              <div className="bg-indigo-50 border border-indigo-100 p-4 rounded-xl mb-4 text-sm text-indigo-800">
+              <div className="bg-indigo-50 border border-indigo-100 p-4 rounded-sm mb-4 text-sm text-indigo-800">
                 <p>Organizations added here will be automatically marked as <strong>VERIFIED</strong>.</p>
               </div>
               
               <div className="grid grid-cols-2 gap-4">
                 <div className="col-span-2">
                   <label className="block text-xs font-bold text-surface-600 mb-1">Organization Name</label>
-                  <input required value={addOrgName} onChange={e=>setAddOrgName(e.target.value)} className="w-full border p-2.5 rounded-xl text-sm" placeholder="e.g. Green Earth NGO" />
+                  <input required value={addOrgName} onChange={e=>setAddOrgName(e.target.value)} className="w-full border p-2.5 rounded-sm text-sm" placeholder="e.g. Green Earth NGO" />
                 </div>
                 <div>
                   <label className="block text-xs font-bold text-surface-600 mb-1">Email</label>
-                  <input required type="email" value={addOrgEmail} onChange={e=>setAddOrgEmail(e.target.value)} className="w-full border p-2.5 rounded-xl text-sm" />
+                  <input required type="email" value={addOrgEmail} onChange={e=>setAddOrgEmail(e.target.value)} className="w-full border p-2.5 rounded-sm text-sm" />
                 </div>
                 <div>
                   <label className="block text-xs font-bold text-surface-600 mb-1">Type</label>
-                  <select required value={addOrgType} onChange={e=>setAddOrgType(e.target.value)} className="w-full border p-2.5 rounded-xl text-sm">
+                  <select required value={addOrgType} onChange={e=>setAddOrgType(e.target.value)} className="w-full border p-2.5 rounded-sm text-sm">
                     <option value="NGO">NGO</option>
                     <option value="NSS">NSS</option>
                     <option value="NCC">NCC</option>
@@ -889,37 +864,37 @@ export default function SuperAdminPage() {
                 </div>
                 <div className="col-span-2">
                   <label className="block text-xs font-bold text-surface-600 mb-1">Description</label>
-                  <textarea required rows={2} value={addOrgDescription} onChange={e=>setAddOrgDescription(e.target.value)} className="w-full border p-2.5 rounded-xl text-sm resize-none" />
+                  <textarea required rows={2} value={addOrgDescription} onChange={e=>setAddOrgDescription(e.target.value)} className="w-full border p-2.5 rounded-sm text-sm resize-none" />
                 </div>
                 <div>
                   <label className="block text-xs font-bold text-surface-600 mb-1">State</label>
-                  <input required value={addOrgState} onChange={e=>setAddOrgState(e.target.value)} className="w-full border p-2.5 rounded-xl text-sm" />
+                  <input required value={addOrgState} onChange={e=>setAddOrgState(e.target.value)} className="w-full border p-2.5 rounded-sm text-sm" />
                 </div>
                 <div>
                   <label className="block text-xs font-bold text-surface-600 mb-1">City</label>
-                  <input required value={addOrgCity} onChange={e=>setAddOrgCity(e.target.value)} className="w-full border p-2.5 rounded-xl text-sm" />
+                  <input required value={addOrgCity} onChange={e=>setAddOrgCity(e.target.value)} className="w-full border p-2.5 rounded-sm text-sm" />
                 </div>
                 <div className="col-span-2">
                   <label className="block text-xs font-bold text-surface-600 mb-1">Address</label>
-                  <input required value={addOrgAddress} onChange={e=>setAddOrgAddress(e.target.value)} className="w-full border p-2.5 rounded-xl text-sm" />
+                  <input required value={addOrgAddress} onChange={e=>setAddOrgAddress(e.target.value)} className="w-full border p-2.5 rounded-sm text-sm" />
                 </div>
                 <div>
                   <label className="block text-xs font-bold text-surface-600 mb-1">Contact Person Name</label>
-                  <input required value={addOrgContactPerson} onChange={e=>setAddOrgContactPerson(e.target.value)} className="w-full border p-2.5 rounded-xl text-sm" />
+                  <input required value={addOrgContactPerson} onChange={e=>setAddOrgContactPerson(e.target.value)} className="w-full border p-2.5 rounded-sm text-sm" />
                 </div>
                 <div>
                   <label className="block text-xs font-bold text-surface-600 mb-1">Phone</label>
-                  <input required value={addOrgPhone} onChange={e=>setAddOrgPhone(e.target.value)} className="w-full border p-2.5 rounded-xl text-sm" />
+                  <input required value={addOrgPhone} onChange={e=>setAddOrgPhone(e.target.value)} className="w-full border p-2.5 rounded-sm text-sm" />
                 </div>
                 <div className="col-span-2">
                   <label className="block text-xs font-bold text-surface-600 mb-1">Initial Password</label>
-                  <input required type="text" value={addOrgPassword} onChange={e=>setAddOrgPassword(e.target.value)} className="w-full border p-2.5 rounded-xl text-sm" placeholder="Set a secure password" />
+                  <input required type="text" value={addOrgPassword} onChange={e=>setAddOrgPassword(e.target.value)} className="w-full border p-2.5 rounded-sm text-sm" placeholder="Set a secure password" />
                 </div>
               </div>
 
               <div className="pt-4 border-t border-surface-100 flex gap-3 justify-end">
-                <button type="button" onClick={() => setIsAddOrgModalOpen(false)} className="px-5 py-2.5 text-sm font-bold text-surface-600 hover:bg-surface-100 rounded-xl transition-colors">Cancel</button>
-                <button type="submit" disabled={addOrgSubmitting} className="px-5 py-2.5 text-sm font-bold bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl transition-colors flex items-center gap-2">
+                <button type="button" onClick={() => setIsAddOrgModalOpen(false)} className="px-5 py-2.5 text-sm font-bold text-surface-600 hover:bg-surface-100 rounded-sm transition-colors">Cancel</button>
+                <button type="submit" disabled={addOrgSubmitting} className="px-5 py-2.5 text-sm font-bold bg-indigo-600 hover:bg-indigo-700 text-white rounded-sm transition-colors flex items-center gap-2">
                   {addOrgSubmitting ? "Creating..." : "Create Organization"}
                 </button>
               </div>

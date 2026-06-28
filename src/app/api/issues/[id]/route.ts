@@ -64,7 +64,7 @@ const PROGRESS_MAP: Record<string, number> = {
   "Community Drive Active": 10,
   "Awaiting Admin Verification": 90,
   "Completed": 100,
-  "Awaiting Citizen Review": 95,
+  "Awaiting Citizen Review": 100,
   "Closed": 100,
 };
 

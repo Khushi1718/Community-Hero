@@ -4,6 +4,8 @@ import { Issue } from "@/models/Issue";
 import { TimelineEvent } from "@/models/TimelineEvent";
 import { User } from "@/models/User";
 import { Notification } from "@/models/Notification";
+import { IntegrationConfig } from "@/models/IntegrationConfig";
+import { pushToExternalCRM } from "@/lib/integrations/pushToExternalCRM";
 
 // Helper to map V2 MongoDB Issue to V1 Frontend Issue format
 const mapToV1Format = async (issueDoc: any) => {
@@ -426,6 +428,37 @@ export async function POST(request: NextRequest) {
             actorRole: "system",
             timestamp: new Date(body.timeline[1].timestamp || Date.now() + 1000)
         });
+    }
+
+    // --- EXTERNAL CRM SYNC (Non-blocking) ---
+    // We look up the integration config using the city from the location payload
+    if (body.city) {
+      IntegrationConfig.findOne({ cityId: body.city }).then(config => {
+        if (config) {
+          if (config.enabled) {
+            pushToExternalCRM(newIssue, config).catch(err => {
+              console.error(`Background CRM webhook sync failed for ${newIssue.issueId}:`, err);
+            });
+          }
+          if (config.pubSubEnabled && config.pubSubTopic) {
+            const { publishToPubSub } = require("@/lib/integrations/publishToPubSub");
+            const { buildCRMPayload } = require("@/lib/integrations/buildPayload");
+            const payload = buildCRMPayload(newIssue, config);
+            
+            publishToPubSub({
+              topicName: config.pubSubTopic,
+              payload,
+              serviceAccountKeyEncrypted: config.pubSubServiceAccountKeyEncrypted,
+              issueId: newIssue.issueId || newIssue._id.toString(),
+              eventType: "TICKET_CREATED"
+            }).catch((err: any) => {
+              console.error(`Background CRM Pub/Sub sync failed for ${newIssue.issueId}:`, err);
+            });
+          }
+        }
+      }).catch(err => {
+        console.error("Failed to fetch IntegrationConfig:", err);
+      });
     }
 
     const v1Response = await mapToV1Format(newIssue);

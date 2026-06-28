@@ -7,6 +7,7 @@ import { useAuth } from "@/lib/auth-context";
 
 // Dynamic Imports for modular landing page sections
 const LandingHero = dynamic(() => import('@/components/landing/LandingHero'));
+const AboutUs = dynamic(() => import('@/components/landing/AboutUs'));
 const WhyCommunityHero = dynamic(() => import('@/components/landing/WhyCommunityHero'));
 const WorkflowTimeline = dynamic(() => import('@/components/landing/WorkflowTimeline'));
 const UserEcosystem = dynamic(() => import('@/components/landing/UserEcosystem'));
@@ -37,11 +38,9 @@ export default function Home() {
     <div className="min-h-screen font-sans overflow-x-hidden bg-white selection:bg-green-100 selection:text-green-900">
       
       <LandingHero />
-      <WhyCommunityHero />
+      <AboutUs />
       <WorkflowTimeline />
       <UserEcosystem />
-      <AIIntelligence />
-      <TransparencyTrust />
       
       {/* ─── LIVE COVERAGE MAP SECTION ─── */}
       <section className="py-24 bg-slate-50 border-b border-slate-200">
@@ -59,12 +58,11 @@ export default function Home() {
         </div>
       </section>
 
-      <PlatformAnalytics />
       <OrganizationRegistrationCTA />
-      <CommunityFeedPreview />
-      <SecurityVerification />
-      <TechStack />
-      <ImpactSection />
+
+      <AIIntelligence />
+      <WhyCommunityHero />
+      <PlatformAnalytics />
 
       {/* ─── FOOTER ─── */}
       <footer className="bg-green-950 text-white py-16 px-4 sm:px-6 lg:px-8 border-t border-green-900">

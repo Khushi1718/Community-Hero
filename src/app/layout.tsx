@@ -20,6 +20,9 @@ export const metadata: Metadata = {
   title: "Community Hero",
   description: "Hyperlocal Problem Solver",
   manifest: "/manifest.json",
+  icons: {
+    icon: "/images/logo.png",
+  },
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",

@@ -2,14 +2,14 @@
 
 import { useAuth } from "@/lib/auth-context";
 import { useRouter } from "next/navigation";
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useMemo } from "react";
 import {
   LayoutDashboard, Compass, Calendar, Users, ClipboardList,
   MessageSquare, Trophy, UserCircle, Bell, Settings, LogOut, FileText,
   TrendingUp, Star, MapPin, Clock, ChevronRight, Search,
   Filter, CheckCircle2, AlertCircle, Building2, Menu, X,
   Shield, Activity, Zap, Heart, RefreshCw, Eye, Edit3,
-  Phone, Mail, Globe, Camera, Plus, Award, Leaf, Trash2, ArrowRight, Download
+  Phone, Mail, Globe, Camera, Plus, Award, Leaf, Trash2, ArrowRight, Download, Target, UserCheck
 } from "lucide-react";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, BarChart, Bar } from "recharts";
 
@@ -67,7 +67,11 @@ interface Drive {
   instructions?: string;
   status: "OPEN" | "CANCELLED" | "COMPLETED" | "WAITING_FOR_ORG" | "ORG_PENDING_APPROVAL" | "ORG_APPROVED" | "VOLUNTEER_REG_OPEN" | "REG_CLOSED" | "DRIVE_IN_PROGRESS" | "DRIVE_COMPLETED" | "ADMIN_VERIFICATION_PENDING" | "VERIFIED" | "FAILED" | "OVERDUE";
   orgName?: string;
+  orgId?: string;
+  acceptedOrgId?: string;
   orgRequests?: any[];
+  partnerRequests?: any[];
+  supportingOrgs?: any[];
   volunteers?: any[];
   driveTimeline?: any[];
   cancellationRequestedBy?: string;
@@ -77,7 +81,6 @@ interface Drive {
   completionNotes?: string;
   isAttendanceLocked?: boolean;
 }
-
 interface Notification {
   _id: string;
   title: string;
@@ -149,6 +152,32 @@ export default function VolunteerOrgDashboard() {
   const [editMode, setEditMode] = useState(false);
   const [editForm, setEditForm] = useState<Partial<OrgProfile>>({});
   const [editSaving, setEditSaving] = useState(false);
+
+  // Calculate dynamic trust score
+  const computedTrustScore = useMemo(() => {
+    if (!org) return 0;
+    let score = 50; // Base score
+    if (org.verifiedBy) score += 20; // +20 if verified
+    
+    // +5 for each completed drive
+    const completedDrives = myDrives.filter(d => d.status === 'COMPLETED').length;
+    score += completedDrives * 5;
+    
+    // -10 for each cancelled drive
+    const cancelledDrives = myDrives.filter(d => d.status === 'CANCELLED').length;
+    score -= cancelledDrives * 10;
+    
+    // -15 for each overdue drive
+    const overdueDrives = myDrives.filter(d => d.status === 'OVERDUE').length;
+    score -= overdueDrives * 15;
+    
+    // +2 for each active member
+    const activeMembersCount = org.members ? org.members.filter((m: any) => m.status === 'member').length : (org.activeMembers || 0);
+    score += activeMembersCount * 2;
+    
+    return Math.max(0, Math.min(100, score)); // clamp between 0 and 100
+  }, [org, myDrives]);
+
 
   // Settings
   const [newPassword, setNewPassword] = useState("");
@@ -437,7 +466,7 @@ export default function VolunteerOrgDashboard() {
   if (org && org.status === "PENDING_VERIFICATION") {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-amber-50 to-white p-4">
-        <div className="max-w-lg w-full bg-white rounded-3xl border border-amber-200 shadow-xl p-10 text-center">
+        <div className="max-w-lg w-full bg-white rounded-sm border border-amber-200 shadow-xl p-10 text-center">
           <div className="w-20 h-20 bg-amber-50 rounded-full flex items-center justify-center mx-auto mb-6 border-4 border-amber-200">
             <Clock className="w-10 h-10 text-amber-500" />
           </div>
@@ -446,12 +475,12 @@ export default function VolunteerOrgDashboard() {
             Your organization <span className="font-bold text-slate-900">{org.name}</span> is awaiting admin verification.
             You'll receive a notification once approved.
           </p>
-          <div className="bg-slate-50 rounded-2xl p-4 text-left space-y-2 mb-6 text-sm">
+          <div className="bg-[#F4F9F5] rounded-sm p-4 text-left space-y-2 mb-6 text-sm">
             <div className="flex justify-between"><span className="text-slate-500">Type</span><span className="font-semibold">{org.type}</span></div>
             <div className="flex justify-between"><span className="text-slate-500">City</span><span className="font-semibold">{org.city}, {org.state}</span></div>
             <div className="flex justify-between"><span className="text-slate-500">Status</span><span className="bg-amber-100 text-amber-700 text-xs font-bold px-2 py-0.5 rounded-full">PENDING VERIFICATION</span></div>
           </div>
-          <button onClick={logoutMock} className="w-full bg-slate-900 text-white font-bold py-3 rounded-2xl flex items-center justify-center gap-2">
+          <button onClick={logoutMock} className="w-full bg-slate-900 text-white font-bold py-3 rounded-sm flex items-center justify-center gap-2">
             <LogOut className="w-4 h-4" /> Sign Out
           </button>
         </div>
@@ -463,19 +492,19 @@ export default function VolunteerOrgDashboard() {
   if (org && org.status === "REJECTED") {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-red-50 to-white p-4">
-        <div className="max-w-lg w-full bg-white rounded-3xl border border-red-200 shadow-xl p-10 text-center">
+        <div className="max-w-lg w-full bg-white rounded-sm border border-red-200 shadow-xl p-10 text-center">
           <div className="w-20 h-20 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-6 border-4 border-red-200">
             <AlertCircle className="w-10 h-10 text-red-500" />
           </div>
           <h1 className="text-2xl font-bold text-slate-900 mb-2">Verification Rejected</h1>
           <p className="text-slate-500 text-sm mb-4">Your organization was not approved.</p>
           {org.rejectionReason && (
-            <div className="bg-red-50 border border-red-200 rounded-2xl p-4 mb-6 text-left">
+            <div className="bg-red-50 border border-red-200 rounded-sm p-4 mb-6 text-left">
               <p className="text-red-700 text-sm font-semibold">Reason:</p>
               <p className="text-red-600 text-sm mt-1">{org.rejectionReason}</p>
             </div>
           )}
-          <button onClick={logoutMock} className="w-full bg-slate-900 text-white font-bold py-3 rounded-2xl">Sign Out</button>
+          <button onClick={logoutMock} className="w-full bg-slate-900 text-white font-bold py-3 rounded-sm">Sign Out</button>
         </div>
       </div>
     );
@@ -485,13 +514,13 @@ export default function VolunteerOrgDashboard() {
   if (org && org.status === "SUSPENDED") {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-100 to-white p-4">
-        <div className="max-w-lg w-full bg-white rounded-3xl border border-slate-200 shadow-xl p-10 text-center">
-          <div className="w-20 h-20 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-6">
+        <div className="max-w-lg w-full bg-white rounded-sm border border-emerald-100 shadow-xl p-10 text-center">
+          <div className="w-20 h-20 bg-emerald-50 rounded-full flex items-center justify-center mx-auto mb-6">
             <Shield className="w-10 h-10 text-slate-500" />
           </div>
           <h1 className="text-2xl font-bold text-slate-900 mb-2">Organization Suspended</h1>
           <p className="text-slate-500 text-sm mb-6">Contact your administrator for more information.</p>
-          <button onClick={logoutMock} className="w-full bg-slate-900 text-white font-bold py-3 rounded-2xl">Sign Out</button>
+          <button onClick={logoutMock} className="w-full bg-slate-900 text-white font-bold py-3 rounded-sm">Sign Out</button>
         </div>
       </div>
     );
@@ -502,7 +531,7 @@ export default function VolunteerOrgDashboard() {
   if (org && org.mustChangePassword) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-50 to-white p-4">
-        <div className="max-w-md w-full bg-white rounded-3xl border border-indigo-200 shadow-xl p-10 text-center">
+        <div className="max-w-md w-full bg-white rounded-sm border border-indigo-200 shadow-xl p-10 text-center">
           <div className="w-16 h-16 bg-indigo-50 rounded-full flex items-center justify-center mx-auto mb-6">
             <Shield className="w-8 h-8 text-indigo-500" />
           </div>
@@ -527,14 +556,14 @@ export default function VolunteerOrgDashboard() {
           }}>
             <div>
               <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">New Password</label>
-              <input type="password" required value={newPassword} onChange={e=>setNewPassword(e.target.value)} className="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+              <input type="password" required value={newPassword} onChange={e=>setNewPassword(e.target.value)} className="w-full border border-emerald-100 rounded-sm px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
             </div>
             <div>
               <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Confirm New Password</label>
-              <input type="password" required value={confirmPassword} onChange={e=>setConfirmPassword(e.target.value)} className="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+              <input type="password" required value={confirmPassword} onChange={e=>setConfirmPassword(e.target.value)} className="w-full border border-emerald-100 rounded-sm px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
             </div>
-            {pwMsg && <p className="text-xs font-bold text-red-600 bg-red-50 p-2 rounded-lg">{pwMsg}</p>}
-            <button type="submit" disabled={editSaving} className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 rounded-2xl transition-colors">
+            {pwMsg && <p className="text-xs font-bold text-red-600 bg-red-50 p-2 rounded-sm">{pwMsg}</p>}
+            <button type="submit" disabled={editSaving} className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 rounded-sm transition-colors">
               {editSaving ? "Saving..." : "Update Password & Continue"}
             </button>
           </form>
@@ -572,9 +601,9 @@ export default function VolunteerOrgDashboard() {
       <div className="p-5 border-b border-slate-800">
         <div className="flex items-center gap-3">
           {org?.logoUrl ? (
-            <img src={org.logoUrl} alt="Logo" className="w-10 h-10 rounded-xl object-cover" />
+            <img src={org.logoUrl} alt="Logo" className="w-10 h-10 rounded-sm object-cover" />
           ) : (
-            <div className="w-10 h-10 bg-emerald-600 rounded-xl flex items-center justify-center">
+            <div className="w-10 h-10 bg-emerald-600 rounded-sm flex items-center justify-center">
               <Building2 className="w-5 h-5 text-white" />
             </div>
           )}
@@ -595,23 +624,23 @@ export default function VolunteerOrgDashboard() {
       <div className="px-4 py-3 border-b border-slate-800">
         <div className="flex items-center justify-between mb-1.5">
           <span className="text-slate-400 text-xs">Trust Score</span>
-          <span className="text-emerald-400 font-bold text-xs">{org?.trustScore ?? 50}/100</span>
+          <span className="text-emerald-400 font-bold text-xs">{computedTrustScore}/100</span>
         </div>
         <div className="w-full bg-slate-700 rounded-full h-1.5">
           <div
             className="bg-gradient-to-r from-emerald-500 to-teal-400 h-1.5 rounded-full transition-all"
-            style={{ width: `${org?.trustScore ?? 50}%` }}
+            style={{ width: `${computedTrustScore}%` }}
           />
         </div>
       </div>
 
       {/* Nav */}
-      <nav className="flex-1 p-3 space-y-0.5 overflow-y-auto">
+      <nav className="flex-1 p-3 space-y-0.5">
         {navItems.map(item => (
           <button
             key={item.id}
             onClick={() => { setActiveTab(item.id); setSidebarOpen(false); }}
-            className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all ${
+            className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-sm text-sm font-medium transition-all ${
               activeTab === item.id
                 ? "bg-emerald-600 text-white"
                 : "text-slate-400 hover:text-white hover:bg-slate-800"
@@ -632,7 +661,7 @@ export default function VolunteerOrgDashboard() {
       <div className="p-3 border-t border-slate-800">
         <button
           onClick={logoutMock}
-          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-slate-400 hover:text-white hover:bg-red-900/30 transition-all"
+          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-sm text-sm font-medium text-slate-400 hover:text-white hover:bg-red-900/30 transition-all"
         >
           <LogOut className="w-4 h-4" />
           Sign Out
@@ -643,7 +672,7 @@ export default function VolunteerOrgDashboard() {
 
   // ── Render ─────────────────────────────────────────────────────────────
   return (
-    <div className="flex h-screen bg-slate-50 overflow-hidden">
+    <div className="flex h-[calc(100dvh-4rem)] bg-[#F4F9F5] overflow-hidden">
       {/* Mobile overlay */}
       {sidebarOpen && (
         <div className="fixed inset-0 bg-black/50 z-40 lg:hidden" onClick={() => setSidebarOpen(false)} />
@@ -654,7 +683,7 @@ export default function VolunteerOrgDashboard() {
       {/* Main Content */}
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Top bar */}
-        <div className="bg-white border-b border-slate-200 px-4 py-3 flex items-center justify-between">
+        <div className="bg-white border-b border-emerald-100 px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <button onClick={() => setSidebarOpen(true)} className="lg:hidden text-slate-500 hover:text-slate-900">
               <Menu className="w-5 h-5" />
@@ -692,7 +721,7 @@ export default function VolunteerOrgDashboard() {
             <div className="space-y-6 animate-fade-in">
               {/* Welcome Banner */}
               {org?.coverImageUrl && (
-                <div className="relative rounded-2xl overflow-hidden h-36">
+                <div className="relative rounded-sm overflow-hidden h-36">
                   <img src={org.coverImageUrl} alt="Cover" className="w-full h-full object-cover" />
                   <div className="absolute inset-0 bg-gradient-to-r from-slate-900/70 to-transparent flex items-center p-6">
                     <div>
@@ -708,11 +737,11 @@ export default function VolunteerOrgDashboard() {
                 {[
                   { label: "Upcoming Drives", value: upcomingDrives.length, icon: <Calendar className="w-5 h-5 text-blue-600" />, color: "bg-blue-50 border-blue-100" },
                   { label: "Completed Drives", value: completedDrives.length, icon: <CheckCircle2 className="w-5 h-5 text-emerald-600" />, color: "bg-emerald-50 border-emerald-100" },
-                  { label: "Trust Score", value: `${org?.trustScore ?? 50}/100`, icon: <Star className="w-5 h-5 text-amber-500" />, color: "bg-amber-50 border-amber-100" },
+                  { label: "Trust Score", value: `${computedTrustScore}/100`, icon: <Star className="w-5 h-5 text-amber-500" />, color: "bg-amber-50 border-amber-100" },
                   { label: "Active Members", value: org?.activeMembers ?? 0, icon: <Users className="w-5 h-5 text-purple-600" />, color: "bg-purple-50 border-purple-100" },
                 ].map((kpi, i) => (
-                  <div key={i} className={`${kpi.color} border rounded-2xl p-4 flex items-start gap-3`}>
-                    <div className="bg-white rounded-xl p-2 shadow-sm">{kpi.icon}</div>
+                  <div key={i} className={`${kpi.color} border rounded-sm p-4 flex items-start gap-3`}>
+                    <div className="bg-white rounded-sm p-2 shadow-sm">{kpi.icon}</div>
                     <div>
                       <p className="text-slate-500 text-xs">{kpi.label}</p>
                       <p className="text-slate-900 font-bold text-xl">{kpi.value}</p>
@@ -723,7 +752,7 @@ export default function VolunteerOrgDashboard() {
 
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 {/* Quick Actions */}
-                <div className="bg-white rounded-2xl border border-slate-200 p-5">
+                <div className="bg-white rounded-sm border border-emerald-100 p-5">
                   <h3 className="font-bold text-slate-900 mb-4 flex items-center gap-2">
                     <Zap className="w-4 h-4 text-amber-500" /> Quick Actions
                   </h3>
@@ -737,7 +766,7 @@ export default function VolunteerOrgDashboard() {
                       <button
                         key={action.tab}
                         onClick={() => setActiveTab(action.tab)}
-                        className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold ${action.color} transition-all text-left`}
+                        className={`w-full flex items-center gap-3 px-4 py-3 rounded-sm text-sm font-semibold ${action.color} transition-all text-left`}
                       >
                         {action.icon} {action.label} <ChevronRight className="w-3.5 h-3.5 ml-auto" />
                       </button>
@@ -746,7 +775,7 @@ export default function VolunteerOrgDashboard() {
                 </div>
 
                 {/* Recent Notifications */}
-                <div className="bg-white rounded-2xl border border-slate-200 p-5">
+                <div className="bg-white rounded-sm border border-emerald-100 p-5">
                   <h3 className="font-bold text-slate-900 mb-4 flex items-center gap-2">
                     <Bell className="w-4 h-4 text-purple-500" /> Recent Notifications
                     {unreadCount > 0 && <span className="bg-red-100 text-red-600 text-[10px] font-bold px-1.5 py-0.5 rounded-full">{unreadCount} new</span>}
@@ -756,7 +785,7 @@ export default function VolunteerOrgDashboard() {
                   ) : (
                     <div className="space-y-2">
                       {notifications.slice(0, 4).map(n => (
-                        <div key={n._id} className={`p-3 rounded-xl text-xs ${n.isRead ? "bg-slate-50" : "bg-emerald-50 border border-emerald-100"}`}>
+                        <div key={n._id} className={`p-3 rounded-sm text-xs ${n.isRead ? "bg-[#F4F9F5]" : "bg-emerald-50 border border-emerald-100"}`}>
                           <p className="font-semibold text-slate-800">{n.title}</p>
                           <p className="text-slate-500 mt-0.5 line-clamp-2">{n.message}</p>
                         </div>
@@ -767,7 +796,7 @@ export default function VolunteerOrgDashboard() {
                 </div>
 
                 {/* Organization Info */}
-                <div className="bg-white rounded-2xl border border-slate-200 p-5">
+                <div className="bg-white rounded-sm border border-emerald-100 p-5">
                   <h3 className="font-bold text-slate-900 mb-4 flex items-center gap-2">
                     <Building2 className="w-4 h-4 text-slate-500" /> Organization
                   </h3>
@@ -808,7 +837,7 @@ export default function VolunteerOrgDashboard() {
             <div className="space-y-6 animate-fade-in">
               <div className="flex justify-between items-center">
                  <h2 className="text-2xl font-black text-slate-900">Manage Drives</h2>
-                 <button onClick={() => setIsCreateDriveModalOpen(true)} className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2.5 px-5 rounded-xl flex items-center gap-2 transition-colors shadow-sm">
+                 <button onClick={() => setIsCreateDriveModalOpen(true)} className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2.5 px-5 rounded-sm flex items-center gap-2 transition-colors shadow-sm">
                    <Plus className="w-4 h-4" /> Create Independent Drive
                  </button>
               </div>
@@ -820,7 +849,7 @@ export default function VolunteerOrgDashboard() {
                        <Shield className="w-5 h-5 text-amber-500" /> Drive Requests (from Admin)
                     </h3>
                     {filteredDrives.length === 0 ? (
-                       <div className="bg-white border border-slate-200 rounded-2xl p-8 text-center">
+                       <div className="bg-white border border-emerald-100 rounded-sm p-8 text-center">
                           <Compass className="w-10 h-10 text-slate-200 mx-auto mb-3" />
                           <p className="text-slate-500 text-sm font-medium">No available drive requests.</p>
                        </div>
@@ -855,7 +884,7 @@ export default function VolunteerOrgDashboard() {
                           <Calendar className="w-5 h-5 text-emerald-500" /> My Drives & Supported Drives
                        </h3>
                        {myDrives.filter(d => !d.partnerRequests?.some((pr: any) => pr.orgId === org?._id && pr.status === "pending")).length === 0 ? (
-                          <div className="bg-white border border-slate-200 rounded-2xl p-8 text-center">
+                          <div className="bg-white border border-emerald-100 rounded-sm p-8 text-center">
                              <Calendar className="w-10 h-10 text-slate-200 mx-auto mb-3" />
                              <p className="text-slate-500 text-sm font-medium">No active drives found.</p>
                           </div>
@@ -877,19 +906,20 @@ export default function VolunteerOrgDashboard() {
              <div className="space-y-8 animate-fade-in">
                 {/* Pending Requests */}
                 <div>
-                   <h2 className="text-xl font-black text-slate-900 mb-4">New Membership Requests</h2>
+                   <h2 className="text-xl font-black text-slate-900 mb-1">Community Hero Volunteer Requests</h2>
+                   <p className="text-sm text-slate-500 mb-4">Volunteers from the Community Hero platform who want to join your missions.</p>
                    {(!org?.members || org.members.filter(m => m.status === 'pending').length === 0) ? (
-                      <div className="bg-white border border-slate-200 rounded-2xl p-8 text-center">
+                      <div className="bg-white border border-emerald-100 rounded-sm p-8 text-center">
                          <Shield className="w-10 h-10 text-slate-200 mx-auto mb-3" />
-                         <p className="text-slate-500 text-sm font-medium">No new membership requests at the moment.</p>
+                         <p className="text-slate-500 text-sm font-medium">No new Community Hero volunteers have requested to join at the moment.</p>
                       </div>
                    ) : (
                       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
                          {org.members.filter(m => m.status === 'pending').map((m: any) => (
-                            <div key={m.email} className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
+                            <div key={m.email} className="bg-white border border-emerald-100 rounded-sm p-5 shadow-sm">
                                <p className="font-bold text-slate-900">{m.name}</p>
                                <p className="text-xs text-slate-500 mb-3">{m.email} • {m.phone}</p>
-                               <div className="bg-slate-50 p-3 rounded-xl mb-4">
+                               <div className="bg-[#F4F9F5] p-3 rounded-sm mb-4">
                                   <p className="text-[10px] font-bold text-slate-400 uppercase">Motivation</p>
                                   <p className="text-xs text-slate-700 italic">"{m.motivation}"</p>
                                </div>
@@ -897,11 +927,11 @@ export default function VolunteerOrgDashboard() {
                                   <button onClick={async () => {
                                      const res = await fetch(`/api/volunteer-org/${org._id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'approve_member', email: m.email }) });
                                      if(res.ok) handleRefresh();
-                                  }} className="flex-1 bg-emerald-100 hover:bg-emerald-200 text-emerald-700 text-xs font-bold py-2 rounded-lg transition-colors">Approve</button>
+                                  }} className="flex-1 bg-emerald-100 hover:bg-emerald-200 text-emerald-700 text-xs font-bold py-2 rounded-sm transition-colors">Approve</button>
                                   <button onClick={async () => {
                                      const res = await fetch(`/api/volunteer-org/${org._id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'reject_member', email: m.email }) });
                                      if(res.ok) handleRefresh();
-                                  }} className="flex-1 bg-red-50 hover:bg-red-100 text-red-600 text-xs font-bold py-2 rounded-lg transition-colors">Reject</button>
+                                  }} className="flex-1 bg-red-50 hover:bg-red-100 text-red-600 text-xs font-bold py-2 rounded-sm transition-colors">Reject</button>
                                </div>
                             </div>
                          ))}
@@ -911,10 +941,11 @@ export default function VolunteerOrgDashboard() {
 
                 {/* Active Members Directory */}
                 <div>
-                   <h2 className="text-xl font-black text-slate-900 mb-4">Active Members Directory</h2>
-                   <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
+                   <h2 className="text-xl font-black text-slate-900 mb-1">Community Hero Volunteer Directory</h2>
+                   <p className="text-sm text-slate-500 mb-4">Active platform users who are officially part of your organization.</p>
+                   <div className="bg-white border border-emerald-100 rounded-sm overflow-hidden shadow-sm">
                       <table className="w-full text-left text-sm">
-                         <thead className="bg-slate-50 border-b border-slate-200">
+                         <thead className="bg-[#F4F9F5] border-b border-emerald-100">
                             <tr>
                                <th className="px-6 py-4 font-bold text-slate-500 uppercase tracking-wider text-[10px]">Member</th>
                                <th className="px-6 py-4 font-bold text-slate-500 uppercase tracking-wider text-[10px]">Contact</th>
@@ -924,10 +955,10 @@ export default function VolunteerOrgDashboard() {
                          </thead>
                          <tbody className="divide-y divide-slate-100">
                             {(!org?.members || org.members.filter(m => m.status === 'member').length === 0) ? (
-                               <tr><td colSpan={4} className="px-6 py-8 text-center text-slate-400">No active members yet.</td></tr>
+                               <tr><td colSpan={4} className="px-6 py-8 text-center text-slate-400">No Community Hero volunteers have joined yet.</td></tr>
                             ) : (
                                org.members.filter(m => m.status === 'member').map((m: any) => (
-                                  <tr key={m.email} className="hover:bg-slate-50 transition-colors">
+                                  <tr key={m.email} className="hover:bg-[#F4F9F5] transition-colors">
                                      <td className="px-6 py-4 font-semibold text-slate-900">{m.name}</td>
                                      <td className="px-6 py-4 text-slate-500">{m.email}<br/><span className="text-xs">{m.phone}</span></td>
                                      <td className="px-6 py-4 text-slate-500 text-xs max-w-[200px] truncate">{m.skills}</td>
@@ -953,7 +984,7 @@ export default function VolunteerOrgDashboard() {
                 </div>
                 
                 {completedDrives.length === 0 ? (
-                   <div className="bg-white rounded-3xl border border-slate-200 shadow-sm p-16 text-center">
+                   <div className="bg-white rounded-sm border border-emerald-100 shadow-sm p-16 text-center">
                       <CheckCircle2 className="w-16 h-16 text-slate-200 mx-auto mb-4" />
                       <p className="text-slate-500 font-medium">Complete a drive with registered volunteers to issue certificates.</p>
                    </div>
@@ -962,7 +993,7 @@ export default function VolunteerOrgDashboard() {
                       {completedDrives.map(drive => {
                          const approvedVolunteers = drive.volunteers?.filter(v => v.status === "approved") || [];
                          return (
-                            <div key={drive._id} className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm flex flex-col">
+                            <div key={drive._id} className="bg-white border border-emerald-100 rounded-sm p-6 shadow-sm flex flex-col">
                                <div className="flex justify-between items-start mb-4">
                                   <div>
                                      <h3 className="text-base font-bold text-slate-900 line-clamp-1">{drive.title}</h3>
@@ -972,11 +1003,11 @@ export default function VolunteerOrgDashboard() {
                                </div>
 
                                {approvedVolunteers.length > 0 ? (
-                                  <div className="bg-slate-50 rounded-xl p-4 flex-1">
+                                  <div className="bg-[#F4F9F5] rounded-sm p-4 flex-1">
                                      <h4 className="text-[10px] font-bold text-slate-500 uppercase mb-3">Eligible Volunteers</h4>
                                      <div className="space-y-2">
                                         {approvedVolunteers.map(v => (
-                                           <div key={v.email} className="flex justify-between items-center bg-white p-3 border border-slate-200 rounded-lg">
+                                           <div key={v.email} className="flex justify-between items-center bg-white p-3 border border-emerald-100 rounded-sm">
                                               <div className="min-w-0 pr-2">
                                                  <p className="text-sm font-semibold text-slate-900 truncate">{v.name}</p>
                                                  <p className="text-[10px] text-slate-400 truncate">{v.email}</p>
@@ -1006,7 +1037,7 @@ export default function VolunteerOrgDashboard() {
                                                     btn.disabled = false;
                                                     alert("Network Error");
                                                  }
-                                              }} className="bg-indigo-600 hover:bg-indigo-700 text-white text-[10px] font-bold px-3 py-1.5 rounded-lg transition-colors flex-shrink-0">
+                                              }} className="bg-indigo-600 hover:bg-indigo-700 text-white text-[10px] font-bold px-3 py-1.5 rounded-sm transition-colors flex-shrink-0">
                                                  Generate & Send
                                               </button>
                                            </div>
@@ -1014,7 +1045,7 @@ export default function VolunteerOrgDashboard() {
                                      </div>
                                   </div>
                                ) : (
-                                  <div className="bg-slate-50 rounded-xl p-4 flex-1 flex items-center justify-center">
+                                  <div className="bg-[#F4F9F5] rounded-sm p-4 flex-1 flex items-center justify-center">
                                      <p className="text-xs text-slate-400 italic text-center">No approved volunteers found.</p>
                                   </div>
                                )}
@@ -1027,115 +1058,188 @@ export default function VolunteerOrgDashboard() {
           )}
 
           {/* ── PROFILE ─────────────────────────────────────────────── */}
-          {activeTab === "profile" && (
-            <div className="space-y-6 animate-fade-in">
-              {/* Cover & Logo */}
-              <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
-                <div className="h-40 bg-gradient-to-r from-emerald-500 to-teal-500 relative">
-                  {org?.coverImageUrl && <img src={org.coverImageUrl} alt="Cover" className="w-full h-full object-cover" />}
-                </div>
-                <div className="px-6 pb-6">
-                  <div className="flex items-end gap-4 -mt-8 mb-4">
-                    <div className="w-20 h-20 rounded-2xl border-4 border-white shadow-lg overflow-hidden bg-emerald-600 flex items-center justify-center">
-                      {org?.logoUrl
-                        ? <img src={org.logoUrl} alt="Logo" className="w-full h-full object-cover" />
-                        : <Building2 className="w-10 h-10 text-white" />
-                      }
-                    </div>
-                    <div className="flex-1 pb-1">
-                      <h2 className="text-xl font-bold text-slate-900">{org?.name}</h2>
-                      <div className="flex items-center gap-2 flex-wrap mt-1">
-                        <span className="bg-emerald-100 text-emerald-700 text-xs font-bold px-2 py-0.5 rounded-full">✓ VERIFIED</span>
-                        {org?.verifiedBy && (
-                           <span className="text-[10px] text-slate-500 font-bold bg-slate-100 px-2 py-0.5 rounded-full flex items-center gap-1">
-                              <Shield className="w-3 h-3 text-emerald-600"/> Verified by {org.verifiedBy} ({new Date(org.verifiedAt || "").toLocaleDateString()})
-                           </span>
-                        )}
-                        <span className="text-slate-500 text-xs">{org?.type}</span>
-                        <span className="text-slate-400 text-xs">•</span>
-                        <span className="text-slate-500 text-xs">{org?.city}, {org?.state}</span>
-                      </div>
-                    </div>
-                    <button
-                      onClick={() => { setEditMode(!editMode); setEditForm(org || {}); }}
-                      className="flex items-center gap-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-sm px-4 py-2 rounded-xl transition-all"
-                    >
-                      <Edit3 className="w-4 h-4" /> {editMode ? "Cancel" : "Edit Profile"}
-                    </button>
-                  </div>
 
+          {activeTab === "profile" && (
+            <div className="space-y-6 animate-fade-in pb-12">
+              <div className="flex justify-between items-end mb-6">
+                <div>
+                  <h2 className="text-2xl font-black text-slate-900">Organization Profile</h2>
+                  <p className="text-slate-500 font-medium mt-1">Official registry and operational details.</p>
+                </div>
+                <button
+                  onClick={() => { setEditMode(!editMode); setEditForm(org || {}); }}
+                  className="flex items-center gap-2 bg-white border border-emerald-200 hover:bg-emerald-50 text-emerald-800 font-bold text-[11px] uppercase tracking-wider px-4 py-2 rounded-none transition-all shadow-sm"
+                >
+                  <Edit3 className="w-4 h-4" /> {editMode ? "Cancel Editing" : "Modify Record"}
+                </button>
+              </div>
+
+              {/* Cover & Master Info Container */}
+              <div className="bg-white border border-emerald-100 rounded-none shadow-sm overflow-hidden">
+                <div className="h-48 bg-emerald-950 relative border-b border-emerald-900">
+                  {org?.coverImageUrl && <img src={org.coverImageUrl} alt="Cover" className="w-full h-full object-cover opacity-80 mix-blend-overlay" />}
+                  <div className="absolute inset-0 bg-gradient-to-t from-emerald-950/80 to-transparent"></div>
+                  
+                  {/* Absolute Info on Cover */}
+                  <div className="absolute bottom-6 left-6 right-6 flex items-end justify-between">
+                     <div className="flex items-end gap-6">
+                       <div className="w-24 h-24 border-2 border-emerald-500 bg-white flex items-center justify-center p-2 shadow-lg">
+                          {org?.logoUrl
+                            ? <img src={org.logoUrl} alt="Logo" className="w-full h-full object-contain" />
+                            : <Building2 className="w-12 h-12 text-emerald-900" />
+                          }
+                       </div>
+                       <div className="pb-2">
+                         <div className="flex items-center gap-3 mb-2">
+                            <span className="bg-emerald-500 text-white text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded-none shadow-sm border border-emerald-400">Verified Entity</span>
+                            {org?.verifiedBy && (
+                               <span className="text-[9px] text-emerald-200 font-bold uppercase tracking-wider flex items-center gap-1">
+                                  <Shield className="w-3 h-3 text-emerald-400"/> Authenticated by {org.verifiedBy}
+                               </span>
+                            )}
+                         </div>
+                         <h2 className="text-3xl font-black text-white tracking-tight leading-none shadow-sm">{org?.name}</h2>
+                       </div>
+                     </div>
+                  </div>
+                </div>
+
+                <div className="p-0">
                   {editMode ? (
-                    <div className="space-y-4">
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="p-8 space-y-6 bg-slate-50/50">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
-                          <label className="text-xs font-bold text-slate-700 block mb-1">Organization Name</label>
+                          <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block mb-2">Registered Entity Name</label>
                           <input type="text" value={editForm.name || ""} onChange={e => setEditForm(f => ({ ...f, name: e.target.value }))}
-                            className="w-full border border-slate-200 rounded-xl px-4 py-2 text-sm text-slate-900 focus:ring-2 focus:ring-emerald-500 focus:outline-none" />
+                            className="w-full border-2 border-emerald-100 bg-white rounded-none px-4 py-2.5 text-sm font-bold text-slate-900 focus:border-emerald-500 focus:outline-none transition-colors" />
                         </div>
                         <div>
-                          <label className="text-xs font-bold text-slate-700 block mb-1">Contact Phone</label>
+                          <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block mb-2">Primary Contact Phone</label>
                           <input type="tel" value={editForm.contactPhone || ""} onChange={e => setEditForm(f => ({ ...f, contactPhone: e.target.value }))}
-                            className="w-full border border-slate-200 rounded-xl px-4 py-2 text-sm text-slate-900 focus:ring-2 focus:ring-emerald-500 focus:outline-none" />
+                            className="w-full border-2 border-emerald-100 bg-white rounded-none px-4 py-2.5 text-sm font-bold text-slate-900 focus:border-emerald-500 focus:outline-none transition-colors" />
                         </div>
-                        <div className="sm:col-span-2">
-                          <label className="text-xs font-bold text-slate-700 block mb-1">Description</label>
+                        <div className="md:col-span-2">
+                          <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block mb-2">Operational Description</label>
                           <textarea rows={3} value={editForm.description || ""} onChange={e => setEditForm(f => ({ ...f, description: e.target.value }))}
-                            className="w-full border border-slate-200 rounded-xl px-4 py-2 text-sm text-slate-900 focus:ring-2 focus:ring-emerald-500 focus:outline-none resize-none" />
+                            className="w-full border-2 border-emerald-100 bg-white rounded-none px-4 py-2.5 text-sm text-slate-900 focus:border-emerald-500 focus:outline-none resize-none" />
                         </div>
-                        <div className="sm:col-span-2">
-                          <label className="text-xs font-bold text-slate-700 block mb-1">Mission Statement</label>
+                        <div className="md:col-span-2">
+                          <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block mb-2">Core Mission Statement</label>
                           <textarea rows={2} value={editForm.mission || ""} onChange={e => setEditForm(f => ({ ...f, mission: e.target.value }))}
-                            className="w-full border border-slate-200 rounded-xl px-4 py-2 text-sm text-slate-900 focus:ring-2 focus:ring-emerald-500 focus:outline-none resize-none" />
+                            className="w-full border-2 border-emerald-100 bg-white rounded-none px-4 py-2.5 text-sm font-medium text-emerald-900 focus:border-emerald-500 focus:outline-none resize-none" />
                         </div>
                         <div>
-                          <label className="text-xs font-bold text-slate-700 block mb-1">Website</label>
+                          <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block mb-2">Official Portal (Website)</label>
                           <input type="url" value={editForm.website || ""} onChange={e => setEditForm(f => ({ ...f, website: e.target.value }))}
-                            className="w-full border border-slate-200 rounded-xl px-4 py-2 text-sm text-slate-900 focus:ring-2 focus:ring-emerald-500 focus:outline-none" />
+                            className="w-full border-2 border-emerald-100 bg-white rounded-none px-4 py-2.5 text-sm font-bold text-slate-900 focus:border-emerald-500 focus:outline-none transition-colors" />
                         </div>
                         <div>
-                          <label className="text-xs font-bold text-slate-700 block mb-1">Contact Person</label>
+                          <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block mb-2">Liaison Officer</label>
                           <input type="text" value={editForm.contactPersonName || ""} onChange={e => setEditForm(f => ({ ...f, contactPersonName: e.target.value }))}
-                            className="w-full border border-slate-200 rounded-xl px-4 py-2 text-sm text-slate-900 focus:ring-2 focus:ring-emerald-500 focus:outline-none" />
+                            className="w-full border-2 border-emerald-100 bg-white rounded-none px-4 py-2.5 text-sm font-bold text-slate-900 focus:border-emerald-500 focus:outline-none transition-colors" />
                         </div>
                       </div>
-                      <button onClick={handleSaveProfile} disabled={editSaving}
-                        className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-6 py-2.5 rounded-xl flex items-center gap-2 disabled:opacity-60">
-                        {editSaving ? <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> : <CheckCircle2 className="w-4 h-4" />}
-                        Save Changes
-                      </button>
+                      <div className="border-t border-slate-200 pt-6">
+                        <button onClick={handleSaveProfile} disabled={editSaving}
+                          className="bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-[11px] uppercase tracking-wider px-8 py-3 rounded-none flex items-center justify-center gap-2 disabled:opacity-60 transition-colors w-full sm:w-auto">
+                          {editSaving ? <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> : <CheckCircle2 className="w-4 h-4" />}
+                          Commit Changes to Registry
+                        </button>
+                      </div>
                     </div>
                   ) : (
-                    <div className="space-y-4">
-                      <p className="text-slate-600 text-sm leading-relaxed">{org?.description}</p>
-                      {org?.mission && (
-                        <div className="bg-emerald-50 rounded-xl p-4">
-                          <p className="text-xs font-bold text-emerald-700 mb-1">Mission Statement</p>
-                          <p className="text-emerald-800 text-sm">{org.mission}</p>
+                    <div>
+                      {/* Key Metrics Grid */}
+                      <div className="grid grid-cols-2 md:grid-cols-4 divide-x divide-y md:divide-y-0 divide-emerald-100 border-b border-emerald-100 bg-emerald-50/30">
+                        <div className="p-6">
+                          <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-2 flex items-center gap-2"><Shield className="w-3 h-3 text-emerald-600"/> Registration No.</p>
+                          <p className="font-black text-slate-900 text-xl tracking-tight">{org?.registrationNumber || "PENDING"}</p>
                         </div>
-                      )}
-                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 text-sm">
-                        <div className="bg-slate-50 rounded-xl p-3">
-                          <p className="text-xs text-slate-400 mb-0.5">Registration No.</p>
-                          <p className="font-semibold text-slate-800">{org?.registrationNumber || "—"}</p>
+                        <div className="p-6">
+                          <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-2 flex items-center gap-2"><Users className="w-3 h-3 text-emerald-600"/> Community Volunteers</p>
+                          <p className="font-black text-slate-900 text-xl tracking-tight">{org?.members ? org.members.filter(m => m.status === 'member').length : (org?.activeMembers || 0)}</p>
                         </div>
-                        <div className="bg-slate-50 rounded-xl p-3">
-                          <p className="text-xs text-slate-400 mb-0.5">Active Members</p>
-                          <p className="font-semibold text-slate-800">{org?.activeMembers}</p>
+                        <div className="p-6">
+                          <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-2 flex items-center gap-2"><Award className="w-3 h-3 text-emerald-600"/> Trust Score</p>
+                          <div className="flex items-end gap-1">
+                             <p className="font-black text-emerald-700 text-xl tracking-tight">{computedTrustScore}</p>
+                             <p className="font-bold text-slate-400 text-sm mb-0.5">/100</p>
+                          </div>
                         </div>
-                        <div className="bg-slate-50 rounded-xl p-3">
-                          <p className="text-xs text-slate-400 mb-0.5">Trust Score</p>
-                          <p className="font-semibold text-slate-800">{org?.trustScore}/100</p>
+                        <div className="p-6">
+                          <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-2 flex items-center gap-2"><MapPin className="w-3 h-3 text-emerald-600"/> Jurisdiction</p>
+                          <p className="font-black text-slate-900 text-sm">{org?.city}</p>
+                          <p className="font-bold text-slate-500 text-xs">{org?.state}</p>
                         </div>
                       </div>
-                      <div>
-                        <p className="text-xs font-bold text-slate-500 uppercase tracking-wide mb-2">Work Categories</p>
-                        <div className="flex flex-wrap gap-2">
-                          {org?.workCategories?.map(cat => (
-                            <span key={cat} className="bg-emerald-50 text-emerald-700 text-xs font-bold px-3 py-1 rounded-full border border-emerald-200">
-                              {CATEGORY_ICONS[cat]} {cat}
-                            </span>
-                          ))}
-                        </div>
+
+                      {/* Details Section */}
+                      <div className="p-8 grid grid-cols-1 md:grid-cols-3 gap-12">
+                         <div className="md:col-span-2 space-y-8">
+                            <div>
+                               <h3 className="text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-3 border-b border-slate-200 pb-2">Operational Overview</h3>
+                               <p className="text-slate-700 text-sm leading-relaxed font-medium">{org?.description || "No operational description provided."}</p>
+                            </div>
+                            
+                            {org?.mission && (
+                              <div className="bg-emerald-950 border border-emerald-900 rounded-none p-6 shadow-inner relative overflow-hidden">
+                                <div className="absolute top-0 right-0 p-4 opacity-10">
+                                   <Target className="w-24 h-24 text-emerald-500" />
+                                </div>
+                                <h3 className="text-[10px] font-black text-emerald-400 uppercase tracking-widest mb-2 relative z-10">Core Mission Directive</h3>
+                                <p className="text-emerald-50 text-sm font-medium leading-relaxed relative z-10 italic">"{org.mission}"</p>
+                              </div>
+                            )}
+                         </div>
+
+                         <div className="space-y-8">
+                            <div>
+                               <h3 className="text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-4 border-b border-slate-200 pb-2">Registered Capabilities</h3>
+                               <div className="flex flex-col gap-2">
+                                 {org?.workCategories?.map(cat => (
+                                   <div key={cat} className="bg-white border border-slate-200 text-slate-700 text-xs font-bold px-3 py-2 rounded-none flex items-center gap-2 shadow-sm">
+                                     <span className="text-emerald-600">{CATEGORY_ICONS[cat]}</span> {cat}
+                                   </div>
+                                 ))}
+                                 {(!org?.workCategories || org.workCategories.length === 0) && (
+                                   <p className="text-xs text-slate-400 italic">No capabilities registered.</p>
+                                 )}
+                               </div>
+                            </div>
+                            
+                            <div>
+                               <h3 className="text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-4 border-b border-slate-200 pb-2">Contact Matrix</h3>
+                               <div className="space-y-3">
+                                  {org?.contactPersonName && (
+                                    <div className="flex items-start gap-3">
+                                      <UserCheck className="w-4 h-4 text-emerald-600 mt-0.5" />
+                                      <div>
+                                         <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Liaison Officer</p>
+                                         <p className="text-xs font-bold text-slate-800">{org.contactPersonName}</p>
+                                      </div>
+                                    </div>
+                                  )}
+                                  {org?.contactPhone && (
+                                    <div className="flex items-start gap-3">
+                                      <Phone className="w-4 h-4 text-emerald-600 mt-0.5" />
+                                      <div>
+                                         <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Emergency Contact</p>
+                                         <p className="text-xs font-bold text-slate-800">{org.contactPhone}</p>
+                                      </div>
+                                    </div>
+                                  )}
+                                  {org?.website && (
+                                    <div className="flex items-start gap-3">
+                                      <Globe className="w-4 h-4 text-emerald-600 mt-0.5" />
+                                      <div>
+                                         <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Official Portal</p>
+                                         <a href={org.website} target="_blank" rel="noopener noreferrer" className="text-xs font-bold text-emerald-600 hover:underline">{org.website.replace(/^https?:\/\//, '')}</a>
+                                      </div>
+                                    </div>
+                                  )}
+                               </div>
+                            </div>
+                         </div>
                       </div>
                     </div>
                   )}
@@ -1147,7 +1251,7 @@ export default function VolunteerOrgDashboard() {
           {/* ── NOTIFICATIONS ────────────────────────────────────────── */}
           {activeTab === "notifications" && (
             <div className="animate-fade-in">
-              <div className="bg-white rounded-2xl border border-slate-200">
+              <div className="bg-white rounded-sm border border-emerald-100">
                 <div className="p-5 border-b border-slate-100 flex items-center justify-between">
                   <div>
                     <h2 className="font-bold text-slate-900">Notifications</h2>
@@ -1170,7 +1274,7 @@ export default function VolunteerOrgDashboard() {
                       <div
                         key={n._id}
                         onClick={() => !n.isRead && markNotificationRead(n._id)}
-                        className={`p-4 cursor-pointer hover:bg-slate-50 transition-colors ${!n.isRead ? "bg-emerald-50/50" : ""}`}
+                        className={`p-4 cursor-pointer hover:bg-[#F4F9F5] transition-colors ${!n.isRead ? "bg-emerald-50/50" : ""}`}
                       >
                         <div className="flex items-start gap-3">
                           <div className={`w-2 h-2 rounded-full mt-2 flex-shrink-0 ${n.isRead ? "bg-slate-200" : "bg-emerald-500"}`} />
@@ -1195,12 +1299,12 @@ export default function VolunteerOrgDashboard() {
           {/* ── SETTINGS ────────────────────────────────────────────── */}
           {activeTab === "settings" && (
             <div className="max-w-lg space-y-6 animate-fade-in">
-              <div className="bg-white rounded-2xl border border-slate-200 p-6">
+              <div className="bg-white rounded-sm border border-emerald-100 p-6">
                 <h2 className="font-bold text-slate-900 mb-5 flex items-center gap-2">
                   <Shield className="w-5 h-5 text-slate-500" /> Change Password
                 </h2>
                 {pwMsg && (
-                  <div className={`text-sm font-semibold mb-4 p-3 rounded-xl ${pwMsg.includes("success") ? "bg-emerald-50 text-emerald-700" : "bg-red-50 text-red-700"}`}>
+                  <div className={`text-sm font-semibold mb-4 p-3 rounded-sm ${pwMsg.includes("success") ? "bg-emerald-50 text-emerald-700" : "bg-red-50 text-red-700"}`}>
                     {pwMsg}
                   </div>
                 )}
@@ -1208,12 +1312,12 @@ export default function VolunteerOrgDashboard() {
                   <div>
                     <label className="text-xs font-bold text-slate-700 block mb-1.5">New Password</label>
                     <input type="password" value={newPassword} onChange={e => setNewPassword(e.target.value)}
-                      className="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm text-slate-900 focus:ring-2 focus:ring-emerald-500 focus:outline-none" />
+                      className="w-full border border-emerald-100 rounded-sm px-4 py-2.5 text-sm text-slate-900 focus:ring-2 focus:ring-emerald-500 focus:outline-none" />
                   </div>
                   <div>
                     <label className="text-xs font-bold text-slate-700 block mb-1.5">Confirm Password</label>
                     <input type="password" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)}
-                      className="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm text-slate-900 focus:ring-2 focus:ring-emerald-500 focus:outline-none" />
+                      className="w-full border border-emerald-100 rounded-sm px-4 py-2.5 text-sm text-slate-900 focus:ring-2 focus:ring-emerald-500 focus:outline-none" />
                   </div>
                   <button
                     onClick={async () => {
@@ -1233,14 +1337,14 @@ export default function VolunteerOrgDashboard() {
                         setPwMsg("Failed to update password.");
                       }
                     }}
-                    className="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold py-3 rounded-xl transition-all"
+                    className="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold py-3 rounded-sm transition-all"
                   >
                     Update Password
                   </button>
                 </div>
               </div>
 
-              <div className="bg-white rounded-2xl border border-slate-200 p-6">
+              <div className="bg-white rounded-sm border border-emerald-100 p-6">
                 <h2 className="font-bold text-slate-900 mb-1 flex items-center gap-2">
                   <Activity className="w-5 h-5 text-slate-500" /> Account Info
                 </h2>
@@ -1263,7 +1367,7 @@ export default function VolunteerOrgDashboard() {
                 </div>
               </div>
 
-              <button onClick={logoutMock} className="w-full flex items-center justify-center gap-2 bg-red-50 hover:bg-red-100 text-red-600 font-bold py-3.5 rounded-2xl transition-all border border-red-200">
+              <button onClick={logoutMock} className="w-full flex items-center justify-center gap-2 bg-red-50 hover:bg-red-100 text-red-600 font-bold py-3.5 rounded-sm transition-all border border-red-200">
                 <LogOut className="w-4 h-4" /> Sign Out
               </button>
             </div>
@@ -1275,10 +1379,10 @@ export default function VolunteerOrgDashboard() {
       {/* ── DRIVE DASHBOARD MODAL ── */}
       {selectedDrive && (
          <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-[60] flex items-center justify-center p-4 overflow-y-auto">
-           <div className="bg-white rounded-3xl w-full max-w-3xl shadow-2xl my-8 overflow-hidden">
+           <div className="bg-white rounded-sm w-full max-w-3xl shadow-2xl my-8 overflow-hidden">
              
              {/* Header */}
-             <div className="bg-slate-50 border-b border-slate-100 p-6 flex justify-between items-start">
+             <div className="bg-[#F4F9F5] border-b border-slate-100 p-6 flex justify-between items-start">
                 <div>
                    <h2 className="text-2xl font-black text-slate-900">{selectedDrive.title}</h2>
                    <div className="flex items-center gap-3 mt-2 text-xs font-bold">
@@ -1287,15 +1391,15 @@ export default function VolunteerOrgDashboard() {
                      <span className="text-slate-500 uppercase flex items-center gap-1"><Clock className="w-3 h-3"/> {selectedDrive.time}</span>
                    </div>
                 </div>
-                <button onClick={() => setSelectedDrive(null)} className="p-2 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-full transition-colors"><X className="w-5 h-5"/></button>
+                <button onClick={() => setSelectedDrive(null)} className="p-2 text-slate-400 hover:text-slate-700 hover:bg-emerald-50 rounded-full transition-colors"><X className="w-5 h-5"/></button>
              </div>
 
              <div className="p-6">
                 <div className="grid grid-cols-3 gap-6">
                    {/* Main Info */}
                    <div className="col-span-2 space-y-6">
-                      <div className="bg-gradient-to-br from-slate-50 to-white border border-slate-100 p-5 rounded-2xl shadow-sm relative overflow-hidden">
-                        <div className="absolute top-0 right-0 w-32 h-32 bg-slate-100 rounded-full mix-blend-multiply opacity-50 -mr-10 -mt-10 blur-2xl"></div>
+                      <div className="bg-gradient-to-br from-slate-50 to-white border border-slate-100 p-5 rounded-sm shadow-sm relative overflow-hidden">
+                        <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-50 rounded-full mix-blend-multiply opacity-50 -mr-10 -mt-10 blur-2xl"></div>
                         <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3 flex items-center gap-2 relative z-10">
                            <FileText className="w-4 h-4 text-slate-300" /> Description
                         </h3>
@@ -1319,8 +1423,8 @@ export default function VolunteerOrgDashboard() {
                                  if (res.ok) { handleRefresh(); setSelectedDrive(null); }
                                } finally { setActionLoading(false); }
                             }}>
-                               <input name="note" placeholder="E.g. Tools have arrived" required className="flex-1 border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none" />
-                               <button type="submit" disabled={actionLoading} className="bg-emerald-600 text-white font-bold px-5 py-2.5 rounded-xl disabled:opacity-50">Post</button>
+                               <input name="note" placeholder="E.g. Tools have arrived" required className="flex-1 border border-emerald-100 rounded-sm px-4 py-2.5 text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none" />
+                               <button type="submit" disabled={actionLoading} className="bg-emerald-600 text-white font-bold px-5 py-2.5 rounded-sm disabled:opacity-50">Post</button>
                             </form>
                          </div>
                       )}
@@ -1345,10 +1449,10 @@ export default function VolunteerOrgDashboard() {
                       {(selectedDrive.orgId === org?._id || selectedDrive.acceptedOrgId === org?._id) && selectedDrive.volunteers && selectedDrive.volunteers.length > 0 && (
                          <div className="mt-8">
                             <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">Registered Volunteers ({(selectedDrive.volunteers?.filter((v: any) => v.status !== 'rejected').length) || selectedDrive.joinedVolunteers}/{selectedDrive.maxVolunteers || selectedDrive.requiredVolunteers})</h3>
-                            <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
+                            <div className="bg-white border border-emerald-100 rounded-sm shadow-sm overflow-hidden">
                                <table className="w-full text-left border-collapse">
                                   <thead>
-                                     <tr className="bg-slate-50 border-b border-slate-100 text-xs font-bold text-slate-500 uppercase tracking-wider">
+                                     <tr className="bg-[#F4F9F5] border-b border-slate-100 text-xs font-bold text-slate-500 uppercase tracking-wider">
                                         <th className="p-4">Name</th>
                                         <th className="p-4">Contact</th>
                                         <th className="p-4">Status</th>
@@ -1357,7 +1461,7 @@ export default function VolunteerOrgDashboard() {
                                   </thead>
                                   <tbody>
                                      {selectedDrive.volunteers.map((vol, i) => (
-                                        <tr key={i} className="border-b border-slate-50 last:border-0 hover:bg-slate-50/50">
+                                        <tr key={i} className="border-b border-slate-50 last:border-0 hover:bg-[#F4F9F5]/50">
                                            <td className="p-4">
                                               <p className="font-bold text-slate-900 text-sm">{vol.name}</p>
                                               <p className="text-xs text-slate-500">Age: {vol.age}</p>
@@ -1384,7 +1488,7 @@ export default function VolunteerOrgDashboard() {
                                                          if (res.ok) { handleRefresh(); setSelectedDrive(null); }
                                                          else { alert("Failed or capacity reached"); }
                                                       } finally { setActionLoading(false); }
-                                                   }} className="text-xs font-bold bg-emerald-100 hover:bg-emerald-200 text-emerald-800 px-3 py-1.5 rounded-lg transition-colors">Approve</button>
+                                                   }} className="text-xs font-bold bg-emerald-100 hover:bg-emerald-200 text-emerald-800 px-3 py-1.5 rounded-sm transition-colors">Approve</button>
                                                    <button onClick={async() => {
                                                       setActionLoading(true);
                                                       try {
@@ -1394,7 +1498,7 @@ export default function VolunteerOrgDashboard() {
                                                          });
                                                          if (res.ok) { handleRefresh(); setSelectedDrive(null); }
                                                       } finally { setActionLoading(false); }
-                                                   }} className="text-xs font-bold bg-red-100 hover:bg-red-200 text-red-800 px-3 py-1.5 rounded-lg transition-colors">Reject</button>
+                                                   }} className="text-xs font-bold bg-red-100 hover:bg-red-200 text-red-800 px-3 py-1.5 rounded-sm transition-colors">Reject</button>
                                                  </>
                                               )}
                                            </td>
@@ -1409,13 +1513,13 @@ export default function VolunteerOrgDashboard() {
 
                    {/* Sidebar Info */}
                    <div className="space-y-4">
-                      <div className="bg-blue-50 border border-blue-100 rounded-2xl p-4">
+                      <div className="bg-blue-50 border border-blue-100 rounded-sm p-4">
                          <h3 className="text-xs font-bold text-blue-800 uppercase tracking-wider mb-3 flex items-center gap-1"><MapPin className="w-4 h-4"/> Location</h3>
                          <p className="text-sm text-blue-900 font-medium">{selectedDrive.meetingLocation || selectedDrive.address}</p>
                          <p className="text-xs text-blue-700 mt-1">{selectedDrive.city}, {selectedDrive.state}</p>
                       </div>
 
-                      <div className="bg-amber-50 border border-amber-100 rounded-2xl p-4">
+                      <div className="bg-amber-50 border border-amber-100 rounded-sm p-4">
                          <h3 className="text-xs font-bold text-amber-800 uppercase tracking-wider mb-3 flex items-center gap-1"><Users className="w-4 h-4"/> Volunteers</h3>
                          <div className="flex items-end gap-1">
                             <span className="text-2xl font-black text-amber-900">{(selectedDrive.volunteers?.filter((v: any) => v.status !== 'rejected').length) || selectedDrive.joinedVolunteers}</span>
@@ -1425,14 +1529,14 @@ export default function VolunteerOrgDashboard() {
                       </div>
 
                       {selectedDrive.instructions && (
-                        <div className="bg-purple-50 border border-purple-100 rounded-2xl p-4">
+                        <div className="bg-purple-50 border border-purple-100 rounded-sm p-4">
                            <h3 className="text-xs font-bold text-purple-800 uppercase tracking-wider mb-1 flex items-center gap-1"><AlertCircle className="w-4 h-4"/> Instructions</h3>
                            <p className="text-sm text-purple-900">{selectedDrive.instructions}</p>
                         </div>
                       )}
 
                       {/* Supporting Organizations */}
-                      <div className="bg-emerald-50 border border-emerald-100 rounded-2xl p-4">
+                      <div className="bg-emerald-50 border border-emerald-100 rounded-sm p-4">
                          <h3 className="text-xs font-bold text-emerald-800 uppercase tracking-wider mb-3 flex items-center gap-1"><Building2 className="w-4 h-4"/> Supporting Orgs</h3>
                          {(!selectedDrive.orgRequests || selectedDrive.orgRequests.length === 0) ? (
                             <p className="text-sm text-emerald-700 mb-3">No supporting organizations partnered yet.</p>
@@ -1448,7 +1552,7 @@ export default function VolunteerOrgDashboard() {
                          )}
 
                          {(selectedDrive.orgId === org?._id || selectedDrive.acceptedOrgId === org?._id) && (
-                            <button onClick={openPartnerModal} className="w-full bg-emerald-200 hover:bg-emerald-300 text-emerald-900 font-bold py-2 rounded-xl text-xs transition-colors mt-3">
+                            <button onClick={openPartnerModal} className="w-full bg-emerald-200 hover:bg-emerald-300 text-emerald-900 font-bold py-2 rounded-sm text-xs transition-colors mt-3">
                                Add Partner Org
                             </button>
                          )}
@@ -1467,7 +1571,7 @@ export default function VolunteerOrgDashboard() {
                                         });
                                         handleRefresh(); setSelectedDrive(null);
                                      } finally { setActionLoading(false); }
-                                  }} className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 rounded-xl text-xs transition-colors shadow-sm">
+                                  }} className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 rounded-sm text-xs transition-colors shadow-sm">
                                      Accept Invite
                                   </button>
                                   <button onClick={async() => {
@@ -1479,7 +1583,7 @@ export default function VolunteerOrgDashboard() {
                                         });
                                         handleRefresh(); setSelectedDrive(null);
                                      } finally { setActionLoading(false); }
-                                  }} className="flex-1 bg-rose-100 hover:bg-rose-200 text-rose-700 font-bold py-2 rounded-xl text-xs transition-colors shadow-sm">
+                                  }} className="flex-1 bg-rose-100 hover:bg-rose-200 text-rose-700 font-bold py-2 rounded-sm text-xs transition-colors shadow-sm">
                                      Decline
                                   </button>
                                </div>
@@ -1491,7 +1595,7 @@ export default function VolunteerOrgDashboard() {
              </div>
 
              {/* Footer Actions */}
-             <div className="bg-slate-50 border-t border-slate-100 p-6 flex flex-wrap gap-3 justify-end">
+             <div className="bg-[#F4F9F5] border-t border-slate-100 p-6 flex flex-wrap gap-3 justify-end">
                 {(selectedDrive.orgId === org?._id || selectedDrive.acceptedOrgId === org?._id) && !['COMPLETED', 'CANCELLED'].includes(selectedDrive.status) && (
                    <button onClick={() => {
                       setDriveTitle(selectedDrive.title || "");
@@ -1502,7 +1606,7 @@ export default function VolunteerOrgDashboard() {
                       setDriveMeetingLoc(selectedDrive.meetingLocation || selectedDrive.address || "");
                       setDriveInstructions(selectedDrive.instructions || "");
                       setIsEditDriveModalOpen(true);
-                   }} className="bg-slate-100 hover:bg-slate-200 text-slate-800 text-sm font-bold px-6 py-3 rounded-xl transition-colors shadow-sm">
+                   }} className="bg-emerald-50 hover:bg-slate-200 text-slate-800 text-sm font-bold px-6 py-3 rounded-sm transition-colors shadow-sm">
                       Edit Details
                    </button>
                 )}
@@ -1516,7 +1620,7 @@ export default function VolunteerOrgDashboard() {
                         });
                         if (res.ok) { handleRefresh(); setSelectedDrive(null); }
                       } finally { setActionLoading(false); }
-                   }} disabled={actionLoading} className="bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-bold px-6 py-3 rounded-xl transition-colors shadow-sm">
+                   }} disabled={actionLoading} className="bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-bold px-6 py-3 rounded-sm transition-colors shadow-sm">
                       {actionLoading ? "Requesting..." : "Take This Drive"}
                    </button>
                 )}
@@ -1530,7 +1634,7 @@ export default function VolunteerOrgDashboard() {
                      setDriveMaxVol(20);
                      setDriveMeetingLoc("");
                      setIsScheduleDriveModalOpen(true);
-                   }} className="bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-bold px-6 py-3 rounded-xl transition-colors shadow-sm">
+                   }} className="bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-bold px-6 py-3 rounded-sm transition-colors shadow-sm">
                       Schedule Drive Details
                    </button>
                 )}
@@ -1541,7 +1645,7 @@ export default function VolunteerOrgDashboard() {
                         setDriveReqVol(selectedDrive.requiredVolunteers || 10);
                         setDriveMaxVol(selectedDrive.maxVolunteers || 20);
                         setIsEditCapacityModalOpen(true);
-                     }} className="bg-amber-100 hover:bg-amber-200 text-amber-800 text-sm font-bold px-6 py-3 rounded-xl transition-colors shadow-sm">
+                     }} className="bg-amber-100 hover:bg-amber-200 text-amber-800 text-sm font-bold px-6 py-3 rounded-sm transition-colors shadow-sm">
                         Edit Capacity
                      </button>
                      <button onClick={async() => {
@@ -1553,7 +1657,7 @@ export default function VolunteerOrgDashboard() {
                         });
                         if (res.ok) { handleRefresh(); setSelectedDrive(null); }
                       } finally { setActionLoading(false); }
-                   }} disabled={actionLoading} className="bg-amber-600 hover:bg-amber-700 text-white text-sm font-bold px-6 py-3 rounded-xl transition-colors shadow-sm">
+                   }} disabled={actionLoading} className="bg-amber-600 hover:bg-amber-700 text-white text-sm font-bold px-6 py-3 rounded-sm transition-colors shadow-sm">
                       Close Registrations
                    </button>
                    </>
@@ -1570,7 +1674,7 @@ export default function VolunteerOrgDashboard() {
                            });
                            if (res.ok) { handleRefresh(); setSelectedDrive(null); }
                          } finally { setActionLoading(false); }
-                      }} disabled={actionLoading} className="flex-1 bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold px-6 py-3 rounded-xl transition-colors shadow-sm">
+                      }} disabled={actionLoading} className="flex-1 bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold px-6 py-3 rounded-sm transition-colors shadow-sm">
                          Start Drive
                       </button>
                    </div>
@@ -1584,7 +1688,7 @@ export default function VolunteerOrgDashboard() {
                         wasteCollected: 0, treesPlanted: 0, awarenessParticipants: 0, additionalNotes: ""
                       });
                       setShowCompletionModal(true);
-                   }} disabled={actionLoading} className="bg-success-600 hover:bg-success-700 text-white text-sm font-bold px-6 py-3 rounded-xl transition-colors shadow-sm">
+                   }} disabled={actionLoading} className="bg-success-600 hover:bg-success-700 text-white text-sm font-bold px-6 py-3 rounded-sm transition-colors shadow-sm">
                       Mark Completed (Submit Proof)
                    </button>
                 )}
@@ -1602,7 +1706,7 @@ export default function VolunteerOrgDashboard() {
                         });
                         if (res.ok) { handleRefresh(); setSelectedDrive(null); }
                       } finally { setActionLoading(false); }
-                   }} disabled={actionLoading} className="bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 text-sm font-bold px-6 py-3 rounded-xl transition-colors">
+                   }} disabled={actionLoading} className="bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 text-sm font-bold px-6 py-3 rounded-sm transition-colors">
                       Request Cancellation
                    </button>
                 )}
@@ -1614,55 +1718,55 @@ export default function VolunteerOrgDashboard() {
       {/* Completion Modal */}
       {showCompletionModal && selectedDrive && (
          <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-           <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+           <div className="bg-white rounded-sm max-w-2xl w-full max-h-[90vh] overflow-y-auto">
              <div className="p-6 border-b border-slate-100 flex justify-between items-center sticky top-0 bg-white/95 backdrop-blur z-10">
                <div>
                  <h2 className="text-xl font-bold text-slate-800">Submit Completion Proof</h2>
                  <p className="text-sm text-slate-500">Provide details for {selectedDrive.title}</p>
                </div>
-               <button onClick={() => setShowCompletionModal(false)} className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-50 rounded-full">
+               <button onClick={() => setShowCompletionModal(false)} className="p-2 text-slate-400 hover:text-slate-600 hover:bg-[#F4F9F5] rounded-full">
                  <X className="w-5 h-5" />
                </button>
              </div>
              <div className="p-6 space-y-5">
                 <div>
                    <label className="block text-sm font-bold text-slate-700 mb-1">Work Performed (Summary) *</label>
-                   <textarea required rows={2} value={completionData.workPerformed} onChange={e => setCompletionData({...completionData, workPerformed: e.target.value})} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-success-500/20 focus:border-success-500" placeholder="Briefly describe what was accomplished..."></textarea>
+                   <textarea required rows={2} value={completionData.workPerformed} onChange={e => setCompletionData({...completionData, workPerformed: e.target.value})} className="w-full bg-[#F4F9F5] border border-emerald-100 rounded-sm px-4 py-3 text-sm focus:ring-2 focus:ring-success-500/20 focus:border-success-500" placeholder="Briefly describe what was accomplished..."></textarea>
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                    <div>
                       <label className="block text-sm font-bold text-slate-700 mb-1">Total Volunteers Present *</label>
-                      <input type="number" required value={completionData.totalVolunteersPresent} onChange={e => setCompletionData({...completionData, totalVolunteersPresent: parseInt(e.target.value)||0})} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-success-500/20 focus:border-success-500" />
+                      <input type="number" required value={completionData.totalVolunteersPresent} onChange={e => setCompletionData({...completionData, totalVolunteersPresent: parseInt(e.target.value)||0})} className="w-full bg-[#F4F9F5] border border-emerald-100 rounded-sm px-4 py-3 text-sm focus:ring-2 focus:ring-success-500/20 focus:border-success-500" />
                    </div>
                    <div>
                       <label className="block text-sm font-bold text-slate-700 mb-1">Total Hours Worked *</label>
-                      <input type="number" required value={completionData.hoursWorked} onChange={e => setCompletionData({...completionData, hoursWorked: parseInt(e.target.value)||0})} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-success-500/20 focus:border-success-500" />
+                      <input type="number" required value={completionData.hoursWorked} onChange={e => setCompletionData({...completionData, hoursWorked: parseInt(e.target.value)||0})} className="w-full bg-[#F4F9F5] border border-emerald-100 rounded-sm px-4 py-3 text-sm focus:ring-2 focus:ring-success-500/20 focus:border-success-500" />
                    </div>
                 </div>
-                <div className="bg-slate-50 rounded-xl p-4 border border-slate-200">
+                <div className="bg-[#F4F9F5] rounded-sm p-4 border border-emerald-100">
                    <h4 className="font-bold text-slate-700 mb-3 text-sm flex items-center gap-2"><Activity className="w-4 h-4"/> Optional Impact Metrics</h4>
                    <div className="grid grid-cols-3 gap-3">
                       <div>
                          <label className="block text-xs font-bold text-slate-500 mb-1">Waste Collected (kg)</label>
-                         <input type="number" value={completionData.wasteCollected} onChange={e => setCompletionData({...completionData, wasteCollected: parseInt(e.target.value)||0})} className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm" />
+                         <input type="number" value={completionData.wasteCollected} onChange={e => setCompletionData({...completionData, wasteCollected: parseInt(e.target.value)||0})} className="w-full border border-emerald-100 rounded-sm px-3 py-2 text-sm" />
                       </div>
                       <div>
                          <label className="block text-xs font-bold text-slate-500 mb-1">Trees Planted</label>
-                         <input type="number" value={completionData.treesPlanted} onChange={e => setCompletionData({...completionData, treesPlanted: parseInt(e.target.value)||0})} className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm" />
+                         <input type="number" value={completionData.treesPlanted} onChange={e => setCompletionData({...completionData, treesPlanted: parseInt(e.target.value)||0})} className="w-full border border-emerald-100 rounded-sm px-3 py-2 text-sm" />
                       </div>
                       <div>
                          <label className="block text-xs font-bold text-slate-500 mb-1">People Reached</label>
-                         <input type="number" value={completionData.awarenessParticipants} onChange={e => setCompletionData({...completionData, awarenessParticipants: parseInt(e.target.value)||0})} className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm" />
+                         <input type="number" value={completionData.awarenessParticipants} onChange={e => setCompletionData({...completionData, awarenessParticipants: parseInt(e.target.value)||0})} className="w-full border border-emerald-100 rounded-sm px-3 py-2 text-sm" />
                       </div>
                    </div>
                 </div>
                 <div>
                    <label className="block text-sm font-bold text-slate-700 mb-1">After Image URLs (Comma separated) *</label>
-                   <input type="text" required value={completionData.afterImageUrls} onChange={e => setCompletionData({...completionData, afterImageUrls: e.target.value})} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-success-500/20 focus:border-success-500" placeholder="https://..." />
+                   <input type="text" required value={completionData.afterImageUrls} onChange={e => setCompletionData({...completionData, afterImageUrls: e.target.value})} className="w-full bg-[#F4F9F5] border border-emerald-100 rounded-sm px-4 py-3 text-sm focus:ring-2 focus:ring-success-500/20 focus:border-success-500" placeholder="https://..." />
                 </div>
                 <div>
                    <label className="block text-sm font-bold text-slate-700 mb-1">Additional Notes</label>
-                   <textarea rows={2} value={completionData.additionalNotes} onChange={e => setCompletionData({...completionData, additionalNotes: e.target.value})} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-success-500/20 focus:border-success-500" placeholder="Any challenges faced or special mentions..."></textarea>
+                   <textarea rows={2} value={completionData.additionalNotes} onChange={e => setCompletionData({...completionData, additionalNotes: e.target.value})} className="w-full bg-[#F4F9F5] border border-emerald-100 rounded-sm px-4 py-3 text-sm focus:ring-2 focus:ring-success-500/20 focus:border-success-500" placeholder="Any challenges faced or special mentions..."></textarea>
                 </div>
                 <button onClick={async() => {
                     if (!completionData.workPerformed || !completionData.afterImageUrls) return alert("Fill required fields");
@@ -1689,7 +1793,7 @@ export default function VolunteerOrgDashboard() {
                          setActiveTab("certificates");
                       }
                     } finally { setActionLoading(false); }
-                }} disabled={actionLoading} className="w-full bg-success-600 hover:bg-success-700 text-white font-bold py-3 rounded-xl shadow-sm mt-4 transition-colors">
+                }} disabled={actionLoading} className="w-full bg-success-600 hover:bg-success-700 text-white font-bold py-3 rounded-sm shadow-sm mt-4 transition-colors">
                    {actionLoading ? "Submitting..." : "Submit Proof & Complete"}
                 </button>
                 <p className="text-xs text-center text-slate-500 mt-4 px-4 leading-relaxed">
@@ -1703,67 +1807,67 @@ export default function VolunteerOrgDashboard() {
       {/* Create Independent Drive Modal */}
       {isCreateDriveModalOpen && (
         <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl animate-fade-in-up">
+          <div className="bg-white rounded-sm w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl animate-fade-in-up">
             <div className="sticky top-0 bg-white/80 backdrop-blur-md px-6 py-4 border-b border-surface-100 flex justify-between items-center z-10">
               <h2 className="text-xl font-black text-surface-900">Create Independent Drive</h2>
-              <button onClick={() => setIsCreateDriveModalOpen(false)} className="text-surface-400 hover:text-surface-600 bg-surface-50 hover:bg-surface-100 p-2 rounded-full transition-colors"><X className="w-5 h-5" /></button>
+              <button onClick={() => setIsCreateDriveModalOpen(false)} className="text-surface-400 hover:text-surface-600 bg-[#F4F9F5] hover:bg-surface-100 p-2 rounded-full transition-colors"><X className="w-5 h-5" /></button>
             </div>
             
             <form onSubmit={handleCreateIndependentDrive} className="p-6 space-y-4">
-              <div className="bg-indigo-50 border border-indigo-100 p-4 rounded-xl mb-4 text-sm text-indigo-800">
+              <div className="bg-indigo-50 border border-indigo-100 p-4 rounded-sm mb-4 text-sm text-indigo-800">
                 <p><strong>Note:</strong> Since your organization is verified, creating a drive here will immediately open it for volunteer registration and publish a Community Post.</p>
               </div>
               
               <div className="grid grid-cols-2 gap-4">
                 <div className="col-span-2">
                   <label className="block text-xs font-bold text-surface-600 mb-1">Drive Title</label>
-                  <input required value={driveTitle} onChange={e=>setDriveTitle(e.target.value)} className="w-full border p-2.5 rounded-xl text-sm" placeholder="e.g. Weekend Lake Cleanup" />
+                  <input required value={driveTitle} onChange={e=>setDriveTitle(e.target.value)} className="w-full border p-2.5 rounded-sm text-sm" placeholder="e.g. Weekend Lake Cleanup" />
                 </div>
                 <div className="col-span-2">
                   <label className="block text-xs font-bold text-surface-600 mb-1">Description & Goal</label>
-                  <textarea required rows={3} value={driveDescription} onChange={e=>setDriveDescription(e.target.value)} className="w-full border p-2.5 rounded-xl text-sm resize-none" placeholder="Describe the purpose of this drive..." />
+                  <textarea required rows={3} value={driveDescription} onChange={e=>setDriveDescription(e.target.value)} className="w-full border p-2.5 rounded-sm text-sm resize-none" placeholder="Describe the purpose of this drive..." />
                 </div>
                 <div>
                   <label className="block text-xs font-bold text-surface-600 mb-1">Drive Category</label>
-                  <select required value={driveCategory} onChange={e=>setDriveCategory(e.target.value)} className="w-full border p-2.5 rounded-xl text-sm">
+                  <select required value={driveCategory} onChange={e=>setDriveCategory(e.target.value)} className="w-full border p-2.5 rounded-sm text-sm">
                     {ALL_CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
                   </select>
                 </div>
                 <div>
                   <label className="block text-xs font-bold text-surface-600 mb-1">Date</label>
-                  <input type="date" required value={driveDate} onChange={e=>setDriveDate(e.target.value)} className="w-full border p-2.5 rounded-xl text-sm" />
+                  <input type="date" required value={driveDate} onChange={e=>setDriveDate(e.target.value)} className="w-full border p-2.5 rounded-sm text-sm" />
                 </div>
                 <div className="grid grid-cols-2 gap-2">
                   <div>
                     <label className="block text-xs font-bold text-surface-600 mb-1">Time</label>
-                    <input type="time" required value={driveTime} onChange={e=>setDriveTime(e.target.value)} className="w-full border p-2.5 rounded-xl text-sm" />
+                    <input type="time" required value={driveTime} onChange={e=>setDriveTime(e.target.value)} className="w-full border p-2.5 rounded-sm text-sm" />
                   </div>
                   <div>
                     <label className="block text-xs font-bold text-surface-600 mb-1">Duration (Hrs)</label>
-                    <input type="number" required min="1" value={driveDuration} onChange={e=>setDriveDuration(Number(e.target.value))} className="w-full border p-2.5 rounded-xl text-sm" />
+                    <input type="number" required min="1" value={driveDuration} onChange={e=>setDriveDuration(Number(e.target.value))} className="w-full border p-2.5 rounded-sm text-sm" />
                   </div>
                 </div>
                 <div>
                   <label className="block text-xs font-bold text-surface-600 mb-1">Required Volunteers</label>
-                  <input type="number" required min="1" value={driveReqVol} onChange={e=>setDriveReqVol(Number(e.target.value))} className="w-full border p-2.5 rounded-xl text-sm" />
+                  <input type="number" required min="1" value={driveReqVol} onChange={e=>setDriveReqVol(Number(e.target.value))} className="w-full border p-2.5 rounded-sm text-sm" />
                 </div>
                 <div>
                   <label className="block text-xs font-bold text-surface-600 mb-1">Max Volunteers (Cap)</label>
-                  <input type="number" required min="1" value={driveMaxVol} onChange={e=>setDriveMaxVol(Number(e.target.value))} className="w-full border p-2.5 rounded-xl text-sm" />
+                  <input type="number" required min="1" value={driveMaxVol} onChange={e=>setDriveMaxVol(Number(e.target.value))} className="w-full border p-2.5 rounded-sm text-sm" />
                 </div>
                 <div className="col-span-2">
                   <label className="block text-xs font-bold text-surface-600 mb-1">Meeting Location / Address</label>
-                  <input required value={driveMeetingLoc} onChange={e=>setDriveMeetingLoc(e.target.value)} className="w-full border p-2.5 rounded-xl text-sm" placeholder="Exact spot to meet" />
+                  <input required value={driveMeetingLoc} onChange={e=>setDriveMeetingLoc(e.target.value)} className="w-full border p-2.5 rounded-sm text-sm" placeholder="Exact spot to meet" />
                 </div>
                 <div className="col-span-2">
                   <label className="block text-xs font-bold text-surface-600 mb-1">Instructions for Volunteers</label>
-                  <input value={driveInstructions} onChange={e=>setDriveInstructions(e.target.value)} className="w-full border p-2.5 rounded-xl text-sm" placeholder="e.g. Bring extra gloves, wear comfortable shoes" />
+                  <input value={driveInstructions} onChange={e=>setDriveInstructions(e.target.value)} className="w-full border p-2.5 rounded-sm text-sm" placeholder="e.g. Bring extra gloves, wear comfortable shoes" />
                 </div>
               </div>
 
               <div className="pt-4 border-t border-surface-100 flex gap-3 justify-end">
-                <button type="button" onClick={() => setIsCreateDriveModalOpen(false)} className="px-5 py-2.5 text-sm font-bold text-surface-600 hover:bg-surface-100 rounded-xl transition-colors">Cancel</button>
-                <button type="submit" disabled={driveCreating} className="px-5 py-2.5 text-sm font-bold bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl transition-colors flex items-center gap-2">
+                <button type="button" onClick={() => setIsCreateDriveModalOpen(false)} className="px-5 py-2.5 text-sm font-bold text-surface-600 hover:bg-surface-100 rounded-sm transition-colors">Cancel</button>
+                <button type="submit" disabled={driveCreating} className="px-5 py-2.5 text-sm font-bold bg-indigo-600 hover:bg-indigo-700 text-white rounded-sm transition-colors flex items-center gap-2">
                   {driveCreating ? "Publishing..." : <><Globe className="w-4 h-4"/> Publish Independent Drive</>}
                 </button>
               </div>
@@ -1775,44 +1879,44 @@ export default function VolunteerOrgDashboard() {
       {/* Schedule Drive Details Modal */}
       {isScheduleDriveModalOpen && selectedDrive && (
         <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl w-full max-w-xl shadow-2xl animate-fade-in-up">
+          <div className="bg-white rounded-sm w-full max-w-xl shadow-2xl animate-fade-in-up">
             <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center">
               <h2 className="text-xl font-bold text-slate-900">Schedule Drive</h2>
               <button onClick={() => setIsScheduleDriveModalOpen(false)} className="text-slate-400 hover:text-slate-600"><X className="w-5 h-5" /></button>
             </div>
             <form onSubmit={handleScheduleDrive} className="p-6 space-y-4">
-              <div className="bg-indigo-50 text-indigo-800 p-4 rounded-xl text-sm font-medium mb-4">
+              <div className="bg-indigo-50 text-indigo-800 p-4 rounded-sm text-sm font-medium mb-4">
                 Please provide the final scheduling and location details for "{selectedDrive.title}". Submitting this will open volunteer registrations and publish the drive to the Community Feed.
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-bold text-slate-600 mb-1">Date</label>
-                  <input type="date" required value={driveDate} onChange={e=>setDriveDate(e.target.value)} className="w-full border p-2.5 rounded-xl text-sm" />
+                  <input type="date" required value={driveDate} onChange={e=>setDriveDate(e.target.value)} className="w-full border p-2.5 rounded-sm text-sm" />
                 </div>
                 <div>
                   <label className="block text-xs font-bold text-slate-600 mb-1">Time</label>
-                  <input type="time" required value={driveTime} onChange={e=>setDriveTime(e.target.value)} className="w-full border p-2.5 rounded-xl text-sm" />
+                  <input type="time" required value={driveTime} onChange={e=>setDriveTime(e.target.value)} className="w-full border p-2.5 rounded-sm text-sm" />
                 </div>
                 <div>
                   <label className="block text-xs font-bold text-slate-600 mb-1">Duration (Hrs)</label>
-                  <input type="number" required min="1" value={driveDuration} onChange={e=>setDriveDuration(Number(e.target.value))} className="w-full border p-2.5 rounded-xl text-sm" />
+                  <input type="number" required min="1" value={driveDuration} onChange={e=>setDriveDuration(Number(e.target.value))} className="w-full border p-2.5 rounded-sm text-sm" />
                 </div>
                 <div>
                   <label className="block text-xs font-bold text-slate-600 mb-1">Required Volunteers</label>
-                  <input type="number" required min="1" value={driveReqVol} onChange={e=>setDriveReqVol(Number(e.target.value))} className="w-full border p-2.5 rounded-xl text-sm" />
+                  <input type="number" required min="1" value={driveReqVol} onChange={e=>setDriveReqVol(Number(e.target.value))} className="w-full border p-2.5 rounded-sm text-sm" />
                 </div>
                 <div>
                   <label className="block text-xs font-bold text-slate-600 mb-1">Max Volunteers (Cap)</label>
-                  <input type="number" required min="1" value={driveMaxVol} onChange={e=>setDriveMaxVol(Number(e.target.value))} className="w-full border p-2.5 rounded-xl text-sm" />
+                  <input type="number" required min="1" value={driveMaxVol} onChange={e=>setDriveMaxVol(Number(e.target.value))} className="w-full border p-2.5 rounded-sm text-sm" />
                 </div>
                 <div className="col-span-2">
                   <label className="block text-xs font-bold text-slate-600 mb-1">Meeting Location / Address</label>
-                  <input required value={driveMeetingLoc} onChange={e=>setDriveMeetingLoc(e.target.value)} className="w-full border p-2.5 rounded-xl text-sm" placeholder="Exact spot to meet" />
+                  <input required value={driveMeetingLoc} onChange={e=>setDriveMeetingLoc(e.target.value)} className="w-full border p-2.5 rounded-sm text-sm" placeholder="Exact spot to meet" />
                 </div>
               </div>
               <div className="pt-4 border-t border-slate-100 flex gap-3 justify-end">
-                <button type="button" onClick={() => setIsScheduleDriveModalOpen(false)} className="px-5 py-2.5 text-sm font-bold text-slate-600 hover:bg-slate-100 rounded-xl transition-colors">Cancel</button>
-                <button type="submit" disabled={scheduleLoading} className="px-5 py-2.5 text-sm font-bold bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl transition-colors">
+                <button type="button" onClick={() => setIsScheduleDriveModalOpen(false)} className="px-5 py-2.5 text-sm font-bold text-slate-600 hover:bg-emerald-50 rounded-sm transition-colors">Cancel</button>
+                <button type="submit" disabled={scheduleLoading} className="px-5 py-2.5 text-sm font-bold bg-indigo-600 hover:bg-indigo-700 text-white rounded-sm transition-colors">
                   {scheduleLoading ? "Scheduling..." : "Schedule and Publish"}
                 </button>
               </div>
@@ -1824,7 +1928,7 @@ export default function VolunteerOrgDashboard() {
       {/* Edit Capacity Modal */}
       {isEditCapacityModalOpen && selectedDrive && (
         <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl w-full max-w-sm shadow-2xl animate-fade-in-up">
+          <div className="bg-white rounded-sm w-full max-w-sm shadow-2xl animate-fade-in-up">
             <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center">
               <h2 className="text-xl font-bold text-slate-900">Edit Capacity</h2>
               <button onClick={() => setIsEditCapacityModalOpen(false)} className="text-slate-400 hover:text-slate-600"><X className="w-5 h-5" /></button>
@@ -1842,15 +1946,15 @@ export default function VolunteerOrgDashboard() {
             }} className="p-6 space-y-4">
               <div>
                 <label className="block text-xs font-bold text-slate-600 mb-1">Required Volunteers</label>
-                <input type="number" required min={selectedDrive.joinedVolunteers || 1} value={driveReqVol} onChange={e=>setDriveReqVol(Number(e.target.value))} className="w-full border p-2.5 rounded-xl text-sm" />
+                <input type="number" required min={selectedDrive.joinedVolunteers || 1} value={driveReqVol} onChange={e=>setDriveReqVol(Number(e.target.value))} className="w-full border p-2.5 rounded-sm text-sm" />
               </div>
               <div>
                 <label className="block text-xs font-bold text-slate-600 mb-1">Max Volunteers (Cap)</label>
-                <input type="number" required min={driveReqVol} value={driveMaxVol} onChange={e=>setDriveMaxVol(Number(e.target.value))} className="w-full border p-2.5 rounded-xl text-sm" />
+                <input type="number" required min={driveReqVol} value={driveMaxVol} onChange={e=>setDriveMaxVol(Number(e.target.value))} className="w-full border p-2.5 rounded-sm text-sm" />
               </div>
               <div className="pt-4 flex gap-3 justify-end">
-                <button type="button" onClick={() => setIsEditCapacityModalOpen(false)} className="px-5 py-2.5 text-sm font-bold text-slate-600 hover:bg-slate-100 rounded-xl transition-colors">Cancel</button>
-                <button type="submit" disabled={actionLoading} className="px-5 py-2.5 text-sm font-bold bg-amber-600 hover:bg-amber-700 text-white rounded-xl transition-colors">
+                <button type="button" onClick={() => setIsEditCapacityModalOpen(false)} className="px-5 py-2.5 text-sm font-bold text-slate-600 hover:bg-emerald-50 rounded-sm transition-colors">Cancel</button>
+                <button type="submit" disabled={actionLoading} className="px-5 py-2.5 text-sm font-bold bg-amber-600 hover:bg-amber-700 text-white rounded-sm transition-colors">
                   {actionLoading ? "Saving..." : "Save Changes"}
                 </button>
               </div>
@@ -1861,54 +1965,54 @@ export default function VolunteerOrgDashboard() {
       {/* ── Edit Drive Modal ── */}
       {isEditDriveModalOpen && selectedDrive && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
-          <div className="bg-white rounded-3xl w-full max-w-lg shadow-2xl overflow-y-auto max-h-[90vh]">
+          <div className="bg-white rounded-sm w-full max-w-lg shadow-2xl overflow-y-auto max-h-[90vh]">
             <div className="p-6 border-b border-slate-100 flex justify-between items-center">
               <div>
                 <h2 className="text-xl font-black text-slate-900">Edit Drive Details</h2>
                 <p className="text-sm text-slate-500">Update information for "{selectedDrive.title}"</p>
               </div>
-              <button onClick={() => setIsEditDriveModalOpen(false)} className="p-2 text-slate-400 hover:text-slate-700 bg-slate-50 hover:bg-slate-100 rounded-full transition-colors"><X className="w-5 h-5"/></button>
+              <button onClick={() => setIsEditDriveModalOpen(false)} className="p-2 text-slate-400 hover:text-slate-700 bg-[#F4F9F5] hover:bg-emerald-50 rounded-full transition-colors"><X className="w-5 h-5"/></button>
             </div>
             
             <form onSubmit={handleEditDrive} className="p-6 space-y-4">
               <div>
                 <label className="text-xs font-bold text-slate-700 block mb-1">Drive Title</label>
-                <input required type="text" value={driveTitle} onChange={e=>setDriveTitle(e.target.value)} className="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-slate-500 focus:outline-none" />
+                <input required type="text" value={driveTitle} onChange={e=>setDriveTitle(e.target.value)} className="w-full border border-emerald-100 rounded-sm px-4 py-3 text-sm focus:ring-2 focus:ring-slate-500 focus:outline-none" />
               </div>
               
               <div>
                 <label className="text-xs font-bold text-slate-700 block mb-1">Description</label>
-                <textarea required value={driveDescription} onChange={e=>setDriveDescription(e.target.value)} rows={4} className="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-slate-500 focus:outline-none resize-none"></textarea>
+                <textarea required value={driveDescription} onChange={e=>setDriveDescription(e.target.value)} rows={4} className="w-full border border-emerald-100 rounded-sm px-4 py-3 text-sm focus:ring-2 focus:ring-slate-500 focus:outline-none resize-none"></textarea>
               </div>
               
               <div className="grid grid-cols-3 gap-4">
                  <div className="col-span-1">
                    <label className="text-xs font-bold text-slate-700 block mb-1">Date</label>
-                   <input required type="date" value={driveDate} onChange={e=>setDriveDate(e.target.value)} className="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-slate-500 focus:outline-none" />
+                   <input required type="date" value={driveDate} onChange={e=>setDriveDate(e.target.value)} className="w-full border border-emerald-100 rounded-sm px-4 py-3 text-sm focus:ring-2 focus:ring-slate-500 focus:outline-none" />
                  </div>
                  <div className="col-span-1">
                    <label className="text-xs font-bold text-slate-700 block mb-1">Time</label>
-                   <input required type="time" value={driveTime} onChange={e=>setDriveTime(e.target.value)} className="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-slate-500 focus:outline-none" />
+                   <input required type="time" value={driveTime} onChange={e=>setDriveTime(e.target.value)} className="w-full border border-emerald-100 rounded-sm px-4 py-3 text-sm focus:ring-2 focus:ring-slate-500 focus:outline-none" />
                  </div>
                  <div className="col-span-1">
                    <label className="text-xs font-bold text-slate-700 block mb-1">Duration (Hrs)</label>
-                   <input required type="number" min="1" step="0.5" value={driveDuration} onChange={e=>setDriveDuration(Number(e.target.value))} className="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-slate-500 focus:outline-none" />
+                   <input required type="number" min="1" step="0.5" value={driveDuration} onChange={e=>setDriveDuration(Number(e.target.value))} className="w-full border border-emerald-100 rounded-sm px-4 py-3 text-sm focus:ring-2 focus:ring-slate-500 focus:outline-none" />
                  </div>
               </div>
 
               <div>
                 <label className="text-xs font-bold text-slate-700 block mb-1">Meeting Location</label>
-                <input required type="text" value={driveMeetingLoc} onChange={e=>setDriveMeetingLoc(e.target.value)} className="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-slate-500 focus:outline-none" />
+                <input required type="text" value={driveMeetingLoc} onChange={e=>setDriveMeetingLoc(e.target.value)} className="w-full border border-emerald-100 rounded-sm px-4 py-3 text-sm focus:ring-2 focus:ring-slate-500 focus:outline-none" />
               </div>
 
               <div>
                 <label className="text-xs font-bold text-slate-700 block mb-1">Special Instructions (Optional)</label>
-                <textarea value={driveInstructions} onChange={e=>setDriveInstructions(e.target.value)} rows={2} className="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-slate-500 focus:outline-none resize-none" placeholder="E.g. Bring gloves and wear comfortable shoes..."></textarea>
+                <textarea value={driveInstructions} onChange={e=>setDriveInstructions(e.target.value)} rows={2} className="w-full border border-emerald-100 rounded-sm px-4 py-3 text-sm focus:ring-2 focus:ring-slate-500 focus:outline-none resize-none" placeholder="E.g. Bring gloves and wear comfortable shoes..."></textarea>
               </div>
 
               <div className="pt-4 flex gap-3 justify-end">
-                <button type="button" onClick={() => setIsEditDriveModalOpen(false)} className="px-5 py-2.5 text-sm font-bold text-slate-600 hover:bg-slate-100 rounded-xl transition-colors">Cancel</button>
-                <button type="submit" disabled={editDriveLoading} className="px-5 py-2.5 text-sm font-bold bg-slate-900 hover:bg-slate-800 text-white rounded-xl transition-colors shadow-sm disabled:opacity-50">
+                <button type="button" onClick={() => setIsEditDriveModalOpen(false)} className="px-5 py-2.5 text-sm font-bold text-slate-600 hover:bg-emerald-50 rounded-sm transition-colors">Cancel</button>
+                <button type="submit" disabled={editDriveLoading} className="px-5 py-2.5 text-sm font-bold bg-slate-900 hover:bg-slate-800 text-white rounded-sm transition-colors shadow-sm disabled:opacity-50">
                   {editDriveLoading ? "Saving..." : "Save Changes"}
                 </button>
               </div>
@@ -1920,7 +2024,7 @@ export default function VolunteerOrgDashboard() {
       {/* Add Partner Modal */}
       {isAddPartnerModalOpen && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
-          <div className="bg-white rounded-3xl w-full max-w-lg shadow-2xl overflow-y-auto max-h-[90vh]">
+          <div className="bg-white rounded-sm w-full max-w-lg shadow-2xl overflow-y-auto max-h-[90vh]">
             <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-emerald-50">
               <div>
                 <h2 className="text-xl font-black text-emerald-900">Add Partner Organization</h2>
@@ -1936,7 +2040,7 @@ export default function VolunteerOrgDashboard() {
                      <p className="text-sm font-bold text-slate-500">Loading organizations in {org?.state}...</p>
                   </div>
                ) : availablePartners.length === 0 ? (
-                  <div className="text-center py-8 bg-slate-50 rounded-2xl">
+                  <div className="text-center py-8 bg-[#F4F9F5] rounded-sm">
                      <p className="text-slate-500 text-sm font-bold">No verified organizations found in your state.</p>
                   </div>
                ) : (
@@ -1945,7 +2049,7 @@ export default function VolunteerOrgDashboard() {
                         const hasRequested = selectedDrive?.partnerRequests?.some(r => r.orgId === partner._id);
                         const isAlreadyPartner = selectedDrive?.supportingOrgs?.includes(partner._id);
                         return (
-                           <div key={idx} className="flex items-center justify-between p-4 bg-slate-50 rounded-2xl border border-slate-100">
+                           <div key={idx} className="flex items-center justify-between p-4 bg-[#F4F9F5] rounded-sm border border-slate-100">
                               <div>
                                  <h4 className="font-bold text-slate-900">{partner.name}</h4>
                                  <p className="text-xs text-slate-500">{partner.city}, {partner.state} • {partner.type}</p>
@@ -1963,7 +2067,7 @@ export default function VolunteerOrgDashboard() {
                                        else { const e = await res.json(); alert(e.error); }
                                     } finally { setActionLoading(false); }
                                  }}
-                                 className={`px-4 py-2 rounded-xl text-xs font-bold transition-colors ${
+                                 className={`px-4 py-2 rounded-sm text-xs font-bold transition-colors ${
                                     isAlreadyPartner ? 'bg-slate-200 text-slate-500 cursor-not-allowed' :
                                     hasRequested ? 'bg-amber-100 text-amber-700 cursor-not-allowed' :
                                     'bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm'
@@ -1988,72 +2092,69 @@ export default function VolunteerOrgDashboard() {
 // ── Shared Components ───────────────────────────────────────────────────
 function DriveCard({ drive, showOrg = true, onClick }: { drive: Drive; showOrg?: boolean; onClick?: () => void }) {
   const statusColors: Record<string, string> = {
-    OPEN: "bg-emerald-500 text-white",
-    COMPLETED: "bg-blue-500 text-white",
-    CANCELLED: "bg-red-500 text-white",
+    OPEN: "bg-emerald-600 text-white",
+    COMPLETED: "bg-slate-700 text-white",
+    CANCELLED: "bg-rose-600 text-white",
     WAITING_FOR_ORG: "bg-amber-500 text-white",
-    ORG_PENDING_APPROVAL: "bg-purple-500 text-white",
+    ORG_PENDING_APPROVAL: "bg-indigo-600 text-white",
+    OVERDUE: "bg-rose-600 text-white"
   };
 
-  const CATEGORY_COLORS: Record<string, string> = {
-    "Cleanliness": "from-teal-400 to-emerald-500", 
-    "Tree Plantation": "from-green-400 to-emerald-600", 
-    "Plastic Collection": "from-cyan-400 to-blue-500",
-    "Animal Welfare": "from-amber-400 to-orange-500", 
-    "Awareness Campaign": "from-purple-400 to-indigo-500",
-    "Other": "from-slate-400 to-slate-500"
+  const getCategoryIcon = (category: string) => {
+    switch (category) {
+      case "Cleanliness": return <Trash2 className="w-7 h-7 text-emerald-600" />;
+      case "Tree Plantation": return <Leaf className="w-7 h-7 text-emerald-600" />;
+      case "Plastic Collection": return <Trash2 className="w-7 h-7 text-emerald-600" />;
+      case "Animal Welfare": return <Heart className="w-7 h-7 text-emerald-600" />;
+      case "Awareness Campaign": return <Globe className="w-7 h-7 text-emerald-600" />;
+      case "Wall Painting": return <Edit3 className="w-7 h-7 text-emerald-600" />;
+      case "Park Cleaning": return <MapPin className="w-7 h-7 text-emerald-600" />;
+      case "Lake Cleaning": return <Activity className="w-7 h-7 text-emerald-600" />;
+      case "River Cleaning": return <Activity className="w-7 h-7 text-emerald-600" />;
+      case "Public Health": return <Shield className="w-7 h-7 text-emerald-600" />;
+      case "Waste Segregation": return <Trash2 className="w-7 h-7 text-emerald-600" />;
+      default: return <Target className="w-7 h-7 text-emerald-600" />;
+    }
   };
-
-  const CATEGORY_ICONS: Record<string, string> = {
-    "Cleanliness": "🧹", "Tree Plantation": "🌳", "Plastic Collection": "♻️",
-    "Animal Welfare": "🐾", "Awareness Campaign": "📣", "Wall Painting": "🎨",
-    "Park Cleaning": "🏞️", "Lake Cleaning": "💧", "River Cleaning": "🌊",
-    "Public Health": "🏥", "Waste Segregation": "🗂️", "Other": "⭐"
-  };
-
-  const gradient = CATEGORY_COLORS[drive.category] || CATEGORY_COLORS["Other"];
 
   const actualJoined = drive.volunteers ? drive.volunteers.filter((v: any) => v.status !== 'rejected').length : drive.joinedVolunteers;
 
   return (
-    <div onClick={onClick} className="bg-white rounded-2xl border border-slate-200 overflow-hidden hover:shadow-xl hover:shadow-indigo-500/10 hover:border-indigo-200 transition-all cursor-pointer flex flex-col h-full group">
-      {/* Banner */}
-      <div className={`h-24 w-full bg-gradient-to-r ${gradient} relative`}>
-         <div className="absolute top-3 right-3">
-            <span className={`${statusColors[drive.status] || "bg-slate-500 text-white"} text-[10px] font-black px-2.5 py-1 rounded-full shadow-sm uppercase tracking-wider`}>
+    <div onClick={onClick} className="bg-white rounded-none border border-emerald-100 overflow-hidden hover:shadow-lg hover:border-emerald-300 transition-all cursor-pointer flex flex-col h-full group">
+      <div className="h-1 bg-emerald-600 w-full"></div>
+      
+      <div className="p-5 flex-1 flex flex-col relative bg-white">
+         <div className="flex justify-between items-start mb-4">
+            <div className="w-14 h-14 bg-emerald-50 rounded-none border border-emerald-100 flex items-center justify-center group-hover:scale-105 transition-transform">
+               {getCategoryIcon(drive.category)}
+            </div>
+            <span className={`${statusColors[drive.status] || "bg-emerald-100 text-emerald-800"} text-[9px] font-black px-2 py-1 rounded-none uppercase tracking-wider`}>
                {drive.status.replace(/_/g, " ")}
             </span>
          </div>
-      </div>
-      
-      {/* Content */}
-      <div className="p-5 flex-1 flex flex-col relative">
-         <div className="absolute -top-10 left-5 w-16 h-16 bg-white rounded-2xl shadow-sm border border-slate-100 flex items-center justify-center text-3xl group-hover:-translate-y-1 transition-transform">
-            {CATEGORY_ICONS[drive.category] || "⭐"}
-         </div>
          
-         <div className="mt-8 mb-3">
+         <div className="mb-4">
             <h3 className="font-black text-slate-900 text-lg leading-tight mb-1 line-clamp-1">{drive.title}</h3>
-            {showOrg && drive.orgName && <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">by {drive.orgName}</p>}
+            {showOrg && drive.orgName && <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Liaison: {drive.orgName}</p>}
          </div>
 
-         <p className="text-xs text-slate-600 mb-4 line-clamp-2 flex-1 leading-relaxed">{drive.description}</p>
+         <p className="text-xs text-slate-600 mb-6 line-clamp-2 flex-1 leading-relaxed">{drive.description}</p>
 
-         <div className="bg-slate-50 rounded-xl p-3 grid grid-cols-2 gap-y-3 gap-x-2 text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+         <div className="bg-[#F4F9F5] border border-emerald-50 rounded-none p-3 grid grid-cols-2 gap-y-3 gap-x-2 text-[10px] font-bold text-slate-500 uppercase tracking-wider">
             <div className="flex items-center gap-2">
-               <MapPin className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+               <MapPin className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
                <span className="truncate">{drive.city}</span>
             </div>
             <div className="flex items-center gap-2">
-               <Calendar className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+               <Calendar className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
                <span className="truncate">{new Date(drive.date).toLocaleDateString("en-IN")}</span>
             </div>
             <div className="flex items-center gap-2">
-               <Clock className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+               <Clock className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
                <span>{drive.time}</span>
             </div>
             <div className="flex items-center gap-2">
-               <Users className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+               <Users className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
                <span>{actualJoined}/{drive.maxVolunteers || drive.requiredVolunteers} Vols</span>
             </div>
          </div>
@@ -2066,7 +2167,7 @@ function EmptyState({ icon, title, message, badge }: {
   icon: React.ReactNode; title: string; message: string; badge?: string;
 }) {
   return (
-    <div className="text-center py-20 bg-white rounded-2xl border border-slate-200 animate-fade-in">
+    <div className="text-center py-20 bg-white rounded-sm border border-emerald-100 animate-fade-in">
       <div className="text-slate-200 flex justify-center mb-4">{icon}</div>
       <h3 className="font-bold text-slate-700 mb-2">{title}</h3>
       <p className="text-slate-400 text-sm max-w-xs mx-auto">{message}</p>

@@ -12,7 +12,7 @@ export function Card({ children, className = '', onClick, hoverable = false }: C
   
   return (
     <div 
-      className={`glass-panel rounded-3xl overflow-hidden ${hoverClasses} ${className}`}
+      className={`bg-white border border-slate-200 rounded-sm overflow-hidden ${hoverClasses} ${className}`}
       onClick={onClick}
     >
       {children}

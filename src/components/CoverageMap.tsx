@@ -49,14 +49,10 @@ export default function CoverageMap() {
 
   const allCoords = { ...CITY_COORDINATES, ...dynamicCoords };
 
-  // Mock global stats for now (could be fetched)
-  const stats = {
-    activeReports: "1,250+",
-    resolvedIssues: "8,300+"
-  };
+  const [stats, setStats] = useState({ activeReports: "0", resolvedIssues: "0" });
 
   useEffect(() => {
-    async function fetchAdmins() {
+    async function fetchMapData() {
       try {
         // Fetch all admins
         const res = await fetch("/api/users?role=admin");
@@ -68,7 +64,6 @@ export default function CoverageMap() {
           const citySet = new Set<string>();
           admins.forEach((admin: any) => {
             if (admin.city) {
-               // Normalize string slightly
                const cityName = admin.city.trim();
                citySet.add(cityName);
             }
@@ -76,7 +71,26 @@ export default function CoverageMap() {
           
           const cityArray = Array.from(citySet);
           setCities(cityArray);
-          setIsLoading(false); // Stop loading early so UI isn't blocked by geocoding
+          setIsLoading(false); // Stop loading early
+
+          // Fetch real issue stats in parallel
+          fetch("/api/issues").then(res => res.json()).then(issues => {
+            let active = 0;
+            let resolved = 0;
+            if (Array.isArray(issues)) {
+              issues.forEach(issue => {
+                if (issue.status === "resolved" || issue.status === "Resolved") {
+                  resolved++;
+                } else {
+                  active++;
+                }
+              });
+            }
+            setStats({
+              activeReports: active.toString(),
+              resolvedIssues: resolved.toString()
+            });
+          }).catch(err => console.error("Error fetching stats:", err));
 
           // Geocode missing cities sequentially to respect Nominatim limits
           const newCoords: Record<string, [number, number]> = {};
@@ -104,7 +118,7 @@ export default function CoverageMap() {
                  const coords = CITY_COORDINATES[firstValid] || newCoords[firstValid];
                  setSelectedCity(firstValid);
                  setCenter(coords);
-                 setZoom(12);
+                 setZoom(7);
              }
           }
         }
@@ -113,14 +127,14 @@ export default function CoverageMap() {
         setIsLoading(false);
       }
     }
-    fetchAdmins();
+    fetchMapData();
   }, []);
 
   const handleCityClick = (city: string) => {
     setSelectedCity(city);
     const coords = allCoords[city] || DEFAULT_CENTER;
     setCenter(coords);
-    setZoom(12);
+    setZoom(7);
   };
 
   const resetMap = () => {

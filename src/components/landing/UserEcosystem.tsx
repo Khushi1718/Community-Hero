@@ -1,13 +1,12 @@
 "use client";
 
-import { UserCircle, Wrench, Shield, Globe } from "lucide-react";
+import { UserCircle, Wrench, Shield, Globe, Building, Network, ArrowRight, Bell, Cloud } from "lucide-react";
 
 export default function UserEcosystem() {
   const roles = [
     {
       icon: UserCircle,
       title: "Citizen",
-      color: "blue",
       items: [
         "Report civic issues instantly",
         "Upload verified photos/videos",
@@ -18,7 +17,6 @@ export default function UserEcosystem() {
     {
       icon: Wrench,
       title: "Municipal Employee",
-      color: "orange",
       items: [
         "Receive assigned tasks",
         "Navigate via GPS routing",
@@ -29,7 +27,6 @@ export default function UserEcosystem() {
     {
       icon: Shield,
       title: "City Admin",
-      color: "green",
       items: [
         "Manage city jurisdiction",
         "Review AI analytics",
@@ -40,7 +37,6 @@ export default function UserEcosystem() {
     {
       icon: Globe,
       title: "Super Admin",
-      color: "purple",
       items: [
         "Oversee national network",
         "Create city administrators",
@@ -51,7 +47,7 @@ export default function UserEcosystem() {
   ];
 
   return (
-    <section className="py-24 bg-slate-50 border-b border-slate-200 relative">
+    <section className="py-12 bg-slate-50 border-b border-slate-200 relative">
       <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-16 max-w-3xl mx-auto">
           <h2 className="text-sm font-black text-slate-500 uppercase tracking-widest mb-4">Four User Ecosystem</h2>
@@ -60,32 +56,76 @@ export default function UserEcosystem() {
           </h3>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-          {roles.map((role, idx) => {
-            const colorConfig = {
-              blue: "border-blue-200 bg-blue-50 text-blue-700 shadow-blue-500/10 marker:text-blue-500",
-              orange: "border-orange-200 bg-orange-50 text-orange-700 shadow-orange-500/10 marker:text-orange-500",
-              green: "border-green-200 bg-green-50 text-green-700 shadow-green-500/10 marker:text-green-500",
-              purple: "border-purple-200 bg-purple-50 text-purple-700 shadow-purple-500/10 marker:text-purple-500",
-            }[role.color as "blue" | "orange" | "green" | "purple"];
-
-            return (
-              <div key={idx} className={`rounded-3xl p-8 border bg-white shadow-xl hover:-translate-y-2 transition-all duration-300 ${colorConfig.split('shadow-')[0]} shadow-lg hover:shadow-2xl`}>
-                <div className={`w-16 h-16 rounded-2xl flex items-center justify-center mb-6 ${colorConfig.split('text-')[0].split('shadow-')[0]}`}>
-                  <role.icon className="w-8 h-8" />
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          {roles.map((role, idx) => (
+            <div key={idx} className="rounded-xl p-7 border border-green-200 bg-white shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all duration-300 shadow-green-500/5">
+              <div className="flex items-center gap-4 mb-5">
+                <div className="w-12 h-12 rounded-lg flex items-center justify-center shrink-0 bg-green-50 text-green-600 border border-green-100">
+                  <role.icon className="w-6 h-6 stroke-[2.5]" />
                 </div>
-                <h4 className="text-2xl font-black text-slate-900 mb-6">{role.title}</h4>
-                <ul className="space-y-4">
-                  {role.items.map((item, i) => (
-                    <li key={i} className="flex items-start gap-3">
-                      <div className={`w-1.5 h-1.5 rounded-full mt-2 shrink-0 bg-${role.color}-500`} />
-                      <span className="text-sm font-bold text-slate-600 leading-relaxed">{item}</span>
-                    </li>
-                  ))}
-                </ul>
+                <h4 className="text-xl font-extrabold text-slate-900">{role.title}</h4>
               </div>
-            );
-          })}
+              
+              <div className="w-10 h-[3px] rounded-full mb-6 bg-green-500" />
+              
+              <ul className="space-y-4">
+                {role.items.map((item, i) => (
+                  <li key={i} className="flex items-start gap-3">
+                    <div className="w-1.5 h-1.5 rounded-full mt-2 shrink-0 bg-green-500" />
+                    <span className="text-sm font-medium text-slate-700 leading-relaxed">{item}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
+        </div>
+
+        {/* Integrations Banner */}
+        <div className="mt-16 bg-white border border-slate-200 rounded-xl p-8 shadow-sm flex flex-col lg:flex-row items-center justify-between gap-10">
+          <div className="lg:w-1/3">
+            <h4 className="text-xl font-bold text-slate-900 mb-3">Seamless Government Integrations</h4>
+            <p className="text-sm text-slate-600 leading-relaxed">
+              Already have an existing municipal CRM? No need to shift platforms. Community Hero integrates directly with your legacy systems to seamlessly push and pull issue reports. Powered by <strong className="text-blue-600">Google Cloud Pub/Sub</strong>, we guarantee real-time, secure, and scalable data exchange without interrupting your current workflow.
+            </p>
+          </div>
+          
+          <div className="lg:w-2/3 flex items-center justify-between w-full gap-2 overflow-x-auto pb-4 lg:pb-0">
+            {/* Flow diagram */}
+            <div className="flex flex-col items-center gap-3 min-w-[100px]">
+              <div className="w-16 h-16 rounded-full bg-slate-50 border border-slate-200 flex items-center justify-center text-slate-600 shadow-sm">
+                <Building className="w-7 h-7" />
+              </div>
+              <span className="text-xs font-bold text-slate-700 text-center">External<br/>Gov. CRM</span>
+            </div>
+            
+            <ArrowRight className="w-5 h-5 text-slate-300 shrink-0" />
+            
+            {/* Normal Google Cloud Pub/Sub Node */}
+            <div className="flex flex-col items-center gap-3 min-w-[100px]">
+              <div className="w-16 h-16 rounded-full bg-blue-50 border border-blue-100 flex items-center justify-center text-blue-600 shadow-sm">
+                <Cloud className="w-7 h-7" />
+              </div>
+              <span className="text-xs font-bold text-slate-700 text-center">Google Cloud<br/>Pub/Sub</span>
+            </div>
+
+            <ArrowRight className="w-5 h-5 text-slate-300 shrink-0" />
+
+            <div className="flex flex-col items-center gap-3 min-w-[100px]">
+              <div className="w-16 h-16 rounded-full bg-green-50 border border-green-100 flex items-center justify-center text-green-600 shadow-sm">
+                <Shield className="w-7 h-7" />
+              </div>
+              <span className="text-xs font-bold text-slate-700 text-center">Community<br/>Hero Platform</span>
+            </div>
+
+            <ArrowRight className="w-5 h-5 text-slate-300 shrink-0" />
+
+            <div className="flex flex-col items-center gap-3 min-w-[100px]">
+              <div className="w-16 h-16 rounded-full bg-purple-50 border border-purple-100 flex items-center justify-center text-purple-600 shadow-sm">
+                <Bell className="w-7 h-7" />
+              </div>
+              <span className="text-xs font-bold text-slate-700 text-center">Real-time Sync<br/>& Notifications</span>
+            </div>
+          </div>
         </div>
       </div>
     </section>

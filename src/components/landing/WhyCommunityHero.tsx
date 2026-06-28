@@ -1,40 +1,63 @@
 "use client";
 
-import { Brain, MapPin, Camera, Activity, FileText, CheckCircle2, TrendingUp, HeartHandshake, Zap } from "lucide-react";
+import Image from "next/image";
 
 export default function WhyCommunityHero() {
   const features = [
-    { icon: Brain, title: "AI-Powered Verification", desc: "Computer vision and NLP instantly verify issues, filter duplicates, and assign severity.", color: "text-purple-600", bg: "bg-purple-100" },
-    { icon: MapPin, title: "GPS & Timestamp Verified", desc: "Every report and resolution requires strict geospatial and temporal validation.", color: "text-blue-600", bg: "bg-blue-100" },
-    { icon: Camera, title: "Media-Based Reporting", desc: "Rich evidence collection with high-resolution photos and video documentation.", color: "text-pink-600", bg: "bg-pink-100" },
-    { icon: Activity, title: "Transparent Lifecycle", desc: "From submission to resolution, every state transition is publicly auditable.", color: "text-emerald-600", bg: "bg-emerald-100" },
-    { icon: FileText, title: "Public Accountability", desc: "Before and after evidence is published to the community feed for all to see.", color: "text-amber-600", bg: "bg-amber-100" },
-    { icon: Zap, title: "Smart Municipal Workflow", desc: "Automated routing and material request handling for optimized field operations.", color: "text-orange-600", bg: "bg-orange-100" },
-    { icon: HeartHandshake, title: "Community Engagement", desc: "Citizens earn trust scores and build stronger communities through collaboration.", color: "text-rose-600", bg: "bg-rose-100" },
-    { icon: TrendingUp, title: "Live Analytics Dashboard", desc: "Real-time KPIs and resolution metrics for data-driven municipal decisions.", color: "text-indigo-600", bg: "bg-indigo-100" },
+    {
+      title: "AI Triage & Anti-Spoofing",
+      desc: "To combat duplicate complaints, our models cross-reference geospatial data. Hardcoded EXIF analysis and temporal validation prevent image spoofing and filter out manipulated media before it reaches city admins.",
+      image: "https://images.unsplash.com/photo-1596423735880-5c6a1e8a8df0?auto=format&fit=crop&q=80&w=800"
+    },
+    {
+      title: "Verified Accountability",
+      desc: "Tickets cannot be closed arbitrarily. Municipal employees must use in-app live camera capture to upload geofenced, timestamped 'After' photos from the exact location, proving the repair was genuinely completed.",
+      image: "https://images.unsplash.com/photo-1504328345606-18bbc8c9d7d1?auto=format&fit=crop&q=80&w=800"
+    },
+    {
+      title: "Immutable Audit Logs",
+      desc: "Every major state transition is securely tracked in immutable admin audit logs. This establishes a clear, auditable, public-facing timeline that helps bridge the trust gap between citizens and local government.",
+      image: "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?auto=format&fit=crop&q=80&w=800"
+    },
+    {
+      title: "Encrypted Privacy & Routing",
+      desc: "Citizen privacy is protected through end-to-end encrypted data transmission. Meanwhile, the platform leverages AI to securely assess and prioritize high-risk reports, escalating them to emergency teams.",
+      image: "https://images.unsplash.com/photo-1588684784732-c6f3964dbdd7?auto=format&fit=crop&q=80&w=800"
+    }
   ];
 
   return (
-    <section className="py-24 bg-white relative">
+    <section className="py-24 bg-white border-y border-slate-200">
       <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center mb-16 max-w-3xl mx-auto">
-          <h2 className="text-sm font-black text-green-600 uppercase tracking-widest mb-4">Why It Matters</h2>
-          <h3 className="text-3xl md:text-5xl font-black text-slate-900 leading-tight">
-            More than just reporting. <br/> A complete governance engine.
-          </h3>
-        </div>
         
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="max-w-4xl mx-auto text-center mb-16">
+          <h2 className="text-sm font-black text-blue-700 uppercase tracking-widest mb-4">Security & Transparency</h2>
+          <h3 className="text-3xl md:text-4xl lg:text-5xl font-black text-slate-900 leading-tight mb-6 whitespace-nowrap">
+            Accountability built into <span className="text-green-600">every step.</span>
+          </h3>
+          <p className="text-lg text-slate-600 font-medium leading-relaxed max-w-3xl mx-auto">
+            Community Hero is designed with bank-grade security to prevent spam, improve verification accuracy, and foster public trust through a cryptographically auditable workflow.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           {features.map((feature, idx) => (
-            <div key={idx} className="group p-8 rounded-3xl border border-slate-100 bg-slate-50 hover:bg-white hover:border-green-200 hover:shadow-xl hover:shadow-green-500/10 transition-all duration-300 transform hover:-translate-y-1">
-              <div className={`w-14 h-14 rounded-2xl ${feature.bg} flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300`}>
-                <feature.icon className={`w-7 h-7 ${feature.color}`} />
+            <div key={idx} className="group bg-green-50/50 hover:bg-green-50 border border-green-100 rounded-2xl p-5 transition-colors flex flex-col h-full">
+              <div className="relative h-48 mb-5 overflow-hidden bg-slate-100 border border-green-200/50 rounded-lg shadow-sm">
+                <img 
+                  src={feature.image} 
+                  alt={feature.title} 
+                  className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-700 ease-in-out" 
+                />
               </div>
-              <h4 className="text-xl font-black text-slate-900 mb-3">{feature.title}</h4>
-              <p className="text-sm font-medium text-slate-500 leading-relaxed">{feature.desc}</p>
+              <h4 className="text-lg font-bold text-green-950 mb-2">{feature.title}</h4>
+              <p className="text-green-900/70 leading-relaxed text-sm flex-grow">
+                {feature.desc}
+              </p>
             </div>
           ))}
         </div>
+
       </div>
     </section>
   );

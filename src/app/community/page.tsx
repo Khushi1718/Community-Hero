@@ -379,50 +379,70 @@ export default function CommunityHubPage() {
     <div className="min-h-screen bg-white font-sans pb-0">
       
       {/* ─── BANNER SECTION ─── */}
-      <section className="bg-[#f8faf6] w-full px-4 sm:px-6 lg:px-8 py-16 flex flex-col items-center text-center relative overflow-hidden">
-        <div className="z-10 w-full max-w-4xl flex flex-col items-center">
-          <h1 className="text-4xl md:text-5xl font-black text-slate-900 mb-4 leading-tight">
-            Stronger Communities,<br/>
-            <span className="text-green-700">Better Tomorrow 💚</span>
+      <section className="relative w-full px-4 sm:px-6 lg:px-8 py-24 flex flex-col items-center text-center overflow-hidden">
+        {/* Background Image & Overlay */}
+        <div 
+          className="absolute inset-0 z-0 bg-cover bg-center"
+          style={{ backgroundImage: "url('/images/new_hero_bg.png')" }}
+        />
+        <div className="absolute inset-0 z-0 bg-black/70 backdrop-blur-sm" />
+
+        <div className="z-10 w-full max-w-4xl flex flex-col items-center relative">
+          <h1 className="text-4xl md:text-5xl font-bold text-white mb-6 leading-tight tracking-tight">
+            Community <span className="text-green-400">Impact</span> & Initiatives
           </h1>
-          <p className="text-slate-700 font-medium mb-10 text-lg">
-            See the impact we're creating together.<br/>
-            Stay informed, get inspired and be a part of the change.
+          <p className="text-gray-200 font-medium mb-12 text-lg md:text-xl max-w-2xl">
+            Discover active community drives, connect with verified local organizations, and track our collective progress.
           </p>
           <div className="flex flex-wrap justify-center gap-4">
-             <div className="bg-white rounded-2xl p-4 flex items-center gap-4 shadow-sm min-w-[180px] text-left">
-               <div className="w-12 h-12 rounded-xl bg-green-50 flex items-center justify-center shrink-0">
-                 <Leaf className="w-6 h-6 text-green-700" />
+             <div className="flex items-center gap-4 bg-black/40 backdrop-blur-md border border-white/10 px-5 py-3.5 rounded-2xl shadow-xl hover:bg-black/50 transition-colors cursor-default">
+               <div className="flex items-center justify-center bg-white/10 w-10 h-10 rounded-xl shrink-0">
+                 <Leaf className="w-5 h-5 text-green-400" />
                </div>
-               <div>
-                 <p className="font-black text-2xl text-slate-900">{stats.totalResolved || posts.filter(p => p.resolutionSummary).length}</p>
-                 <p className="text-[11px] font-bold text-slate-500 uppercase tracking-wide">Issues Resolved</p>
-               </div>
-             </div>
-             <div className="bg-white rounded-2xl p-4 flex items-center gap-4 shadow-sm min-w-[180px] text-left">
-               <div className="w-12 h-12 rounded-xl bg-slate-50 flex items-center justify-center shrink-0">
-                 <Users className="w-6 h-6 text-slate-700" />
-               </div>
-               <div>
-                 <p className="font-black text-2xl text-slate-900">{stats.verifiedOrgs || orgs.length}</p>
-                 <p className="text-[11px] font-bold text-slate-500 uppercase tracking-wide">Organizations</p>
+               <div className="flex flex-col text-left">
+                 <span className="font-bold text-2xl text-white leading-none mb-1.5">{stats.totalResolved || posts.filter(p => p.resolutionSummary).length}</span>
+                 <span className="text-[10px] font-bold text-gray-300 uppercase tracking-widest leading-none">Issues Resolved</span>
                </div>
              </div>
-             <div className="bg-white rounded-2xl p-4 flex items-center gap-4 shadow-sm min-w-[180px] text-left">
-               <div className="w-12 h-12 rounded-xl bg-green-50 flex items-center justify-center shrink-0">
-                 <CheckCircle2 className="w-6 h-6 text-green-700" />
+             <div className="flex items-center gap-4 bg-black/40 backdrop-blur-md border border-white/10 px-5 py-3.5 rounded-2xl shadow-xl hover:bg-black/50 transition-colors cursor-default">
+               <div className="flex items-center justify-center bg-white/10 w-10 h-10 rounded-xl shrink-0">
+                 <Users className="w-5 h-5 text-blue-400" />
                </div>
-               <div>
-                 <p className="font-black text-2xl text-slate-900">{stats.totalDrives || drives.length}</p>
-                 <p className="text-[11px] font-bold text-slate-500 uppercase tracking-wide">Active Drives</p>
+               <div className="flex flex-col text-left">
+                 <span className="font-bold text-2xl text-white leading-none mb-1.5">{stats.verifiedOrgs || orgs.length}</span>
+                 <span className="text-[10px] font-bold text-gray-300 uppercase tracking-widest leading-none">Organizations</span>
+               </div>
+             </div>
+             <div className="flex items-center gap-4 bg-black/40 backdrop-blur-md border border-white/10 px-5 py-3.5 rounded-2xl shadow-xl hover:bg-black/50 transition-colors cursor-default">
+               <div className="flex items-center justify-center bg-white/10 w-10 h-10 rounded-xl shrink-0">
+                 <CheckCircle2 className="w-5 h-5 text-green-400" />
+               </div>
+               <div className="flex flex-col text-left">
+                 <span className="font-bold text-2xl text-white leading-none mb-1.5">{stats.totalDrives || drives.length}</span>
+                 <span className="text-[10px] font-bold text-gray-300 uppercase tracking-widest leading-none">Active Drives</span>
                </div>
              </div>
           </div>
         </div>
       </section>
 
+      {/* ─── QUICK NAV STRIP ─── */}
+      <div className="w-full bg-green-900 border-b border-green-950 shadow-md sticky top-[72px] z-40">
+        <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-center md:justify-start gap-8 h-12 overflow-x-auto whitespace-nowrap custom-scrollbar">
+          <a href="#resolved-issues" className="font-bold text-[13px] text-green-100 hover:text-white transition-colors">
+            Resolved Issues
+          </a>
+          <a href="#live-drives" className="font-bold text-[13px] text-green-100 hover:text-white transition-colors">
+            Explore Drives
+          </a>
+          <a href="#organizations" className="font-bold text-[13px] text-green-100 hover:text-white transition-colors">
+            View Organizations
+          </a>
+        </div>
+      </div>
+
       {/* ─── RESOLVED ISSUES SECTION ─── */}
-      <section className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 mt-16">
+      <section id="resolved-issues" className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 mt-12">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-4">
           <div>
             <h2 className="text-2xl font-black text-slate-900 mb-1">Resolved Issues</h2>
@@ -501,7 +521,7 @@ export default function CommunityHubPage() {
       </section>
 
       {/* ─── LIVE DRIVES SECTION ─── */}
-      <section className="bg-slate-50 border-y border-slate-200 mt-20 py-16">
+      <section id="live-drives" className="bg-slate-50 border-y border-slate-200 mt-20 py-16">
         <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-8 gap-4">
             <div>
@@ -566,7 +586,7 @@ export default function CommunityHubPage() {
       </section>
 
       {/* ─── ORGANIZATIONS SECTION ─── */}
-      <section className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 mt-16">
+      <section id="organizations" className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 mt-16">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-8 gap-4">
           <div>
             <h2 className="text-2xl font-black text-slate-900 mb-1">Featured Organizations</h2>
@@ -576,23 +596,47 @@ export default function CommunityHubPage() {
 
         <div className="flex overflow-x-auto gap-6 pb-4 snap-x custom-scrollbar">
           {orgs.map(org => (
-            <div key={org._id} className="min-w-[300px] bg-white rounded-2xl border border-slate-200 p-6 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden flex flex-col items-center text-center shrink-0 snap-start">
-              <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mb-4 overflow-hidden border border-slate-200">
-                {org.logoUrl ? <img src={org.logoUrl} className="w-full h-full object-cover"/> : <Building2 className="w-8 h-8 text-slate-400" />}
+            <div key={org._id} className="w-[340px] shrink-0 bg-white border border-slate-200 p-5 shadow-sm hover:shadow-md transition-shadow relative flex flex-col snap-start rounded-md h-full">
+              <div className="flex items-center gap-4 mb-4">
+                <div className="w-14 h-14 rounded-full bg-slate-50 flex items-center justify-center border border-slate-200 shrink-0 overflow-hidden">
+                  {org.logoUrl ? (
+                    <img src={org.logoUrl} className="w-full h-full object-cover"/>
+                  ) : (
+                    <img src={`https://api.dicebear.com/7.x/initials/svg?seed=${org.name}`} className="w-full h-full object-cover"/>
+                  )}
+                </div>
+                <div>
+                  <h3 className="font-bold text-[17px] text-slate-900 mb-0.5 text-left">{org.name}</h3>
+                  <p className="text-[13px] font-medium text-blue-700 flex items-center gap-1 text-left"><MapPin className="w-3.5 h-3.5"/> {org.city ? `${org.city}, Haryana` : "Rohtak, Haryana"}</p>
+                </div>
               </div>
-              <h3 className="font-black text-lg text-slate-900 mb-1">{org.name}</h3>
-              <p className="text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-4 flex items-center justify-center gap-1"><MapPin className="w-3 h-3"/> {org.city}</p>
               
-              <div className="w-full flex items-center justify-center gap-6 border-t border-slate-100 pt-4 mb-5">
-                <div>
-                  <p className="text-lg font-black text-slate-900">{org.completedDrivesCount || 0}</p>
-                  <p className="text-[10px] font-bold text-slate-500 uppercase">Drives</p>
+              <hr className="border-slate-100 mb-4" />
+              
+              <div className="w-full flex items-center justify-center pb-4 mb-4">
+                <div className="flex-1 text-center">
+                  <p className="text-[22px] font-bold text-green-800 leading-none mb-1">{org.completedDrivesCount || 0}</p>
+                  <p className="text-[13px] font-medium text-slate-600">Active Drives</p>
                 </div>
-                <div className="w-px h-8 bg-slate-200"></div>
-                <div>
-                  <p className="text-lg font-black text-slate-900">{org.activeMembers || 0}</p>
-                  <p className="text-[10px] font-bold text-slate-500 uppercase">Members</p>
+                <div className="w-px h-10 bg-slate-200 mx-2"></div>
+                <div className="flex-1 text-center">
+                  <p className="text-[22px] font-bold text-green-800 leading-none mb-1">{org.activeMembers || 0}</p>
+                  <p className="text-[13px] font-medium text-slate-600">Total Members</p>
                 </div>
+              </div>
+              
+              <div className="flex-1 mb-5 text-left flex flex-col">
+                <p className="text-[14px] text-slate-600 font-medium leading-relaxed mb-4">
+                  {org.mission || [
+                    `Working for a cleaner, greener and better ${org.city || "community"}.`,
+                    "Empowering citizens to take action for a cleaner and healthier neighborhood.",
+                    "Dedicated to organizing community drives and promoting civic responsibility.",
+                    "Focused on grassroots initiatives and youth volunteering for social good."
+                  ][(org.name.length || 0) % 4]}
+                </p>
+                <p className="text-[13px] text-slate-500 italic mt-auto">
+                  Registered with District Administration
+                </p>
               </div>
               
               <button 
@@ -601,9 +645,9 @@ export default function CommunityHubPage() {
                   setJoinEmail(user?.email || appUser?.email || "");
                   setSelectedOrgForRegistration(org);
                 }}
-                className="w-full bg-green-50 border border-green-200 text-green-700 font-bold py-2 rounded-lg text-sm hover:bg-green-100 transition-colors"
+                className="w-full bg-white border border-green-700 text-green-800 font-bold py-2.5 rounded text-[15px] hover:bg-green-50 transition-colors"
               >
-                 Join
+                 Request to Join
               </button>
             </div>
           ))}
@@ -611,35 +655,25 @@ export default function CommunityHubPage() {
       </section>
 
       {/* ─── BE A PART OF THE CHANGE CTA ─── */}
-      <section className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 mt-20">
-        <div className="bg-[#f8faf6] rounded-3xl p-8 md:p-12 flex flex-col md:flex-row items-center justify-between gap-10">
-          <div className="max-w-sm">
-            <h2 className="text-3xl font-black text-slate-900 mb-3">Be a Part of the Change</h2>
-            <p className="text-sm text-slate-600 font-medium mb-6">Join drives, follow organizations and inspire others.</p>
-            <button className="px-6 py-3 bg-green-700 hover:bg-green-800 text-white font-bold rounded-xl text-sm transition-colors shadow-lg">Explore Drives</button>
+      <section className="bg-slate-50 border-t border-slate-200 mt-16 py-10">
+        <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row items-center justify-between gap-6">
+          <div className="flex items-center gap-5">
+            <div className="w-14 h-14 bg-green-100 text-green-700 flex items-center justify-center rounded-md shrink-0 border border-green-200">
+               <HeartHandshake className="w-7 h-7" />
+            </div>
+            <div>
+              <h2 className="text-2xl font-bold text-slate-900 mb-1">Be a Part of the Change</h2>
+              <p className="text-sm text-slate-600 font-medium">Join drives, follow organizations, and inspire your community.</p>
+            </div>
           </div>
-          <div className="flex flex-col sm:flex-row gap-8 md:gap-16">
-            <div className="flex flex-col items-center text-center max-w-[160px]">
-              <div className="w-20 h-20 mb-4 bg-white rounded-full flex items-center justify-center shadow-sm">
-                 <HeartHandshake className="w-10 h-10 text-green-600" />
-              </div>
-              <h3 className="font-black text-slate-900 text-sm mb-1">Join Drives</h3>
-              <p className="text-[11px] text-slate-500 leading-relaxed font-medium">Take part in live community drives near you.</p>
-            </div>
-            <div className="flex flex-col items-center text-center max-w-[160px]">
-              <div className="w-20 h-20 mb-4 bg-white rounded-full flex items-center justify-center shadow-sm">
-                 <Users className="w-10 h-10 text-emerald-600" />
-              </div>
-              <h3 className="font-black text-slate-900 text-sm mb-1">Follow Organizations</h3>
-              <p className="text-[11px] text-slate-500 leading-relaxed font-medium">Stay updated with the work they are doing.</p>
-            </div>
-            <div className="flex flex-col items-center text-center max-w-[160px]">
-              <div className="w-20 h-20 mb-4 bg-white rounded-full flex items-center justify-center shadow-sm">
-                 <Share2 className="w-10 h-10 text-orange-500" />
-              </div>
-              <h3 className="font-black text-slate-900 text-sm mb-1">Inspire Others</h3>
-              <p className="text-[11px] text-slate-500 leading-relaxed font-medium">Like, share and spread the word.</p>
-            </div>
+          
+          <div className="flex items-center gap-4 shrink-0 w-full md:w-auto">
+            <button className="flex-1 md:flex-none px-6 py-2.5 bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 font-bold rounded-md text-sm transition-colors shadow-sm">
+              Follow Organizations
+            </button>
+            <button className="flex-1 md:flex-none px-6 py-2.5 bg-green-700 hover:bg-green-800 text-white font-bold rounded-md text-sm transition-colors shadow-sm">
+              Explore Drives
+            </button>
           </div>
         </div>
       </section>
