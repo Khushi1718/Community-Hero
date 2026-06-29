@@ -1,0 +1,26 @@
+steps:
+  # Step 1: Build the Docker image
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['build', '-t', 'gcr.io/$PROJECT_ID/community-hero:$COMMIT_SHA', '.']
+    
+  # Step 2: Push the Docker image to Container Registry
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['push', 'gcr.io/$PROJECT_ID/community-hero:$COMMIT_SHA']
+
+  # Step 3: Deploy the image to Cloud Run
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: gcloud
+    args:
+      - 'run'
+      - 'deploy'
+      - 'community-hero'
+      - '--image'
+      - 'gcr.io/$PROJECT_ID/community-hero:$COMMIT_SHA'
+      - '--region'
+      - 'us-central1'
+      - '--allow-unauthenticated'
+      # Example of referencing Secret Manager secrets:
+      # - '--set-secrets=GEMINI_API_KEY=gemini-api-key:latest,MONGODB_URI=mongodb-uri:latest,CLERK_SECRET_KEY=clerk-secret-key:latest,NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=clerk-publishable-key:latest'
+
+images:
+  - 'gcr.io/$PROJECT_ID/community-hero:$COMMIT_SHA'

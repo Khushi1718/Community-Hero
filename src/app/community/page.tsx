@@ -388,14 +388,14 @@ export default function CommunityHubPage() {
         <div className="absolute inset-0 z-0 bg-black/70 backdrop-blur-sm" />
 
         <div className="z-10 w-full max-w-4xl flex flex-col items-center relative">
-          <h1 className="text-4xl md:text-5xl font-bold text-white mb-6 leading-tight tracking-tight">
+          <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-white mb-4 sm:mb-6 leading-tight tracking-tight px-2">
             Community <span className="text-green-400">Impact</span> & Initiatives
           </h1>
-          <p className="text-gray-200 font-medium mb-12 text-lg md:text-xl max-w-2xl">
+          <p className="text-gray-200 font-medium mb-8 sm:mb-12 text-base sm:text-lg md:text-xl max-w-2xl px-4">
             Discover active community drives, connect with verified local organizations, and track our collective progress.
           </p>
-          <div className="flex flex-wrap justify-center gap-4">
-             <div className="flex items-center gap-4 bg-black/40 backdrop-blur-md border border-white/10 px-5 py-3.5 rounded-2xl shadow-xl hover:bg-black/50 transition-colors cursor-default">
+          <div className="flex flex-col sm:flex-row flex-wrap w-full sm:w-auto justify-center gap-3 sm:gap-4 px-4 sm:px-0">
+             <div className="flex items-center w-full sm:w-auto gap-4 bg-black/40 backdrop-blur-md border border-white/10 px-5 py-3.5 rounded-2xl shadow-xl hover:bg-black/50 transition-colors cursor-default">
                <div className="flex items-center justify-center bg-white/10 w-10 h-10 rounded-xl shrink-0">
                  <Leaf className="w-5 h-5 text-green-400" />
                </div>
@@ -404,7 +404,7 @@ export default function CommunityHubPage() {
                  <span className="text-[10px] font-bold text-gray-300 uppercase tracking-widest leading-none">Issues Resolved</span>
                </div>
              </div>
-             <div className="flex items-center gap-4 bg-black/40 backdrop-blur-md border border-white/10 px-5 py-3.5 rounded-2xl shadow-xl hover:bg-black/50 transition-colors cursor-default">
+             <div className="flex items-center w-full sm:w-auto gap-4 bg-black/40 backdrop-blur-md border border-white/10 px-5 py-3.5 rounded-2xl shadow-xl hover:bg-black/50 transition-colors cursor-default">
                <div className="flex items-center justify-center bg-white/10 w-10 h-10 rounded-xl shrink-0">
                  <Users className="w-5 h-5 text-blue-400" />
                </div>
@@ -413,7 +413,7 @@ export default function CommunityHubPage() {
                  <span className="text-[10px] font-bold text-gray-300 uppercase tracking-widest leading-none">Organizations</span>
                </div>
              </div>
-             <div className="flex items-center gap-4 bg-black/40 backdrop-blur-md border border-white/10 px-5 py-3.5 rounded-2xl shadow-xl hover:bg-black/50 transition-colors cursor-default">
+             <div className="flex items-center w-full sm:w-auto gap-4 bg-black/40 backdrop-blur-md border border-white/10 px-5 py-3.5 rounded-2xl shadow-xl hover:bg-black/50 transition-colors cursor-default">
                <div className="flex items-center justify-center bg-white/10 w-10 h-10 rounded-xl shrink-0">
                  <CheckCircle2 className="w-5 h-5 text-green-400" />
                </div>
@@ -494,14 +494,14 @@ export default function CommunityHubPage() {
                   <div className="flex gap-1 h-[250px] mb-4 relative rounded-xl overflow-hidden bg-slate-50 border border-slate-100">
                     <div className="w-1/2 h-full relative group p-2">
                       <div className="absolute top-4 left-4 bg-slate-600 text-white text-[10px] font-bold px-2 py-1 rounded shadow-sm z-10">Before</div>
-                      {post.beforeImageUrls?.[0] ? <img src={post.beforeImageUrls[0]} alt="Before" className="w-full h-full object-cover rounded-lg transition-transform group-hover:scale-105" /> : <div className="w-full h-full bg-slate-100 rounded-lg flex items-center justify-center"><AlertTriangle className="w-8 h-8 text-slate-300" /></div>}
+                      <img src={post.beforeImageUrls?.[0] || "https://images.unsplash.com/photo-1518005020951-eccb494ad742?auto=format&fit=crop&w=600&q=80"} alt="Before" className="w-full h-full object-cover rounded-lg transition-transform group-hover:scale-105" />
                     </div>
                     <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-8 h-8 bg-white rounded-full flex items-center justify-center shadow-md z-20">
                        <ChevronRight className="w-4 h-4 text-slate-400" />
                     </div>
                     <div className="w-1/2 h-full relative group p-2">
                       <div className="absolute top-4 left-4 bg-slate-600 text-white text-[10px] font-bold px-2 py-1 rounded shadow-sm z-10">After</div>
-                      {post.afterImageUrls?.[0] ? <img src={post.afterImageUrls[0]} alt="After" className="w-full h-full object-cover rounded-lg transition-transform group-hover:scale-105" /> : <div className="w-full h-full bg-slate-100 rounded-lg flex items-center justify-center"><CheckCircle className="w-8 h-8 text-slate-300" /></div>}
+                      <img src={post.afterImageUrls?.[0] || "https://images.unsplash.com/photo-1473686884638-34860b2964e5?auto=format&fit=crop&w=600&q=80"} alt="After" className="w-full h-full object-cover rounded-lg transition-transform group-hover:scale-105" />
                     </div>
                   </div>
 

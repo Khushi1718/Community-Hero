@@ -10,19 +10,46 @@ The platform bridges the gap between citizens, city administrators, on-ground mu
 
 The Community Hero system is built on a highly scalable, multi-tenant architecture designed to handle thousands of concurrent users, complex AI vision processing, and secure civic data management.
 
-### Tech Stack
-* **Frontend Core:** Next.js 14 (App Router), React, Tailwind CSS, TypeScript
-* **Database:** MongoDB (Mongoose) with Geospatial indexing for location-based clustering.
-* **Authentication:** Clerk Auth for highly secure, multi-role identity management.
-* **AI Engine:** Google Gemini 1.5 Pro & Vision (Zero-temperature configuration for deterministic classification).
-* **Certificate Generation:** Puppeteer (Headless Chrome) for rendering HTML templates to high-res A4 PDFs.
-* **Email & Delivery:** **Google SMTP (Nodemailer)** for automated delivery of Volunteer Certificates and important civic alerts.
-* **Event Streaming & Webhooks:** **Google Cloud Pub/Sub** for highly reliable, asynchronous event streaming to external third-party systems (instead of generic, unreliable webhook integrations).
-* **GPS live location** did it using the html geolocation api and it is not reliable at all   
-* **Mapping & Routing:** **Google Maps API**  for advanced routing of municipal vehicles and geographic heatmaps.
-* **Government Integration:** Syncing with **National Portal of India APIs** (Future Integration) to automatically escalate unresolved severe civic issues to official central dashboards.
+### Technologies Used
 
----
+**Frontend**
+* Next.js 15 (App Router)
+* React
+* TypeScript
+* Tailwind CSS
+* Shadcn/UI & Framer Motion
+
+**Backend & Database**
+* Node.js & Next.js API Routes
+* REST APIs
+* MongoDB Atlas & Mongoose ODM (with Geospatial indexing)
+
+**Authentication & Security**
+* Clerk Authentication (Role-Based Access Control - RBAC)
+* Audit Logging
+* SHA-256 Image Hashing & Image Compression
+
+**AI & Machine Learning (Google Gemini)**
+* Google Gemini 2.5 Flash (Multimodal) via Google AI Studio
+* Prompt Engineering & Structured JSON Generation
+* Computer Vision & AI-assisted Decision Support
+* **Dynamic Escalation Agent:** Intelligently evaluates issue severity, employee workload, and historical patterns to decide whether to nudge employees, escalate to admins, or suggest volunteer orgs.
+* **Self-Improving Routing Agent:** Continuously learns from past resolutions to automatically route new civic issues to the fastest-resolving departments/employees.
+* **Vision Agent:** Image/video understanding, issue detection, and categorization.
+* **Severity Agent:** Determines issue severity, generates reasoning, and assists in priority estimation.
+* **Resolution Verification Agent:** Compares Before and After images to verify civic repairs and assist admin approval.
+* **Content Generation:** Community impact summaries, volunteer appreciation messages, and smart recommendations.
+
+**Maps & Location**
+* Google Maps JavaScript API & Google Places API
+* HTML5 Geolocation API
+* GPS-based issue reporting, interactive maps, location validation, and community drive tracking.
+
+**Other Integrations**
+* Google SMTP (Nodemailer) for real-time notifications & certificates
+* Puppeteer for headless PDF generation
+* Google Cloud Pub/Sub for asynchronous event streaming
+-
 
 ##  End-to-End Workflows: How Things Work on Different Ends
 

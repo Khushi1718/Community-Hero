@@ -13,13 +13,11 @@ export default function SuperAdminPage() {
   const [admins, setAdmins] = useState<AppUser[]>([]);
   const [employees, setEmployees] = useState<AppUser[]>([]);
   
-  const [activeTab, setActiveTab] = useState<"admins" | "employees" | "volunteer_orgs" | "area_adoptions" | "audit_logs" | "ai_report" | "overdue_escalations">("admins");
+  const [activeTab, setActiveTab] = useState<"admins" | "employees" | "volunteer_orgs" | "area_adoptions" | "audit_logs" | "overdue_escalations">("admins");
 
   // Prompt 4B States
   const [adoptedAreas, setAdoptedAreas] = useState<any[]>([]);
   const [auditLogs, setAuditLogs] = useState<any[]>([]);
-  const [aiReportGenerating, setAiReportGenerating] = useState(false);
-  const [aiReportData, setAiReportData] = useState<any>(null);
 
   // Volunteer Orgs
   const [allOrgs, setAllOrgs] = useState<any[]>([]);
@@ -347,12 +345,6 @@ export default function SuperAdminPage() {
                 className={`px-5 py-2.5 text-[13px] font-bold uppercase tracking-wider transition-colors border-b-2 ${activeTab === "audit_logs" ? "border-slate-800 text-slate-900 bg-slate-100/50" : "border-transparent text-slate-500 hover:text-slate-800 hover:bg-slate-50"}`}
             >
                 Audit Logs
-            </button>
-            <button
-                onClick={() => setActiveTab("ai_report")}
-                className={`px-5 py-2.5 text-[13px] font-bold uppercase tracking-wider transition-colors border-b-2 ${activeTab === "ai_report" ? "border-slate-800 text-slate-900 bg-slate-100/50" : "border-transparent text-slate-500 hover:text-slate-800 hover:bg-slate-50"}`}
-            >
-                AI Monthly Report
             </button>
         </div>
 <div className="bg-white border border-emerald-100 rounded-sm shadow-sm overflow-hidden">
@@ -780,54 +772,6 @@ export default function SuperAdminPage() {
           </div>
         </div>
       )}
-{/* AI Report Tab */}
-      {activeTab === "ai_report" && (
-        <div className="bg-white border border-emerald-100 rounded-sm shadow-sm p-6 animate-fade-in">
-          <h2 className="text-xl font-bold text-slate-900 mb-4 flex items-center gap-2"><TrendingUp className="w-5 h-5 text-emerald-600" /> AI Monthly Impact Report</h2>
-          <p className="text-slate-600 mb-6">Generate an AI-powered summary of platform health, municipal performance, and volunteer engagement.</p>
-          
-          {!aiReportData ? (
-             <button disabled={aiReportGenerating} onClick={async () => {
-               setAiReportGenerating(true);
-               // Mocking AI report generation
-               setTimeout(() => {
-                 setAiReportData({
-                   title: "Monthly Impact & Health Summary",
-                   highlights: [
-                     "Resolved issues increased by 14% compared to last month.",
-                     "12 new volunteer organizations were onboarded and verified.",
-                     "AI successfully filtered 150+ suspicious reports, saving 40 hours of admin time."
-                   ],
-                   recommendations: [
-                     "Consider re-allocating staff to the 'Water Department' due to a 20% spike in related issues.",
-                     "Push a community challenge in 'Downtown' to address the low volunteer participation rate in that sector."
-                   ],
-                   date: new Date().toLocaleDateString()
-                 });
-                 setAiReportGenerating(false);
-               }, 2000);
-             }} className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 px-6 rounded-sm transition-colors">
-               {aiReportGenerating ? "Generating Report..." : "Generate Report with Google Gemini"}
-             </button>
-          ) : (
-             <div className="bg-slate-50 border border-emerald-100 rounded-sm p-6">
-                <h3 className="text-2xl font-black text-slate-900 mb-2">{aiReportData.title}</h3>
-                <p className="text-sm text-slate-500 mb-6">Generated on {aiReportData.date}</p>
-                
-                <h4 className="font-bold text-emerald-700 mb-2 uppercase tracking-wide text-sm">Key Highlights</h4>
-                <ul className="list-disc list-inside text-slate-700 mb-6 space-y-2">
-                  {aiReportData.highlights.map((h: string, i: number) => <li key={i}>{h}</li>)}
-                </ul>
-                
-                <h4 className="font-bold text-indigo-700 mb-2 uppercase tracking-wide text-sm">Actionable Recommendations</h4>
-                <ul className="list-disc list-inside text-slate-700 space-y-2">
-                  {aiReportData.recommendations.map((h: string, i: number) => <li key={i}>{h}</li>)}
-                </ul>
-                
-                <button onClick={() => setAiReportData(null)} className="mt-8 text-sm font-bold text-slate-500 hover:text-slate-700">Dismiss Report</button>
-             </div>
-          )}
-        </div>
       )}      {/* Add Organization Modal */}
       {isAddOrgModalOpen && (
         <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">

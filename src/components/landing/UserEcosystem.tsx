@@ -56,9 +56,9 @@ export default function UserEcosystem() {
           </h3>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="flex overflow-x-auto snap-x snap-mandatory pb-6 -mx-4 px-4 md:-mx-0 md:px-0 md:pb-0 md:grid md:grid-cols-2 lg:grid-cols-4 gap-6 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
           {roles.map((role, idx) => (
-            <div key={idx} className="rounded-xl p-7 border border-green-200 bg-white shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all duration-300 shadow-green-500/5">
+            <div key={idx} className="w-[85vw] shrink-0 snap-center md:w-auto rounded-xl p-7 border border-green-200 bg-white shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all duration-300 shadow-green-500/5">
               <div className="flex items-center gap-4 mb-5">
                 <div className="w-12 h-12 rounded-lg flex items-center justify-center shrink-0 bg-green-50 text-green-600 border border-green-100">
                   <role.icon className="w-6 h-6 stroke-[2.5]" />

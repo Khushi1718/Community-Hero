@@ -32,7 +32,7 @@ export default function WhyCommunityHero() {
         
         <div className="max-w-4xl mx-auto text-center mb-16">
           <h2 className="text-sm font-black text-blue-700 uppercase tracking-widest mb-4">Security & Transparency</h2>
-          <h3 className="text-3xl md:text-4xl lg:text-5xl font-black text-slate-900 leading-tight mb-6 whitespace-nowrap">
+          <h3 className="text-3xl md:text-4xl lg:text-5xl font-black text-slate-900 leading-tight mb-6">
             Accountability built into <span className="text-green-600">every step.</span>
           </h3>
           <p className="text-lg text-slate-600 font-medium leading-relaxed max-w-3xl mx-auto">
@@ -40,9 +40,9 @@ export default function WhyCommunityHero() {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="flex overflow-x-auto snap-x snap-mandatory pb-6 -mx-4 px-4 md:-mx-0 md:px-0 md:pb-0 md:grid sm:grid-cols-2 lg:grid-cols-4 gap-6 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
           {features.map((feature, idx) => (
-            <div key={idx} className="group bg-green-50/50 hover:bg-green-50 border border-green-100 rounded-2xl p-5 transition-colors flex flex-col h-full">
+            <div key={idx} className="w-[85vw] shrink-0 snap-center md:w-auto group bg-green-50/50 hover:bg-green-50 border border-green-100 rounded-2xl p-5 transition-colors flex flex-col h-full">
               <div className="relative h-48 mb-5 overflow-hidden bg-slate-100 border border-green-200/50 rounded-lg shadow-sm">
                 <img 
                   src={feature.image} 

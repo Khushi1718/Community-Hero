@@ -6,6 +6,7 @@ import { User } from "@/models/User";
 import { Notification } from "@/models/Notification";
 import { IntegrationConfig } from "@/models/IntegrationConfig";
 import { pushToExternalCRM } from "@/lib/integrations/pushToExternalCRM";
+import { GoogleGenerativeAI } from "@google/generative-ai";
 
 // Helper to map V2 MongoDB Issue to V1 Frontend Issue format
 const mapToV1Format = async (issueDoc: any) => {
@@ -265,8 +266,8 @@ export async function POST(request: NextRequest) {
     // Attempt to auto-assign based on location and department with loose regex matching
     const deptPrefix = assignedDepartment.split(' ')[0].replace(/s$/i, ''); // e.g. "Roads" -> "Road"
     
-    // Find matching employee — use $ne: false so we match employees where isAvailable is true OR undefined (legacy)
-    const matchingStaff = await User.findOne({
+    // Find matching employees
+    const candidateStaff = await User.find({
       role: "employee",
       $or: [
         { state: { $regex: new RegExp(`^${(body.state || '').trim()}$`, 'i') } },
@@ -276,9 +277,71 @@ export async function POST(request: NextRequest) {
       isAvailable: { $ne: false } // match true or missing (default true per schema)
     });
 
-    if (matchingStaff && !routeToOrg) {
-      assignedToId = matchingStaff._id;
-      assignedToName = matchingStaff.name;
+    if (candidateStaff.length > 0 && !routeToOrg) {
+      let selectedStaff = candidateStaff[0];
+
+      // Dynamic AI Routing if more than 1 candidate and API key exists
+      const apiKey = process.env.GEMINI_API_KEY;
+      if (candidateStaff.length > 1 && apiKey && apiKey !== "your_gemini_api_key" && apiKey !== "your_gemini_api_key_here") {
+        try {
+          // Gather historical performance: average resolution time per employee for this category
+          const historicalData: any = {};
+          const pastIssues = await Issue.find({
+            "aiAnalysis.category": body.aiAnalysis?.category,
+            status: { $in: ["Resolved", "Closed"] }
+          }).limit(50); // Get recent 50
+
+          for (const pastIssue of pastIssues) {
+             if (pastIssue.assignedTo && pastIssue.resolvedAt && pastIssue.createdAt) {
+               const timeTaken = new Date(pastIssue.resolvedAt).getTime() - new Date(pastIssue.createdAt).getTime();
+               const days = timeTaken / (1000 * 60 * 60 * 24);
+               const empId = pastIssue.assignedTo.toString();
+               if (!historicalData[empId]) {
+                 historicalData[empId] = { totalDays: 0, count: 0 };
+               }
+               historicalData[empId].totalDays += days;
+               historicalData[empId].count += 1;
+             }
+          }
+
+          let employeeStats = candidateStaff.map(emp => {
+            const stats = historicalData[emp._id.toString()];
+            const avgTime = stats ? (stats.totalDays / stats.count).toFixed(1) + " days" : "No history (treat as average)";
+            return `Employee ID: ${emp._id.toString()}, Name: ${emp.name}, Avg Resolution Time for this category: ${avgTime}`;
+          }).join("\n");
+
+          const genAI = new GoogleGenerativeAI(apiKey);
+          const model = genAI.getGenerativeModel({
+            model: "gemini-2.5-flash",
+            generationConfig: { temperature: 0.1, responseMimeType: "application/json" }
+          });
+
+          const prompt = `You are a Municipal Routing AI. Your goal is to assign a new issue to the most efficient employee based on historical performance.
+Issue Category: "${body.aiAnalysis?.category}"
+Severity: "${priority}"
+
+Candidates:
+${employeeStats}
+
+Select the best employee to route this issue to. Prefer employees with faster average resolution times.
+Respond ONLY with a valid JSON object:
+{
+  "selectedEmployeeId": "ID of the chosen employee"
+}`;
+          const result = await model.generateContent(prompt);
+          const parsed = JSON.parse(result.response.text());
+          
+          if (parsed.selectedEmployeeId) {
+             const found = candidateStaff.find(emp => emp._id.toString() === parsed.selectedEmployeeId);
+             if (found) selectedStaff = found;
+          }
+        } catch (e) {
+          console.error("AI Routing Error:", e);
+        }
+      }
+
+      assignedToId = selectedStaff._id;
+      assignedToName = selectedStaff.name;
     }
 
     // Find matching Admin — use $ne: false for isAvailable check as well

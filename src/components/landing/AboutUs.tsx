@@ -47,9 +47,9 @@ export default function AboutUs() {
       {/* 5 Columns Feature Section */}
       <div className="border-t border-slate-100 bg-white">
         <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-16">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-8">
+          <div className="flex overflow-x-auto snap-x snap-mandatory pb-6 -mx-4 px-4 md:-mx-0 md:px-0 md:pb-0 md:grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-8 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
             
-            <div className="flex flex-col h-full">
+            <div className="flex flex-col h-full w-[85vw] shrink-0 snap-center md:w-auto">
               <div className="w-12 h-12 rounded-full bg-green-50 flex items-center justify-center text-[#2e7d32] mb-4 border border-green-100 shrink-0">
                 <ClipboardCheck className="w-6 h-6" />
               </div>
@@ -59,7 +59,7 @@ export default function AboutUs() {
               </p>
             </div>
             
-            <div className="flex flex-col h-full">
+            <div className="flex flex-col h-full w-[85vw] shrink-0 snap-center md:w-auto">
               <div className="w-12 h-12 rounded-full bg-green-50 flex items-center justify-center text-[#2e7d32] mb-4 border border-green-100 shrink-0">
                 <Users className="w-6 h-6" />
               </div>
@@ -69,7 +69,7 @@ export default function AboutUs() {
               </p>
             </div>
             
-            <div className="flex flex-col h-full">
+            <div className="flex flex-col h-full w-[85vw] shrink-0 snap-center md:w-auto">
               <div className="w-12 h-12 rounded-full bg-green-50 flex items-center justify-center text-[#2e7d32] mb-4 border border-green-100 shrink-0">
                 <Award className="w-6 h-6" />
               </div>
@@ -79,7 +79,7 @@ export default function AboutUs() {
               </p>
             </div>
 
-            <div className="flex flex-col h-full">
+            <div className="flex flex-col h-full w-[85vw] shrink-0 snap-center md:w-auto">
               <div className="w-12 h-12 rounded-full bg-green-50 flex items-center justify-center text-[#2e7d32] mb-4 border border-green-100 shrink-0">
                 <BarChart2 className="w-6 h-6" />
               </div>
@@ -89,7 +89,7 @@ export default function AboutUs() {
               </p>
             </div>
             
-            <div className="flex flex-col h-full">
+            <div className="flex flex-col h-full w-[85vw] shrink-0 snap-center md:w-auto">
               <div className="w-12 h-12 rounded-full bg-green-50 flex items-center justify-center text-[#2e7d32] mb-4 border border-green-100 shrink-0">
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
               </div>

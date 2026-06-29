@@ -29,9 +29,9 @@ export default function AIIntelligence() {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="flex overflow-x-auto snap-x snap-mandatory pb-6 -mx-4 px-4 md:-mx-0 md:px-0 md:pb-0 md:grid md:grid-cols-2 lg:grid-cols-4 gap-6 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
           {features.map((feature, idx) => (
-            <div key={idx} className="p-8 rounded-xl bg-slate-50 border border-slate-200 hover:border-blue-300 transition-all duration-300 hover:shadow-lg hover:-translate-y-1">
+            <div key={idx} className="w-[85vw] shrink-0 snap-center md:w-auto p-8 rounded-xl bg-slate-50 border border-slate-200 hover:border-blue-300 transition-all duration-300 hover:shadow-lg hover:-translate-y-1">
               <div className="w-12 h-12 rounded-lg bg-white border border-slate-200 text-blue-700 flex items-center justify-center mb-6 shadow-sm">
                 <feature.icon className="w-6 h-6 stroke-[2]" />
               </div>

@@ -3,7 +3,7 @@
 import { useAuth } from "@/lib/auth-context";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useRef } from "react";
-import { Camera, MapPin, CheckCircle2, Sparkles, AlertTriangle, ShieldCheck, Clock, XCircle, Send, AlertOctagon, Video, Film, BarChart2, Zap, Info, Leaf } from "lucide-react";
+import { Camera, MapPin, CheckCircle2, Sparkles, AlertTriangle, ShieldCheck, Clock, XCircle, Send, AlertOctagon, Video, Film, BarChart2, Zap, Info, Leaf, Users } from "lucide-react";
 import { saveIssue, getIssues, Issue } from "@/lib/storage";
 import { EvidenceCapture, CaptureMetadata } from "@/components/EvidenceCapture";
 
@@ -902,21 +902,25 @@ export default function ReportPage() {
                     </div>
                   </div>
                 ) : (
-                  <div className="w-full border-2 border-dashed border-green-200 bg-green-50/30 rounded-2xl p-6 flex flex-col md:flex-row items-center gap-6">
-                    <div className="flex-1 flex flex-col items-center justify-center border-r-0 md:border-r border-slate-200 pr-0 md:pr-6 pb-6 md:pb-0 border-b md:border-b-0">
-                      <div className="flex gap-4 mb-4 w-full justify-center">
-                         <button type="button" onClick={() => setShowCapture(true)} className="flex-1 bg-white border border-slate-200 shadow-sm rounded-xl py-4 flex flex-col items-center gap-2 hover:bg-slate-50 transition-transform active:scale-95">
-                            <Camera className="w-6 h-6 text-green-600" />
-                            <span className="font-bold text-xs text-slate-700">Take Photo</span>
+                  <div className="w-full border-2 border-dashed border-green-200 bg-green-50/30 rounded-2xl p-4 sm:p-6 flex flex-col md:flex-row items-center gap-6">
+                    <div className="flex-1 flex flex-col items-center justify-center border-r-0 md:border-r border-slate-200 pr-0 md:pr-6 pb-6 md:pb-0 border-b md:border-b-0 w-full">
+                      <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 mb-4 w-full justify-center">
+                         <button type="button" onClick={() => setShowCapture(true)} className="w-full sm:flex-1 bg-white border-2 border-green-100 shadow-sm rounded-2xl py-4 sm:py-5 flex flex-col items-center gap-3 hover:bg-green-50 hover:border-green-300 transition-all active:scale-95 group">
+                            <div className="bg-green-100 p-3 rounded-full group-hover:bg-green-200 transition-colors">
+                              <Camera className="w-6 h-6 text-green-700" />
+                            </div>
+                            <span className="font-bold text-sm text-slate-700">Take Photo</span>
                          </button>
-                         <button type="button" onClick={() => setShowCapture(true)} className="flex-1 bg-white border border-slate-200 shadow-sm rounded-xl py-4 flex flex-col items-center gap-2 hover:bg-slate-50 transition-transform active:scale-95">
-                            <Video className="w-6 h-6 text-indigo-600" />
-                            <span className="font-bold text-xs text-slate-700">Record Video</span>
+                         <button type="button" onClick={() => setShowCapture(true)} className="w-full sm:flex-1 bg-white border-2 border-indigo-100 shadow-sm rounded-2xl py-4 sm:py-5 flex flex-col items-center gap-3 hover:bg-indigo-50 hover:border-indigo-300 transition-all active:scale-95 group">
+                            <div className="bg-indigo-100 p-3 rounded-full group-hover:bg-indigo-200 transition-colors">
+                              <Video className="w-6 h-6 text-indigo-700" />
+                            </div>
+                            <span className="font-bold text-sm text-slate-700">Record Video</span>
                          </button>
                       </div>
-                      <p className="text-xs text-slate-400 font-medium">or drag and drop files here</p>
+                      <p className="text-xs text-slate-400 font-medium hidden sm:block">or drag and drop files here</p>
                     </div>
-                    <div className="flex-1 flex flex-col gap-4">
+                    <div className="flex-1 flex flex-col gap-4 w-full">
                        <div className="flex items-center gap-3 text-sm text-slate-600 font-medium"><MapPin className="w-5 h-5 text-green-600"/> GPS & timestamp auto attached</div>
                        <div className="flex items-center gap-3 text-sm text-slate-600 font-medium"><Sparkles className="w-5 h-5 text-green-600"/> AI analyzes every frame</div>
                        <div className="flex items-center gap-3 text-sm text-slate-600 font-medium"><Film className="w-5 h-5 text-green-600"/> Supports JPG, PNG, MP4 (Max 50MB)</div>
@@ -990,27 +994,7 @@ export default function ReportPage() {
                 </div>
               </div>
 
-              <div>
-                <label className="block text-sm font-bold text-slate-700 mb-1">Location on Map <span className="text-red-500">*</span></label>
-                <p className="text-xs text-slate-500 mb-3">Mark the exact location of the issue</p>
-                
-                <div className="relative w-full h-32 bg-slate-100 rounded-xl overflow-hidden border border-slate-200 flex items-center justify-between p-4">
-                  <div className="absolute inset-0 opacity-40 bg-[url('https://maps.googleapis.com/maps/api/staticmap?center=New+York,NY&zoom=14&size=800x400&sensor=false')] bg-cover bg-center"></div>
-                  <div className="relative z-10 flex gap-2">
-                     <button type="button" className="bg-white text-green-700 border border-green-200 font-bold px-3 py-2 rounded-lg flex items-center gap-2 shadow-sm text-sm hover:bg-slate-50 transition-colors">
-                       <MapPin className="w-4 h-4"/> Use My Location
-                     </button>
-                  </div>
-                  <div className="relative z-10 w-8 flex flex-col">
-                     <button type="button" className="w-8 h-8 bg-white border border-slate-200 rounded-t-lg flex items-center justify-center text-slate-600 font-bold text-lg hover:bg-slate-50 shadow-sm">+</button>
-                     <button type="button" className="w-8 h-8 bg-white border border-slate-200 rounded-b-lg flex items-center justify-center text-slate-600 font-bold text-lg hover:bg-slate-50 shadow-sm border-t-0">-</button>
-                  </div>
-                  {/* Pin in the middle */}
-                  <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-10">
-                    <MapPin className="w-8 h-8 text-green-600 drop-shadow-md" fill="currentColor"/>
-                  </div>
-                </div>
-              </div>
+              {/* Location on Map removed */}
 
               {/* GPS Status */}
               {!gpsCoords && (
@@ -1057,12 +1041,29 @@ export default function ReportPage() {
 
         {/* Right Column: Tips & Info */}
         <div className="space-y-6">
-           <div className="bg-white border border-slate-200 p-6 rounded-3xl shadow-sm">
+           <div className="bg-white border border-slate-200 p-6 rounded-3xl shadow-sm relative overflow-hidden">
+             <div className="absolute top-0 right-0 w-32 h-32 bg-green-50 rounded-bl-full -z-10" />
              <h3 className="flex items-center gap-2 font-bold text-slate-800 mb-4"><Leaf className="w-5 h-5 text-green-600"/> Why Your Report Matters</h3>
-             <p className="text-sm text-slate-600 mb-6 leading-relaxed">
-               Your report helps create a cleaner, safer and better community for everyone.
+             <p className="text-sm text-slate-600 mb-4 leading-relaxed relative z-10">
+               Your report directly helps create a cleaner, safer, and more vibrant community for everyone. Local authorities rely on these inputs to allocate resources efficiently.
              </p>
-             <div className="w-full h-32 bg-[url('https://cdni.iconscout.com/illustration/premium/thumb/environment-care-illustration-download-in-svg-png-gif-file-formats--tree-saving-protection-plant-ecology-pack-nature-illustrations-3965561.png')] bg-contain bg-no-repeat bg-center opacity-80 mix-blend-multiply"></div>
+             <div className="space-y-4 mb-6 relative z-10">
+               <div className="flex items-start gap-3 bg-slate-50 p-3 rounded-xl border border-slate-100">
+                 <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center shrink-0"><Clock className="w-4 h-4 text-blue-700" /></div>
+                 <div>
+                   <h4 className="text-xs font-bold text-slate-800">40% Faster Resolution</h4>
+                   <p className="text-xs text-slate-600 leading-snug mt-1">Issues reported with photo evidence are resolved significantly faster.</p>
+                 </div>
+               </div>
+               <div className="flex items-start gap-3 bg-slate-50 p-3 rounded-xl border border-slate-100">
+                 <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center shrink-0"><Users className="w-4 h-4 text-green-700" /></div>
+                 <div>
+                   <h4 className="text-xs font-bold text-slate-800">Community Driven</h4>
+                   <p className="text-xs text-slate-600 leading-snug mt-1">Join thousands of verified citizens actively contributing to community upkeep.</p>
+                 </div>
+               </div>
+             </div>
+             <div className="w-full h-32 bg-[url('https://cdni.iconscout.com/illustration/premium/thumb/environment-care-illustration-download-in-svg-png-gif-file-formats--tree-saving-protection-plant-ecology-pack-nature-illustrations-3965561.png')] bg-contain bg-no-repeat bg-center opacity-80 mix-blend-multiply mt-2"></div>
            </div>
 
            <div className="bg-white border border-slate-200 p-6 rounded-3xl shadow-sm">
