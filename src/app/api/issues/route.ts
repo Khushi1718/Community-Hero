@@ -228,6 +228,7 @@ export async function POST(request: NextRequest) {
 
     let assignedToId: any = undefined;
     let assignedToName: string | undefined = undefined;
+    let assignedToEmail: string | undefined = undefined;
     let assignedDepartment = body.aiAnalysis?.department || "General";
     let assignedAdminId: any = undefined;
     let assignedAdminName: string | undefined = undefined;
@@ -342,6 +343,7 @@ Respond ONLY with a valid JSON object:
 
       assignedToId = selectedStaff._id;
       assignedToName = selectedStaff.name;
+      assignedToEmail = selectedStaff.email;
     }
 
     // Find matching Admin — use $ne: false for isAvailable check as well
@@ -429,7 +431,7 @@ Respond ONLY with a valid JSON object:
       });
 
       await Notification.create({
-          userId: matchingStaff!.email,
+          userId: assignedToEmail as string,
           issueId: issueId,
           title: "New Auto-Assignment",
           message: `You have been automatically assigned to a new issue: ${issueId}`,
