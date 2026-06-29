@@ -130,10 +130,20 @@ export function Navbar() {
         {/* Right Actions */}
         <div className="flex gap-3 items-center">
           {loading ? (
-            /* Skeleton placeholder while auth resolves — keeps navbar visible */
-            <div className="flex items-center gap-3 animate-pulse">
-              <div className="w-9 h-9 rounded-xl bg-slate-200" />
-              <div className="w-24 h-9 rounded-lg bg-slate-200 hidden sm:block" />
+            /* Show login buttons while auth resolves — looks correct for all visitors */
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => router.push("/login")}
+                className="px-4 py-2 text-sm font-bold text-slate-700 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors"
+              >
+                Login
+              </button>
+              <button
+                onClick={() => router.push("/report")}
+                className="px-4 py-2 text-sm font-bold text-white bg-green-600 rounded-lg hover:bg-green-700 transition-colors shadow-sm"
+              >
+                Report an Issue
+              </button>
             </div>
           ) : isLoggedIn ? (
             <div className="flex items-center gap-3">
