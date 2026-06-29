@@ -7,6 +7,7 @@ import {
   ChevronLeft, ChevronRight, MoreHorizontal, Bookmark, User, Calendar
 } from "lucide-react";
 import { useEffect, useState, useCallback, useRef } from "react";
+import { motion } from "framer-motion";
 import { useAuth } from "@/lib/auth-context";
 import { Card, CardHeader, CardContent } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
@@ -387,57 +388,65 @@ export default function CommunityHubPage() {
         />
         <div className="absolute inset-0 z-0 bg-black/70 backdrop-blur-sm" />
 
-        <div className="z-10 w-full max-w-4xl flex flex-col items-center relative">
+        <motion.div
+            className="z-10 w-full max-w-4xl flex flex-col items-center relative"
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.7, ease: "easeOut" }}
+          >
           <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-white mb-4 sm:mb-6 leading-tight tracking-tight px-2">
             Community <span className="text-green-400">Impact</span> & Initiatives
           </h1>
           <p className="text-gray-200 font-medium mb-8 sm:mb-12 text-base sm:text-lg md:text-xl max-w-2xl px-4">
             Discover active community drives, connect with verified local organizations, and track our collective progress.
           </p>
-          <div className="flex flex-col sm:flex-row flex-wrap w-full sm:w-auto justify-center gap-3 sm:gap-4 px-4 sm:px-0">
-             <div className="flex items-center w-full sm:w-auto gap-4 bg-black/40 backdrop-blur-md border border-white/10 px-5 py-3.5 rounded-2xl shadow-xl hover:bg-black/50 transition-colors cursor-default">
-               <div className="flex items-center justify-center bg-white/10 w-10 h-10 rounded-xl shrink-0">
-                 <Leaf className="w-5 h-5 text-green-400" />
-               </div>
-               <div className="flex flex-col text-left">
-                 <span className="font-bold text-2xl text-white leading-none mb-1.5">{stats.totalResolved || posts.filter(p => p.resolutionSummary).length}</span>
-                 <span className="text-[10px] font-bold text-gray-300 uppercase tracking-widest leading-none">Issues Resolved</span>
-               </div>
-             </div>
-             <div className="flex items-center w-full sm:w-auto gap-4 bg-black/40 backdrop-blur-md border border-white/10 px-5 py-3.5 rounded-2xl shadow-xl hover:bg-black/50 transition-colors cursor-default">
-               <div className="flex items-center justify-center bg-white/10 w-10 h-10 rounded-xl shrink-0">
-                 <Users className="w-5 h-5 text-blue-400" />
-               </div>
-               <div className="flex flex-col text-left">
-                 <span className="font-bold text-2xl text-white leading-none mb-1.5">{stats.verifiedOrgs || orgs.length}</span>
-                 <span className="text-[10px] font-bold text-gray-300 uppercase tracking-widest leading-none">Organizations</span>
-               </div>
-             </div>
-             <div className="flex items-center w-full sm:w-auto gap-4 bg-black/40 backdrop-blur-md border border-white/10 px-5 py-3.5 rounded-2xl shadow-xl hover:bg-black/50 transition-colors cursor-default">
-               <div className="flex items-center justify-center bg-white/10 w-10 h-10 rounded-xl shrink-0">
-                 <CheckCircle2 className="w-5 h-5 text-green-400" />
-               </div>
-               <div className="flex flex-col text-left">
-                 <span className="font-bold text-2xl text-white leading-none mb-1.5">{stats.totalDrives || drives.length}</span>
-                 <span className="text-[10px] font-bold text-gray-300 uppercase tracking-widest leading-none">Active Drives</span>
-               </div>
-             </div>
-          </div>
-        </div>
+          <motion.div
+            className="flex flex-col sm:flex-row flex-wrap w-full sm:w-auto justify-center gap-3 sm:gap-4 px-4 sm:px-0"
+            variants={{ hidden: {}, show: { transition: { staggerChildren: 0.15 } } }}
+            initial="hidden"
+            animate="show"
+          >
+            {[
+              { icon: <Leaf className="w-5 h-5 text-green-400" />, value: stats.totalResolved || posts.filter(p => p.resolutionSummary).length, label: "Issues Resolved" },
+              { icon: <Users className="w-5 h-5 text-blue-400" />, value: stats.verifiedOrgs || orgs.length, label: "Organizations" },
+              { icon: <CheckCircle2 className="w-5 h-5 text-green-400" />, value: stats.totalDrives || drives.length, label: "Active Drives" },
+            ].map(({ icon, value, label }) => (
+              <motion.div
+                key={label}
+                variants={{ hidden: { opacity: 0, y: 20, scale: 0.95 }, show: { opacity: 1, y: 0, scale: 1 } }}
+                transition={{ duration: 0.5, ease: "easeOut" }}
+                whileHover={{ scale: 1.05, backgroundColor: "rgba(0,0,0,0.55)" }}
+                className="flex items-center w-full sm:w-auto gap-4 bg-black/40 backdrop-blur-md border border-white/10 px-5 py-3.5 rounded-2xl shadow-xl cursor-default"
+              >
+                <div className="flex items-center justify-center bg-white/10 w-10 h-10 rounded-xl shrink-0">{icon}</div>
+                <div className="flex flex-col text-left">
+                  <span className="font-bold text-2xl text-white leading-none mb-1.5">{value}</span>
+                  <span className="text-[10px] font-bold text-gray-300 uppercase tracking-widest leading-none">{label}</span>
+                </div>
+              </motion.div>
+            ))}
+          </motion.div>
+        </motion.div>
       </section>
 
       {/* ─── QUICK NAV STRIP ─── */}
-      <div className="w-full bg-green-900 border-b border-green-950 shadow-md sticky top-[72px] z-40">
+      <div className="w-full bg-green-900 border-b border-green-950 shadow-md sticky top-0 z-40">
         <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-center md:justify-start gap-8 h-12 overflow-x-auto whitespace-nowrap custom-scrollbar">
-          <a href="#resolved-issues" className="font-bold text-[13px] text-green-100 hover:text-white transition-colors">
-            Resolved Issues
-          </a>
-          <a href="#live-drives" className="font-bold text-[13px] text-green-100 hover:text-white transition-colors">
-            Explore Drives
-          </a>
-          <a href="#organizations" className="font-bold text-[13px] text-green-100 hover:text-white transition-colors">
-            View Organizations
-          </a>
+          {[
+            { href: "#resolved-issues", label: "Resolved Issues" },
+            { href: "#live-drives",     label: "Explore Drives"  },
+            { href: "#organizations",  label: "View Organizations" },
+          ].map(({ href, label }) => (
+            <a
+              key={href}
+              href={href}
+              className="relative font-bold text-[13px] text-green-100 hover:text-white transition-colors group py-1"
+            >
+              {label}
+              {/* animated underline on hover */}
+              <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-green-400 rounded-full transition-all duration-300 group-hover:w-full" />
+            </a>
+          ))}
         </div>
       </div>
 
@@ -531,7 +540,13 @@ export default function CommunityHubPage() {
             <button className="text-green-700 font-bold text-sm flex items-center gap-1 hover:underline">View All Drives <ChevronRight className="w-4 h-4"/></button>
           </div>
 
-          <div className="flex overflow-x-auto gap-6 pb-4 snap-x custom-scrollbar">
+          <motion.div
+            className="flex overflow-x-auto gap-6 pb-4 snap-x custom-scrollbar"
+            variants={{ hidden: {}, show: { transition: { staggerChildren: 0.12 } } }}
+            initial="hidden"
+            whileInView="show"
+            viewport={{ once: true, amount: 0.2 }}
+          >
             {drives.map(drive => {
                const actualJoined = (drive as any).volunteers ? (drive as any).volunteers.filter((v: any) => v.status !== 'rejected').length : drive.joinedVolunteers;
                const maxVols = drive.maxVolunteers || drive.requiredVolunteers || 100;
@@ -539,7 +554,12 @@ export default function CommunityHubPage() {
                const isRegistered = (drive as any).volunteers?.some((v: any) => v.email === (user?.email || appUser?.email) || (userId !== "anonymous" && v.userId === userId));
                const isFull = maxVols ? actualJoined >= maxVols : false;
                return (
-                <div key={drive._id} className="min-w-[320px] w-[320px] bg-white border border-slate-200 rounded-2xl shrink-0 snap-start shadow-sm overflow-hidden flex flex-col">
+                <motion.div
+                  key={drive._id}
+                  variants={{ hidden: { opacity: 0, y: 24, scale: 0.96 }, show: { opacity: 1, y: 0, scale: 1 } }}
+                  transition={{ duration: 0.45, ease: "easeOut" }}
+                  whileHover={{ y: -6, boxShadow: "0 20px 40px -10px rgba(0,0,0,0.15)" }}
+                  className="min-w-[320px] w-[320px] bg-white border border-slate-200 rounded-2xl shrink-0 snap-start shadow-sm overflow-hidden flex flex-col">
                   {/* Image Header */}
                   <div className="h-[160px] w-full relative bg-slate-100">
                     <div className="absolute top-3 left-3 bg-green-600 text-white text-[10px] font-black uppercase tracking-wider px-2 py-1 rounded shadow-sm z-10">Live</div>
@@ -578,10 +598,10 @@ export default function CommunityHubPage() {
                       </button>
                     </div>
                   </div>
-                </div>
+                </motion.div>
                );
             })}
-          </div>
+          </motion.div>
         </div>
       </section>
 
@@ -594,9 +614,20 @@ export default function CommunityHubPage() {
           </div>
         </div>
 
-        <div className="flex overflow-x-auto gap-6 pb-4 snap-x custom-scrollbar">
+        <motion.div
+          className="flex overflow-x-auto gap-6 pb-4 snap-x custom-scrollbar"
+          variants={{ hidden: {}, show: { transition: { staggerChildren: 0.12 } } }}
+          initial="hidden"
+          whileInView="show"
+          viewport={{ once: true, amount: 0.2 }}
+        >
           {orgs.map(org => (
-            <div key={org._id} className="w-[340px] shrink-0 bg-white border border-slate-200 p-5 shadow-sm hover:shadow-md transition-shadow relative flex flex-col snap-start rounded-md h-full">
+            <motion.div
+              key={org._id}
+              variants={{ hidden: { opacity: 0, y: 24, scale: 0.96 }, show: { opacity: 1, y: 0, scale: 1 } }}
+              transition={{ duration: 0.45, ease: "easeOut" }}
+              whileHover={{ y: -6, boxShadow: "0 20px 40px -10px rgba(0,0,0,0.13)" }}
+              className="w-[340px] shrink-0 bg-white border border-slate-200 p-5 shadow-sm relative flex flex-col snap-start rounded-md h-full">
               <div className="flex items-center gap-4 mb-4">
                 <div className="w-14 h-14 rounded-full bg-slate-50 flex items-center justify-center border border-slate-200 shrink-0 overflow-hidden">
                   {org.logoUrl ? (
@@ -649,9 +680,9 @@ export default function CommunityHubPage() {
               >
                  Request to Join
               </button>
-            </div>
+            </motion.div>
           ))}
-        </div>
+        </motion.div>
       </section>
 
       {/* ─── BE A PART OF THE CHANGE CTA ─── */}

@@ -4,6 +4,7 @@ import dynamic from 'next/dynamic';
 import { Shield } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
+import { Navbar } from "@/components/Navbar";
 
 // Dynamic Imports for modular landing page sections
 const LandingHero = dynamic(() => import('@/components/landing/LandingHero'));
@@ -36,7 +37,7 @@ export default function Home() {
 
   return (
     <div className="min-h-screen font-sans overflow-x-hidden bg-white selection:bg-green-100 selection:text-green-900">
-      
+      <Navbar />
       <LandingHero />
       <AboutUs />
       <WorkflowTimeline />
