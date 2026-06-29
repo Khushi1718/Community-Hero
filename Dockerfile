@@ -1,5 +1,5 @@
 # Use Node 20 as base image
-FROM node:20-slim AS base
+FROM node:22-slim AS base
 
 # Install necessary dependencies for Puppeteer/Chromium
 # as Next.js app needs it
@@ -24,6 +24,7 @@ RUN apt-get update && apt-get install -y \
     libxfixes3 \
     libxrandr2 \
     xdg-utils \
+    unzip \
     --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
