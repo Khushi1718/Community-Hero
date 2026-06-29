@@ -89,8 +89,6 @@ export function Navbar() {
     ] : []),
   ];
 
-  if (loading) return null;
-
   const isLoggedIn = !!(user || appUser);
 
   return (
@@ -131,7 +129,13 @@ export function Navbar() {
 
         {/* Right Actions */}
         <div className="flex gap-3 items-center">
-          {isLoggedIn ? (
+          {loading ? (
+            /* Skeleton placeholder while auth resolves — keeps navbar visible */
+            <div className="flex items-center gap-3 animate-pulse">
+              <div className="w-9 h-9 rounded-xl bg-slate-200" />
+              <div className="w-24 h-9 rounded-lg bg-slate-200 hidden sm:block" />
+            </div>
+          ) : isLoggedIn ? (
             <div className="flex items-center gap-3">
               {/* Notification Bell */}
               <div className="relative" ref={notifRef}>
