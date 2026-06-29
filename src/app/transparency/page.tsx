@@ -6,7 +6,9 @@ import connectToDatabase from "@/lib/mongoose";
 import { Navbar } from "@/components/Navbar";
 import { ShieldCheck, Users, CalendarCheck, Award, TrendingUp, Building2 } from "lucide-react";
 
-export const revalidate = 3600; // Cache for 1 hour
+// Force dynamic rendering so this page is never prerendered at build time.
+// It fetches live DB data, which is only available at runtime — not during Docker build.
+export const dynamic = "force-dynamic";
 
 export default async function TransparencyPage() {
   await connectToDatabase();
