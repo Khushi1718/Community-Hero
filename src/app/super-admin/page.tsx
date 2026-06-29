@@ -772,7 +772,7 @@ export default function SuperAdminPage() {
           </div>
         </div>
       )}
-      )}      {/* Add Organization Modal */}
+      {/* Add Organization Modal */}
       {isAddOrgModalOpen && (
         <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-sm w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl animate-fade-in-up">
