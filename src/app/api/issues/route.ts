@@ -10,6 +10,22 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 import AuditLog from "@/models/AuditLog";
 
 // --- Hierarchical User Assignment Helper ---
+async function sortByWorkload(candidates: any[], role: "employee" | "admin") {
+  if (candidates.length <= 1) return candidates;
+  
+  const workloads = await Promise.all(candidates.map(async (c) => {
+    const activeQuery: any = { status: { $nin: ["Completed", "Closed", "Rejected"] } };
+    if (role === "admin") activeQuery.assignedAdmin = c._id;
+    else activeQuery.assignedTo = c._id;
+    
+    const count = await Issue.countDocuments(activeQuery);
+    return { user: c, count };
+  }));
+  
+  workloads.sort((a, b) => a.count - b.count);
+  return workloads.map(w => w.user);
+}
+
 async function findUserWithFallback(role: "employee" | "admin", state: string, city: string, department: string) {
   const deptPrefix = (department || "General").split(' ')[0].replace(/s$/i, ''); // e.g. "Roads" -> "Road"
   const stateRegex = new RegExp(`^${(state || '').trim()}$`, 'i');
@@ -25,26 +41,28 @@ async function findUserWithFallback(role: "employee" | "admin", state: string, c
     city: cityRegex,
     department: deptRegex
   });
-  if (candidates.length > 0) return candidates;
+  if (candidates.length > 0) return await sortByWorkload(candidates, role);
 
   // Level 2: State-level Admin/Employee for the specific Department
   candidates = await User.find({
     ...baseQuery,
     state: stateRegex,
-    $or: [{ city: "ALL" }, { city: { $exists: false } }, { city: "" }],
+    $or: [{ city: "ALL" }, { city: { $exists: false } }, { city: "" }, { city: "Entire State" }],
     department: deptRegex
   });
-  if (candidates.length > 0) return candidates;
+  if (candidates.length > 0) return await sortByWorkload(candidates, role);
 
   // Level 3: State-level Admin/Employee for ALL Departments
   candidates = await User.find({
     ...baseQuery,
     state: stateRegex,
-    $or: [{ city: "ALL" }, { city: { $exists: false } }, { city: "" }],
-    $or: [{ department: "ALL" }, { department: { $exists: false } }, { department: "" }]
+    $and: [
+      { $or: [{ city: "ALL" }, { city: { $exists: false } }, { city: "" }, { city: "Entire State" }] },
+      { $or: [{ department: "ALL" }, { department: { $exists: false } }, { department: "" }, { department: "All Departments" }] }
+    ]
   });
   
-  return candidates;
+  return await sortByWorkload(candidates, role);
 }
 // Helper to map V2 MongoDB Issue to V1 Frontend Issue format
 const mapToV1Format = async (issueDoc: any) => {

@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Shield, Plus, X, Users, MapPin, LogOut, UserCog, UserCircle, Briefcase, Building2, TrendingUp, Search, CheckCircle2, AlertTriangle, RefreshCw, Trash2, Star, Filter } from "lucide-react";
 import { AppUser } from "@/lib/storage";
+import { ModalPortal } from "@/components/ModalPortal";
 
 export default function SuperAdminPage() {
   const { user, appUser, role, loading, logoutMock } = useAuth();
@@ -71,6 +72,16 @@ export default function SuperAdminPage() {
       }
     }
   }, [user, role, loading, router]);
+
+  // -- SCROLL LOCK FOR MODALS --
+  useEffect(() => {
+    if (isModalOpen || isEmployeeModalOpen || isPasswordModalOpen || isAddOrgModalOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => { document.body.style.overflow = ""; };
+  }, [isModalOpen, isEmployeeModalOpen, isPasswordModalOpen, isAddOrgModalOpen]);
 
   const loadData = async () => {
     try {
@@ -612,13 +623,15 @@ export default function SuperAdminPage() {
 
       {/* Admin Modal */}
       {isModalOpen && (
-        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-sm w-full max-w-lg p-8 shadow-2xl animate-fade-in-up">
-            <div className="flex justify-between items-center mb-6">
+        <ModalPortal>
+          <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4 sm:p-6">
+            <div className="absolute inset-0" onClick={() => setIsModalOpen(false)}></div>
+            <div className="bg-white rounded-sm w-full max-w-lg my-8 max-h-[90vh] flex flex-col relative z-10 shadow-2xl animate-fade-in-up overflow-hidden">
+              <div className="flex justify-between items-center p-6 border-b border-slate-100 shrink-0">
               <h2 className="text-2xl font-bold text-slate-800">Create Administrator</h2>
               <button onClick={() => setIsModalOpen(false)} className="text-slate-400 hover:text-slate-600"><X className="w-6 h-6" /></button>
             </div>
-            <form onSubmit={handleCreateAdmin} className="space-y-4">
+            <form onSubmit={handleCreateAdmin} className="p-6 overflow-y-auto custom-scrollbar flex-1 space-y-4">
               <div>
                 <label className="block text-sm font-bold text-slate-700 mb-1">Full Name</label>
                 <input required type="text" value={newName} onChange={e => setNewName(e.target.value)} className="w-full bg-slate-50 border border-emerald-100 rounded-sm px-4 py-3 text-slate-900" />
@@ -658,23 +671,26 @@ export default function SuperAdminPage() {
                   <input required type="text" value={newPassword} onChange={e => setNewPassword(e.target.value)} placeholder="Assign a custom password" className="w-full bg-slate-50 border border-emerald-100 rounded-sm px-4 py-3 text-slate-900" />
                 </div>
               </div>
-              <button type="submit" className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-4 rounded-sm mt-4">
+              <button type="submit" className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-4 rounded-sm mt-4 shrink-0">
                 Create Admin Account
               </button>
             </form>
           </div>
         </div>
+        </ModalPortal>
       )}
 
       {/* Employee Modal */}
       {isEmployeeModalOpen && (
-        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-sm w-full max-w-lg p-8 shadow-2xl animate-fade-in-up">
-            <div className="flex justify-between items-center mb-6">
+        <ModalPortal>
+          <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4 sm:p-6">
+            <div className="absolute inset-0" onClick={() => setIsEmployeeModalOpen(false)}></div>
+            <div className="bg-white rounded-sm w-full max-w-lg my-8 max-h-[90vh] flex flex-col relative z-10 shadow-2xl animate-fade-in-up overflow-hidden">
+            <div className="flex justify-between items-center p-6 border-b border-slate-100 shrink-0">
               <h2 className="text-2xl font-bold text-slate-800">Create Employee</h2>
               <button onClick={() => setIsEmployeeModalOpen(false)} className="text-slate-400 hover:text-slate-600"><X className="w-6 h-6" /></button>
             </div>
-            <form onSubmit={handleCreateEmployee} className="space-y-4">
+            <form onSubmit={handleCreateEmployee} className="p-6 overflow-y-auto custom-scrollbar flex-1 space-y-4">
               <div>
                 <label className="block text-sm font-bold text-slate-700 mb-1">Assign Under Admin</label>
                 <select required value={selectedAdminEmail} onChange={e => setSelectedAdminEmail(e.target.value)} className="w-full bg-slate-50 border border-emerald-100 rounded-sm px-4 py-3 text-slate-900">
@@ -697,23 +713,26 @@ export default function SuperAdminPage() {
                 <label className="block text-sm font-bold text-slate-700 mb-1">Initial Password</label>
                 <input required type="text" value={newEmpPassword} onChange={e => setNewEmpPassword(e.target.value)} placeholder="Assign a custom password" className="w-full bg-slate-50 border border-emerald-100 rounded-sm px-4 py-3 text-slate-900" />
               </div>
-              <button type="submit" className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-4 rounded-sm mt-4">
+              <button type="submit" className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-4 rounded-sm mt-4 shrink-0">
                 Create Employee Account
               </button>
             </form>
           </div>
         </div>
+        </ModalPortal>
       )}
 
       {/* Change Password Modal */}
       {isPasswordModalOpen && (
-        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-sm w-full max-w-sm p-8 shadow-2xl animate-fade-in-up">
-            <div className="flex justify-between items-center mb-6">
+        <ModalPortal>
+          <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 sm:p-6">
+            <div className="absolute inset-0" onClick={() => setIsPasswordModalOpen(false)}></div>
+            <div className="bg-white rounded-sm w-full max-w-sm my-8 max-h-[90vh] flex flex-col relative z-10 shadow-2xl animate-fade-in-up overflow-hidden">
+            <div className="flex justify-between items-center p-6 border-b border-slate-100 shrink-0">
               <h2 className="text-xl font-bold text-slate-800">Change Password</h2>
               <button onClick={() => setIsPasswordModalOpen(false)} className="text-slate-400 hover:text-slate-600"><X className="w-5 h-5" /></button>
             </div>
-            <form onSubmit={handleChangePassword} className="space-y-4">
+            <form onSubmit={handleChangePassword} className="p-6 overflow-y-auto custom-scrollbar flex-1 space-y-4">
               <div>
                 <label className="block text-sm font-bold text-slate-700 mb-2">New Password</label>
                 <input 
@@ -724,12 +743,13 @@ export default function SuperAdminPage() {
                   className="w-full bg-slate-50 border border-emerald-100 rounded-sm px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-900"
                 />
               </div>
-              <button type="submit" className="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold py-3 rounded-sm transition-colors">
+              <button type="submit" className="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold py-3 rounded-sm transition-colors mt-4 shrink-0">
                 Update Password
               </button>
             </form>
           </div>
         </div>
+        </ModalPortal>
       )}
       
       {/* Area Adoptions Tab */}
@@ -775,14 +795,16 @@ export default function SuperAdminPage() {
       )}
       {/* Add Organization Modal */}
       {isAddOrgModalOpen && (
-        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-sm w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl animate-fade-in-up">
-            <div className="sticky top-0 bg-white/80 backdrop-blur-md px-6 py-4 border-b border-surface-100 flex justify-between items-center z-10">
+        <ModalPortal>
+          <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4 sm:p-6">
+            <div className="absolute inset-0" onClick={() => setIsAddOrgModalOpen(false)}></div>
+            <div className="bg-white rounded-sm w-full max-w-2xl my-8 max-h-[90vh] flex flex-col relative z-10 shadow-2xl animate-fade-in-up overflow-hidden">
+            <div className="p-6 border-b border-surface-100 flex justify-between items-center shrink-0">
               <h2 className="text-xl font-black text-surface-900">Add Organization</h2>
               <button onClick={() => setIsAddOrgModalOpen(false)} className="text-surface-400 hover:text-surface-600 bg-surface-50 hover:bg-surface-100 p-2 rounded-full transition-colors"><X className="w-5 h-5" /></button>
             </div>
             
-            <form onSubmit={handleAddOrganization} className="p-6 space-y-4">
+            <form onSubmit={handleAddOrganization} className="p-6 overflow-y-auto custom-scrollbar flex-1 space-y-4">
               <div className="bg-indigo-50 border border-indigo-100 p-4 rounded-sm mb-4 text-sm text-indigo-800">
                 <p>Organizations added here will be automatically marked as <strong>VERIFIED</strong>.</p>
               </div>
@@ -837,7 +859,7 @@ export default function SuperAdminPage() {
                 </div>
               </div>
 
-              <div className="pt-4 border-t border-surface-100 flex gap-3 justify-end">
+              <div className="pt-4 border-t border-surface-100 flex gap-3 justify-end shrink-0">
                 <button type="button" onClick={() => setIsAddOrgModalOpen(false)} className="px-5 py-2.5 text-sm font-bold text-surface-600 hover:bg-surface-100 rounded-sm transition-colors">Cancel</button>
                 <button type="submit" disabled={addOrgSubmitting} className="px-5 py-2.5 text-sm font-bold bg-indigo-600 hover:bg-indigo-700 text-white rounded-sm transition-colors flex items-center gap-2">
                   {addOrgSubmitting ? "Creating..." : "Create Organization"}
@@ -846,6 +868,7 @@ export default function SuperAdminPage() {
             </form>
           </div>
         </div>
+        </ModalPortal>
       )}
 
     </div>

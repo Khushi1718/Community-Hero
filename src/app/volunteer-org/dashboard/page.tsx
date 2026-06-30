@@ -12,6 +12,7 @@ import {
   Phone, Mail, Globe, Camera, Plus, Award, Leaf, Trash2, ArrowRight, Download, Target, UserCheck
 } from "lucide-react";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, BarChart, Bar } from "recharts";
+import { ModalPortal } from "@/components/ModalPortal";
 
 // ── Types ──────────────────────────────────────────────────────────────
 interface OrgProfile {
@@ -196,6 +197,34 @@ export default function VolunteerOrgDashboard() {
   const [driveMeetingLoc, setDriveMeetingLoc] = useState("");
   const [driveInstructions, setDriveInstructions] = useState("");
   const [driveCreating, setDriveCreating] = useState(false);
+  const [driveCoverImage, setDriveCoverImage] = useState<string>("");
+  const [isUploading, setIsUploading] = useState(false);
+
+  const handleCoverImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setIsUploading(true);
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = async () => {
+      const base64 = reader.result as string;
+      try {
+        const res = await fetch("/api/upload", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ imageBase64: base64 })
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setDriveCoverImage(data.url);
+        }
+      } catch (err) {
+        console.error("Upload error", err);
+      } finally {
+        setIsUploading(false);
+      }
+    };
+  };
 
   const handleCreateIndependentDrive = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -218,11 +247,12 @@ export default function VolunteerOrgDashboard() {
           maxVolunteers: driveMaxVol,
           meetingLocation: driveMeetingLoc,
           instructions: driveInstructions,
+          coverImage: driveCoverImage,
         })
       });
       if (res.ok) {
         setIsCreateDriveModalOpen(false);
-        setDriveTitle(""); setDriveDescription(""); setDriveMeetingLoc(""); setDriveInstructions("");
+        setDriveTitle(""); setDriveDescription(""); setDriveMeetingLoc(""); setDriveInstructions(""); setDriveCoverImage("");
         loadData(); // refresh drives
       } else {
         const err = await res.json();
@@ -255,6 +285,7 @@ export default function VolunteerOrgDashboard() {
           requiredVolunteers: driveReqVol,
           maxVolunteers: driveMaxVol,
           meetingLocation: driveMeetingLoc,
+          coverImage: driveCoverImage,
         })
       });
       if (res.ok) {
@@ -410,6 +441,32 @@ export default function VolunteerOrgDashboard() {
   useEffect(() => {
     if (org) loadOrgData(org);
   }, [org, loadOrgData]);
+
+  // -- SCROLL LOCK FOR MODALS --
+  useEffect(() => {
+    if (
+      selectedDrive ||
+      showCompletionModal ||
+      isEditCapacityModalOpen ||
+      isAddPartnerModalOpen ||
+      isCreateDriveModalOpen ||
+      isScheduleDriveModalOpen ||
+      isEditDriveModalOpen
+    ) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => { document.body.style.overflow = ""; };
+  }, [
+    selectedDrive,
+    showCompletionModal,
+    isEditCapacityModalOpen,
+    isAddPartnerModalOpen,
+    isCreateDriveModalOpen,
+    isScheduleDriveModalOpen,
+    isEditDriveModalOpen
+  ]);
 
   const handleRefresh = async () => {
     setRefreshing(true);
@@ -596,7 +653,7 @@ export default function VolunteerOrgDashboard() {
   ];
 
   const Sidebar = () => (
-    <div className={`fixed inset-y-0 left-0 z-50 w-64 bg-slate-900 transform transition-transform duration-300 flex flex-col ${sidebarOpen ? "translate-x-0" : "-translate-x-full"} lg:translate-x-0 lg:static lg:flex`}>
+    <div className={`fixed inset-y-0 left-0 z-[100] w-64 bg-slate-900 transform transition-transform duration-300 flex flex-col ${sidebarOpen ? "translate-x-0" : "-translate-x-full"} lg:translate-x-0 lg:static lg:flex`}>
       {/* Brand */}
       <div className="p-5 border-b border-slate-800">
         <div className="flex items-center gap-3">
@@ -943,7 +1000,7 @@ export default function VolunteerOrgDashboard() {
                 <div>
                    <h2 className="text-xl font-black text-slate-900 mb-1">Community Hero Volunteer Directory</h2>
                    <p className="text-sm text-slate-500 mb-4">Active platform users who are officially part of your organization.</p>
-                   <div className="bg-white border border-emerald-100 rounded-sm overflow-hidden shadow-sm">
+                   <div className="bg-white border border-emerald-100 rounded-sm overflow-hidden shadow-sm max-h-[400px] overflow-y-auto custom-scrollbar">
                       <table className="w-full text-left text-sm">
                          <thead className="bg-[#F4F9F5] border-b border-emerald-100">
                             <tr>
@@ -1378,11 +1435,13 @@ export default function VolunteerOrgDashboard() {
 
       {/* ── DRIVE DASHBOARD MODAL ── */}
       {selectedDrive && (
-         <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-[60] flex items-center justify-center p-4 overflow-y-auto">
-           <div className="bg-white rounded-sm w-full max-w-3xl shadow-2xl my-8 overflow-hidden">
+         <ModalPortal>
+         <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-[9999] flex items-center justify-center p-4 sm:p-6">
+           <div className="absolute inset-0" onClick={() => setSelectedDrive(null)}></div>
+           <div className="bg-white rounded-[2rem] w-full max-w-3xl max-h-[90vh] flex flex-col shadow-2xl relative z-10 overflow-hidden">
              
              {/* Header */}
-             <div className="bg-[#F4F9F5] border-b border-slate-100 p-6 flex justify-between items-start">
+             <div className="bg-[#F4F9F5] border-b border-slate-100 p-6 flex justify-between items-start shrink-0">
                 <div>
                    <h2 className="text-2xl font-black text-slate-900">{selectedDrive.title}</h2>
                    <div className="flex items-center gap-3 mt-2 text-xs font-bold">
@@ -1394,7 +1453,7 @@ export default function VolunteerOrgDashboard() {
                 <button onClick={() => setSelectedDrive(null)} className="p-2 text-slate-400 hover:text-slate-700 hover:bg-emerald-50 rounded-full transition-colors"><X className="w-5 h-5"/></button>
              </div>
 
-             <div className="p-6">
+             <div className="p-6 overflow-y-auto custom-scrollbar flex-1">
                 <div className="grid grid-cols-3 gap-6">
                    {/* Main Info */}
                    <div className="col-span-2 space-y-6">
@@ -1406,50 +1465,13 @@ export default function VolunteerOrgDashboard() {
                         <p className="text-[15px] font-medium text-slate-700 leading-relaxed relative z-10 whitespace-pre-wrap">{selectedDrive.description}</p>
                       </div>
 
-                      {/* Timeline Updates (My Drives only) */}
-                      {(selectedDrive.orgId === org?._id || selectedDrive.acceptedOrgId === org?._id) && ["ORG_APPROVED", "VOLUNTEER_REG_OPEN", "REG_CLOSED", "DRIVE_IN_PROGRESS"].includes(selectedDrive.status) && (
-                         <div>
-                            <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Post Timeline Update</h3>
-                            <form className="flex gap-2" onSubmit={async(e) => {
-                               e.preventDefault();
-                               const input = e.currentTarget.elements.namedItem("note") as HTMLInputElement;
-                               if (!input.value) return;
-                               setActionLoading(true);
-                               try {
-                                 const res = await fetch(`/api/community-drives/${selectedDrive._id}`, {
-                                   method: "PATCH", headers: {"Content-Type":"application/json"},
-                                   body: JSON.stringify({ action: "add_timeline", note: input.value, author: org?.name })
-                                 });
-                                 if (res.ok) { handleRefresh(); setSelectedDrive(null); }
-                               } finally { setActionLoading(false); }
-                            }}>
-                               <input name="note" placeholder="E.g. Tools have arrived" required className="flex-1 border border-emerald-100 rounded-sm px-4 py-2.5 text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none" />
-                               <button type="submit" disabled={actionLoading} className="bg-emerald-600 text-white font-bold px-5 py-2.5 rounded-sm disabled:opacity-50">Post</button>
-                            </form>
-                         </div>
-                      )}
 
-                      {/* Drive Timeline */}
-                      {selectedDrive.driveTimeline && selectedDrive.driveTimeline.length > 0 && (
-                        <div>
-                           <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">Live Timeline</h3>
-                           <div className="relative border-l-2 border-emerald-100 ml-3 space-y-4">
-                              {selectedDrive.driveTimeline.map((item, i) => (
-                                 <div key={i} className="relative pl-5">
-                                    <div className="absolute w-3 h-3 rounded-full -left-[7px] top-1 bg-emerald-400 ring-2 ring-white" />
-                                    <p className="text-sm font-medium text-slate-700">{item.note}</p>
-                                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{item.author} • {new Date(item.timestamp).toLocaleString()}</p>
-                                 </div>
-                              ))}
-                           </div>
-                        </div>
-                      )}
 
                      {/* Registered Volunteers */}
                       {(selectedDrive.orgId === org?._id || selectedDrive.acceptedOrgId === org?._id) && selectedDrive.volunteers && selectedDrive.volunteers.length > 0 && (
                          <div className="mt-8">
                             <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">Registered Volunteers ({(selectedDrive.volunteers?.filter((v: any) => v.status !== 'rejected').length) || selectedDrive.joinedVolunteers}/{selectedDrive.maxVolunteers || selectedDrive.requiredVolunteers})</h3>
-                            <div className="bg-white border border-emerald-100 rounded-sm shadow-sm overflow-hidden">
+                            <div className="bg-white border border-emerald-100 rounded-sm shadow-sm overflow-y-auto max-h-64 custom-scrollbar">
                                <table className="w-full text-left border-collapse">
                                   <thead>
                                      <tr className="bg-[#F4F9F5] border-b border-slate-100 text-xs font-bold text-slate-500 uppercase tracking-wider">
@@ -1618,7 +1640,18 @@ export default function VolunteerOrgDashboard() {
                            method: "PATCH", headers: {"Content-Type":"application/json"},
                            body: JSON.stringify({ action: "org_accept", orgId: org?._id, orgName: org?.name })
                         });
-                        if (res.ok) { handleRefresh(); setSelectedDrive(null); }
+                        if (res.ok) { 
+                           await handleRefresh(); 
+                           setSelectedDrive({...selectedDrive, status: "ORG_APPROVED", acceptedOrgId: org?._id});
+                           setDriveDate("");
+                           setDriveTime("");
+                           setDriveDuration(2);
+                           setDriveReqVol(10);
+                           setDriveMaxVol(20);
+                           setDriveMeetingLoc("");
+                           setDriveCoverImage("");
+                           setIsScheduleDriveModalOpen(true);
+                        }
                       } finally { setActionLoading(false); }
                    }} disabled={actionLoading} className="bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-bold px-6 py-3 rounded-sm transition-colors shadow-sm">
                       {actionLoading ? "Requesting..." : "Take This Drive"}
@@ -1633,6 +1666,7 @@ export default function VolunteerOrgDashboard() {
                      setDriveReqVol(10);
                      setDriveMaxVol(20);
                      setDriveMeetingLoc("");
+                     setDriveCoverImage("");
                      setIsScheduleDriveModalOpen(true);
                    }} className="bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-bold px-6 py-3 rounded-sm transition-colors shadow-sm">
                       Schedule Drive Details
@@ -1663,7 +1697,7 @@ export default function VolunteerOrgDashboard() {
                    </>
                 )}
 
-                {(selectedDrive.orgId === org?._id || selectedDrive.acceptedOrgId === org?._id) && selectedDrive.status === "REG_CLOSED" && (
+                {(selectedDrive.orgId === org?._id || selectedDrive.acceptedOrgId === org?._id) && (selectedDrive.status === "REG_CLOSED" || selectedDrive.status === "VOLUNTEER_REG_OPEN") && (
                    <div className="flex w-full">
                       <button onClick={async() => {
                          setActionLoading(true);
@@ -1713,13 +1747,16 @@ export default function VolunteerOrgDashboard() {
              </div>
            </div>
          </div>
+         </ModalPortal>
       )}
 
       {/* Completion Modal */}
       {showCompletionModal && selectedDrive && (
-         <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-           <div className="bg-white rounded-sm max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-             <div className="p-6 border-b border-slate-100 flex justify-between items-center sticky top-0 bg-white/95 backdrop-blur z-10">
+         <ModalPortal>
+         <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-[9999] flex items-center justify-center p-4 sm:p-6">
+           <div className="absolute inset-0" onClick={() => setShowCompletionModal(false)}></div>
+           <div className="bg-white rounded-none w-full max-w-xl max-h-[90vh] flex flex-col relative z-10 shadow-2xl overflow-hidden">
+             <div className="p-6 border-b border-slate-100 flex justify-between items-center shrink-0">
                <div>
                  <h2 className="text-xl font-bold text-slate-800">Submit Completion Proof</h2>
                  <p className="text-sm text-slate-500">Provide details for {selectedDrive.title}</p>
@@ -1728,7 +1765,7 @@ export default function VolunteerOrgDashboard() {
                  <X className="w-5 h-5" />
                </button>
              </div>
-             <div className="p-6 space-y-5">
+             <div className="p-6 space-y-5 overflow-y-auto custom-scrollbar flex-1">
                 <div>
                    <label className="block text-sm font-bold text-slate-700 mb-1">Work Performed (Summary) *</label>
                    <textarea required rows={2} value={completionData.workPerformed} onChange={e => setCompletionData({...completionData, workPerformed: e.target.value})} className="w-full bg-[#F4F9F5] border border-emerald-100 rounded-sm px-4 py-3 text-sm focus:ring-2 focus:ring-success-500/20 focus:border-success-500" placeholder="Briefly describe what was accomplished..."></textarea>
@@ -1802,18 +1839,21 @@ export default function VolunteerOrgDashboard() {
              </div>
            </div>
          </div>
+         </ModalPortal>
       )}
 
       {/* Create Independent Drive Modal */}
       {isCreateDriveModalOpen && (
-        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-sm w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl animate-fade-in-up">
-            <div className="sticky top-0 bg-white/80 backdrop-blur-md px-6 py-4 border-b border-surface-100 flex justify-between items-center z-10">
+        <ModalPortal>
+        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-[9999] flex items-center justify-center p-4 sm:p-6">
+          <div className="absolute inset-0" onClick={() => setIsCreateDriveModalOpen(false)}></div>
+          <div className="bg-white rounded-[1rem] w-full max-w-2xl max-h-[90vh] flex flex-col relative z-10 shadow-2xl animate-fade-in-up overflow-hidden">
+            <div className="px-6 py-4 border-b border-surface-100 flex justify-between items-center shrink-0">
               <h2 className="text-xl font-black text-surface-900">Create Independent Drive</h2>
               <button onClick={() => setIsCreateDriveModalOpen(false)} className="text-surface-400 hover:text-surface-600 bg-[#F4F9F5] hover:bg-surface-100 p-2 rounded-full transition-colors"><X className="w-5 h-5" /></button>
             </div>
             
-            <form onSubmit={handleCreateIndependentDrive} className="p-6 space-y-4">
+            <form onSubmit={handleCreateIndependentDrive} className="p-6 overflow-y-auto custom-scrollbar flex-1 space-y-4">
               <div className="bg-indigo-50 border border-indigo-100 p-4 rounded-sm mb-4 text-sm text-indigo-800">
                 <p><strong>Note:</strong> Since your organization is verified, creating a drive here will immediately open it for volunteer registration and publish a Community Post.</p>
               </div>
@@ -1860,6 +1900,12 @@ export default function VolunteerOrgDashboard() {
                   <input required value={driveMeetingLoc} onChange={e=>setDriveMeetingLoc(e.target.value)} className="w-full border p-2.5 rounded-sm text-sm" placeholder="Exact spot to meet" />
                 </div>
                 <div className="col-span-2">
+                  <label className="block text-xs font-bold text-surface-600 mb-1">Drive Cover Image</label>
+                  <input type="file" accept="image/*" onChange={handleCoverImageChange} className="w-full border p-2.5 rounded-sm text-sm bg-white" />
+                  {isUploading && <p className="text-xs text-indigo-600 mt-1 font-bold">Uploading to Cloudinary...</p>}
+                  {driveCoverImage && <img src={driveCoverImage} alt="Cover Preview" className="mt-2 w-full h-32 object-cover rounded-sm border border-slate-200" />}
+                </div>
+                <div className="col-span-2">
                   <label className="block text-xs font-bold text-surface-600 mb-1">Instructions for Volunteers</label>
                   <input value={driveInstructions} onChange={e=>setDriveInstructions(e.target.value)} className="w-full border p-2.5 rounded-sm text-sm" placeholder="e.g. Bring extra gloves, wear comfortable shoes" />
                 </div>
@@ -1874,17 +1920,20 @@ export default function VolunteerOrgDashboard() {
             </form>
           </div>
         </div>
+        </ModalPortal>
       )}
 
       {/* Schedule Drive Details Modal */}
       {isScheduleDriveModalOpen && selectedDrive && (
-        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-sm w-full max-w-xl shadow-2xl animate-fade-in-up">
-            <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center">
+        <ModalPortal>
+        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-[9999] flex items-center justify-center p-4 sm:p-6">
+          <div className="absolute inset-0" onClick={() => setIsScheduleDriveModalOpen(false)}></div>
+          <div className="bg-white rounded-[2rem] w-full max-w-xl max-h-[90vh] flex flex-col relative z-10 shadow-2xl animate-fade-in-up overflow-hidden">
+            <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center shrink-0">
               <h2 className="text-xl font-bold text-slate-900">Schedule Drive</h2>
               <button onClick={() => setIsScheduleDriveModalOpen(false)} className="text-slate-400 hover:text-slate-600"><X className="w-5 h-5" /></button>
             </div>
-            <form onSubmit={handleScheduleDrive} className="p-6 space-y-4">
+            <form onSubmit={handleScheduleDrive} className="p-6 overflow-y-auto custom-scrollbar flex-1 space-y-4">
               <div className="bg-indigo-50 text-indigo-800 p-4 rounded-sm text-sm font-medium mb-4">
                 Please provide the final scheduling and location details for "{selectedDrive.title}". Submitting this will open volunteer registrations and publish the drive to the Community Feed.
               </div>
@@ -1913,8 +1962,14 @@ export default function VolunteerOrgDashboard() {
                   <label className="block text-xs font-bold text-slate-600 mb-1">Meeting Location / Address</label>
                   <input required value={driveMeetingLoc} onChange={e=>setDriveMeetingLoc(e.target.value)} className="w-full border p-2.5 rounded-sm text-sm" placeholder="Exact spot to meet" />
                 </div>
+                <div className="col-span-2">
+                  <label className="block text-xs font-bold text-slate-600 mb-1">Drive Cover Image</label>
+                  <input type="file" accept="image/*" onChange={handleCoverImageChange} className="w-full border p-2.5 rounded-sm text-sm bg-white" />
+                  {isUploading && <p className="text-xs text-indigo-600 mt-1 font-bold">Uploading to Cloudinary...</p>}
+                  {driveCoverImage && <img src={driveCoverImage} alt="Cover Preview" className="mt-2 w-full h-32 object-cover rounded-sm border border-slate-200" />}
+                </div>
               </div>
-              <div className="pt-4 border-t border-slate-100 flex gap-3 justify-end">
+              <div className="pt-4 border-t border-slate-100 flex gap-3 justify-end shrink-0 mt-4">
                 <button type="button" onClick={() => setIsScheduleDriveModalOpen(false)} className="px-5 py-2.5 text-sm font-bold text-slate-600 hover:bg-emerald-50 rounded-sm transition-colors">Cancel</button>
                 <button type="submit" disabled={scheduleLoading} className="px-5 py-2.5 text-sm font-bold bg-indigo-600 hover:bg-indigo-700 text-white rounded-sm transition-colors">
                   {scheduleLoading ? "Scheduling..." : "Schedule and Publish"}
@@ -1923,13 +1978,16 @@ export default function VolunteerOrgDashboard() {
             </form>
           </div>
         </div>
+        </ModalPortal>
       )}
 
       {/* Edit Capacity Modal */}
       {isEditCapacityModalOpen && selectedDrive && (
-        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-sm w-full max-w-sm shadow-2xl animate-fade-in-up">
-            <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center">
+        <ModalPortal>
+        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-[9999] flex items-center justify-center p-4 sm:p-6">
+          <div className="absolute inset-0" onClick={() => setIsEditCapacityModalOpen(false)}></div>
+          <div className="bg-white rounded-[2rem] w-full max-w-sm max-h-[90vh] flex flex-col relative z-10 shadow-2xl animate-fade-in-up overflow-hidden">
+            <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center shrink-0">
               <h2 className="text-xl font-bold text-slate-900">Edit Capacity</h2>
               <button onClick={() => setIsEditCapacityModalOpen(false)} className="text-slate-400 hover:text-slate-600"><X className="w-5 h-5" /></button>
             </div>
@@ -1943,7 +2001,7 @@ export default function VolunteerOrgDashboard() {
                   });
                   if (res.ok) { handleRefresh(); setIsEditCapacityModalOpen(false); setSelectedDrive(null); }
                } finally { setActionLoading(false); }
-            }} className="p-6 space-y-4">
+            }} className="p-6 overflow-y-auto custom-scrollbar flex-1 space-y-4">
               <div>
                 <label className="block text-xs font-bold text-slate-600 mb-1">Required Volunteers</label>
                 <input type="number" required min={selectedDrive.joinedVolunteers || 1} value={driveReqVol} onChange={e=>setDriveReqVol(Number(e.target.value))} className="w-full border p-2.5 rounded-sm text-sm" />
@@ -1961,12 +2019,15 @@ export default function VolunteerOrgDashboard() {
             </form>
           </div>
         </div>
+        </ModalPortal>
       )}
       {/* ── Edit Drive Modal ── */}
       {isEditDriveModalOpen && selectedDrive && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
-          <div className="bg-white rounded-sm w-full max-w-lg shadow-2xl overflow-y-auto max-h-[90vh]">
-            <div className="p-6 border-b border-slate-100 flex justify-between items-center">
+        <ModalPortal>
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 sm:p-6 bg-slate-900/60 backdrop-blur-sm">
+          <div className="absolute inset-0" onClick={() => setIsEditDriveModalOpen(false)}></div>
+          <div className="bg-white rounded-[2rem] w-full max-w-lg flex flex-col relative z-10 shadow-2xl max-h-[90vh] overflow-hidden">
+            <div className="p-6 border-b border-slate-100 flex justify-between items-center shrink-0">
               <div>
                 <h2 className="text-xl font-black text-slate-900">Edit Drive Details</h2>
                 <p className="text-sm text-slate-500">Update information for "{selectedDrive.title}"</p>
@@ -1974,7 +2035,7 @@ export default function VolunteerOrgDashboard() {
               <button onClick={() => setIsEditDriveModalOpen(false)} className="p-2 text-slate-400 hover:text-slate-700 bg-[#F4F9F5] hover:bg-emerald-50 rounded-full transition-colors"><X className="w-5 h-5"/></button>
             </div>
             
-            <form onSubmit={handleEditDrive} className="p-6 space-y-4">
+            <form onSubmit={handleEditDrive} className="p-6 overflow-y-auto custom-scrollbar flex-1 space-y-4">
               <div>
                 <label className="text-xs font-bold text-slate-700 block mb-1">Drive Title</label>
                 <input required type="text" value={driveTitle} onChange={e=>setDriveTitle(e.target.value)} className="w-full border border-emerald-100 rounded-sm px-4 py-3 text-sm focus:ring-2 focus:ring-slate-500 focus:outline-none" />
@@ -2010,7 +2071,7 @@ export default function VolunteerOrgDashboard() {
                 <textarea value={driveInstructions} onChange={e=>setDriveInstructions(e.target.value)} rows={2} className="w-full border border-emerald-100 rounded-sm px-4 py-3 text-sm focus:ring-2 focus:ring-slate-500 focus:outline-none resize-none" placeholder="E.g. Bring gloves and wear comfortable shoes..."></textarea>
               </div>
 
-              <div className="pt-4 flex gap-3 justify-end">
+              <div className="pt-4 flex gap-3 justify-end shrink-0 mt-4">
                 <button type="button" onClick={() => setIsEditDriveModalOpen(false)} className="px-5 py-2.5 text-sm font-bold text-slate-600 hover:bg-emerald-50 rounded-sm transition-colors">Cancel</button>
                 <button type="submit" disabled={editDriveLoading} className="px-5 py-2.5 text-sm font-bold bg-slate-900 hover:bg-slate-800 text-white rounded-sm transition-colors shadow-sm disabled:opacity-50">
                   {editDriveLoading ? "Saving..." : "Save Changes"}
@@ -2019,13 +2080,16 @@ export default function VolunteerOrgDashboard() {
             </form>
           </div>
         </div>
+        </ModalPortal>
       )}
 
       {/* Add Partner Modal */}
       {isAddPartnerModalOpen && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
-          <div className="bg-white rounded-sm w-full max-w-lg shadow-2xl overflow-y-auto max-h-[90vh]">
-            <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-emerald-50">
+        <ModalPortal>
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 sm:p-6 bg-slate-900/60 backdrop-blur-sm">
+          <div className="absolute inset-0" onClick={() => setIsAddPartnerModalOpen(false)}></div>
+          <div className="bg-white rounded-[2rem] w-full max-w-lg flex flex-col relative z-10 shadow-2xl max-h-[90vh] overflow-hidden">
+            <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-emerald-50 shrink-0">
               <div>
                 <h2 className="text-xl font-black text-emerald-900">Add Partner Organization</h2>
                 <p className="text-sm text-emerald-700">Invite organizations in your state to join this drive.</p>
@@ -2083,6 +2147,7 @@ export default function VolunteerOrgDashboard() {
             </div>
           </div>
         </div>
+        </ModalPortal>
       )}
 
     </div>
@@ -2120,42 +2185,40 @@ function DriveCard({ drive, showOrg = true, onClick }: { drive: Drive; showOrg?:
   const actualJoined = drive.volunteers ? drive.volunteers.filter((v: any) => v.status !== 'rejected').length : drive.joinedVolunteers;
 
   return (
-    <div onClick={onClick} className="bg-white rounded-none border border-emerald-100 overflow-hidden hover:shadow-lg hover:border-emerald-300 transition-all cursor-pointer flex flex-col h-full group">
-      <div className="h-1 bg-emerald-600 w-full"></div>
-      
-      <div className="p-5 flex-1 flex flex-col relative bg-white">
-         <div className="flex justify-between items-start mb-4">
-            <div className="w-14 h-14 bg-emerald-50 rounded-none border border-emerald-100 flex items-center justify-center group-hover:scale-105 transition-transform">
+    <div onClick={onClick} className="bg-white rounded-[2rem] border border-slate-200/60 overflow-hidden hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] hover:border-emerald-200 hover:-translate-y-1 transition-all duration-300 cursor-pointer flex flex-col h-full group p-2">
+      <div className="bg-gradient-to-br from-emerald-50/50 to-white rounded-[1.5rem] p-6 flex-1 flex flex-col relative h-full">
+         <div className="flex justify-between items-start mb-6">
+            <div className="w-14 h-14 bg-white shadow-sm rounded-2xl border border-emerald-100 flex items-center justify-center group-hover:scale-110 group-hover:shadow-md transition-all duration-300">
                {getCategoryIcon(drive.category)}
             </div>
-            <span className={`${statusColors[drive.status] || "bg-emerald-100 text-emerald-800"} text-[9px] font-black px-2 py-1 rounded-none uppercase tracking-wider`}>
+            <span className={`${statusColors[drive.status] || "bg-emerald-100 text-emerald-800"} text-[10px] font-bold px-3 py-1.5 rounded-full uppercase tracking-wider shadow-sm`}>
                {drive.status.replace(/_/g, " ")}
             </span>
          </div>
          
          <div className="mb-4">
-            <h3 className="font-black text-slate-900 text-lg leading-tight mb-1 line-clamp-1">{drive.title}</h3>
-            {showOrg && drive.orgName && <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Liaison: {drive.orgName}</p>}
+            <h3 className="font-black text-slate-800 text-xl leading-tight mb-2 line-clamp-1 group-hover:text-emerald-700 transition-colors">{drive.title}</h3>
+            {showOrg && drive.orgName && <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Liaison: <span className="text-emerald-600">{drive.orgName}</span></p>}
          </div>
 
-         <p className="text-xs text-slate-600 mb-6 line-clamp-2 flex-1 leading-relaxed">{drive.description}</p>
+         <p className="text-sm text-slate-500 mb-6 line-clamp-2 flex-1 leading-relaxed font-medium">{drive.description}</p>
 
-         <div className="bg-[#F4F9F5] border border-emerald-50 rounded-none p-3 grid grid-cols-2 gap-y-3 gap-x-2 text-[10px] font-bold text-slate-500 uppercase tracking-wider">
-            <div className="flex items-center gap-2">
-               <MapPin className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
-               <span className="truncate">{drive.city}</span>
+         <div className="bg-white border border-slate-100 rounded-2xl p-4 grid grid-cols-2 gap-y-4 gap-x-2 text-[11px] font-bold text-slate-500 uppercase tracking-wider shadow-sm group-hover:border-emerald-100 transition-colors">
+            <div className="flex items-center gap-2.5">
+               <MapPin className="w-4 h-4 text-emerald-500 shrink-0" />
+               <span className="truncate text-slate-600">{drive.city}</span>
             </div>
-            <div className="flex items-center gap-2">
-               <Calendar className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
-               <span className="truncate">{new Date(drive.date).toLocaleDateString("en-IN")}</span>
+            <div className="flex items-center gap-2.5">
+               <Calendar className="w-4 h-4 text-emerald-500 shrink-0" />
+               <span className="truncate text-slate-600">{new Date(drive.date).toLocaleDateString("en-IN", { month: "short", day: "numeric", year: "numeric" })}</span>
             </div>
-            <div className="flex items-center gap-2">
-               <Clock className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
-               <span>{drive.time}</span>
+            <div className="flex items-center gap-2.5">
+               <Clock className="w-4 h-4 text-emerald-500 shrink-0" />
+               <span className="text-slate-600">{drive.time}</span>
             </div>
-            <div className="flex items-center gap-2">
-               <Users className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
-               <span>{actualJoined}/{drive.maxVolunteers || drive.requiredVolunteers} Vols</span>
+            <div className="flex items-center gap-2.5">
+               <Users className="w-4 h-4 text-emerald-500 shrink-0" />
+               <span className="text-slate-600">{actualJoined}/{drive.maxVolunteers || drive.requiredVolunteers} Vols</span>
             </div>
          </div>
       </div>
@@ -2167,7 +2230,7 @@ function EmptyState({ icon, title, message, badge }: {
   icon: React.ReactNode; title: string; message: string; badge?: string;
 }) {
   return (
-    <div className="text-center py-20 bg-white rounded-sm border border-emerald-100 animate-fade-in">
+    <div className="text-center py-20 bg-white rounded-[2rem] border border-slate-200/60 shadow-sm animate-fade-in">
       <div className="text-slate-200 flex justify-center mb-4">{icon}</div>
       <h3 className="font-bold text-slate-700 mb-2">{title}</h3>
       <p className="text-slate-400 text-sm max-w-xs mx-auto">{message}</p>

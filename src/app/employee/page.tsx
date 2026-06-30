@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { saveUser } from "@/lib/storage";
 import { CameraCapture } from "@/components/CameraCapture";
+import { ModalPortal } from "@/components/ModalPortal";
 import { Card, CardHeader, CardContent, CardFooter } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { StatusBadge } from "@/components/ui/Badge";
@@ -200,6 +201,16 @@ export default function EmployeePage() {
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [appUser, role, loading]);
+
+  // -- SCROLL LOCK FOR MODALS --
+  useEffect(() => {
+    if (selectedIssue || isPasswordModalOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => { document.body.style.overflow = ""; };
+  }, [selectedIssue, isPasswordModalOpen]);
 
   // ── Data Loading ─────────────────────────────────────────────────────────────
   const loadIssues = useCallback(async () => {
@@ -757,9 +768,10 @@ export default function EmployeePage() {
 
       {/* ── ISSUE WORKSPACE DRAWER ── */}
       {selectedIssue && (
-        <div className="fixed inset-0 z-[1050] flex animate-fade-in">
-          <div className="flex-1 bg-emerald-900/60 backdrop-blur-sm transition-opacity" onClick={() => setSelectedIssue(null)} />
-          <div className="w-full max-w-2xl bg-[#F4F9F5] h-full flex flex-col shadow-2xl overflow-hidden animate-slide-up sm:animate-fade-in">
+        <ModalPortal>
+          <div className="fixed inset-0 z-[1050] flex animate-fade-in">
+            <div className="flex-1 bg-emerald-900/60 backdrop-blur-sm transition-opacity" onClick={() => setSelectedIssue(null)} />
+            <div className="w-full max-w-2xl bg-[#F4F9F5] h-full flex flex-col shadow-2xl overflow-hidden animate-slide-up sm:animate-fade-in">
             {/* Header */}
             <div className="p-6 border-b border-emerald-100 bg-white flex items-start justify-between flex-shrink-0 z-20">
               <div>
@@ -1072,22 +1084,26 @@ export default function EmployeePage() {
             </div>
           </div>
         </div>
+        </ModalPortal>
       )}
 
       {/* ── PASSWORD MODAL ── */}
       {isPasswordModalOpen && (
-        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-none w-full max-w-sm p-8 shadow-2xl">
-            <div className="flex justify-between items-center mb-6">
+        <ModalPortal>
+          <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 sm:p-6">
+            <div className="absolute inset-0" onClick={() => setIsPasswordModalOpen(false)}></div>
+            <div className="bg-white rounded-none w-full max-w-sm max-h-[90vh] flex flex-col relative z-10 shadow-2xl overflow-hidden">
+            <div className="p-8 border-b border-slate-100 flex justify-between items-center shrink-0">
               <h2 className="text-xl font-bold">Change Password</h2>
               <button onClick={() => setIsPasswordModalOpen(false)}><X className="w-5 h-5 text-slate-400" /></button>
             </div>
-            <form onSubmit={handleChangePassword} className="space-y-4">
+            <form onSubmit={handleChangePassword} className="p-8 overflow-y-auto custom-scrollbar flex-1 space-y-4">
               <input type="password" required value={newPassword} onChange={e => setNewPassword(e.target.value)} placeholder="New password" className="w-full border border-emerald-100 rounded-none px-4 py-3 focus:outline-none focus:ring-2 focus:ring-emerald-500" />
-              <button type="submit" className="w-full bg-slate-900 text-white font-bold py-3 rounded-none">Update Password</button>
+              <button type="submit" className="w-full bg-slate-900 text-white font-bold py-3 rounded-none shrink-0 mt-4">Update Password</button>
             </form>
           </div>
         </div>
+        </ModalPortal>
       )}
 
       {showCamera && (

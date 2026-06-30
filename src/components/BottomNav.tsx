@@ -2,7 +2,7 @@
 
 import { useAuth } from "@/lib/auth-context";
 import { useRouter, usePathname } from "next/navigation";
-import { Home, MapPin, FileText, Users, User } from "lucide-react";
+import { Home, MapPin, FileText, Users, User, LayoutDashboard } from "lucide-react";
 import { useEffect, useState } from "react";
 
 export function BottomNav() {
@@ -26,8 +26,12 @@ export function BottomNav() {
       { name: "Report", path: "/report", icon: MapPin },
       { name: "My Reports", path: "/my-reports", icon: FileText },
     ] : []),
-    ...(role === "employee" ? [
-      { name: "Tasks", path: "/employee", icon: FileText },
+    ...(role && role !== "citizen" ? [
+      { 
+        name: "Dashboard", 
+        path: role === "volunteer_org" ? "/volunteer-org/dashboard" : role === "super_admin" ? "/super-admin" : `/${role}`, 
+        icon: LayoutDashboard 
+      },
     ] : []),
     { name: "Community", path: "/community", icon: Users },
     ...(role === "citizen" ? [

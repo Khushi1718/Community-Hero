@@ -11,6 +11,42 @@ export async function GET() {
 
     const now = Date.now();
     
+    // Also trigger community drive background checks locally
+    try {
+        const VolunteerDriveModel = require('@/models/VolunteerDrive').VolunteerDrive;
+        const orgPendingDrives = await VolunteerDriveModel.find({ status: "WAITING_FOR_ORG" });
+        for (const drive of orgPendingDrives) {
+            if (drive.expiresAt && new Date() > new Date(drive.expiresAt)) {
+                drive.status = "FAILED";
+                drive.cancelReason = "No organization accepted the drive within 24 hours.";
+                
+                if (drive.issueId) {
+                    const issue = await Issue.findOne({ issueId: drive.issueId });
+                    if (issue && issue.status === "Community Drive Active") {
+                        issue.status = "Assigned";
+                        issue.employeeHoldReason = undefined;
+                        issue.statusHistory.push({ status: "Assigned", timestamp: new Date(), actorName: "System", actorRole: "system" });
+                        await issue.save();
+                        
+                        if (issue.assignedToName) {
+                            const emp = await User.findOne({ name: issue.assignedToName });
+                            if (emp) {
+                                await Notification.create({
+                                    userId: emp.email, issueId: issue.issueId, type: "System",
+                                    title: "Assignment Restored",
+                                    message: `Community drive "${drive.title}" failed to find an organization. You are reassigned to issue ${issue.issueId}.`
+                                });
+                            }
+                        }
+                    }
+                }
+                await drive.save();
+            }
+        }
+    } catch(e) {
+        console.error("Failed to process drive SLA:", e);
+    }
+
     // Find issues that are overdue and haven't been flagged yet
     // Exclude issues that are already completed, resolved, rejected, or closed.
     const overdueIssues = await Issue.find({

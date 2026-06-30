@@ -65,6 +65,7 @@ export interface IVolunteerDrive extends Document {
   title: string;
   description: string;
   category: WorkCategory;
+  coverImage?: string;
 
   // Location
   city: string;
@@ -169,6 +170,7 @@ const VolunteerDriveSchema = new Schema<IVolunteerDrive>(
       ],
       required: true,
     },
+    coverImage: { type: String },
 
     city: { type: String, required: true },
     state: { type: String, required: true },

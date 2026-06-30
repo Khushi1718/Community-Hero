@@ -2,7 +2,7 @@
 
 import { useAuth } from "@/lib/auth-context";
 import { useRouter, usePathname } from "next/navigation";
-import { Shield, Home, MapPin, FileText, Users, User, LogOut, Bell, X, Check, Globe } from "lucide-react";
+import { Shield, Home, MapPin, FileText, Users, User, LogOut, Bell, X, Check, Globe, LayoutDashboard } from "lucide-react";
 import { UserButton } from "@clerk/nextjs";
 import { useEffect, useState, useRef, useCallback } from "react";
 import { useTranslation } from "react-i18next";
@@ -86,6 +86,7 @@ export function Navbar() {
     else if (role === "super_admin") router.push("/super-admin");
     else if (role === "admin") router.push("/admin");
     else if (role === "employee") router.push("/employee");
+    else if (role === "volunteer_org") router.push("/volunteer-org/dashboard");
   };
 
   const navItems = [
@@ -97,6 +98,13 @@ export function Navbar() {
     { name: t("navbar.community"), path: "/community", icon: Users },
     ...(role === "citizen" ? [
       { name: t("navbar.profile"), path: "/profile", icon: User },
+    ] : []),
+    ...(role && role !== "citizen" ? [
+      { 
+        name: "Dashboard", 
+        path: role === "volunteer_org" ? "/volunteer-org/dashboard" : role === "super_admin" ? "/super-admin" : `/${role}`, 
+        icon: LayoutDashboard 
+      },
     ] : []),
   ];
 
@@ -189,7 +197,8 @@ export function Navbar() {
                 onClick={() => router.push("/report")}
                 className="px-4 py-2 text-sm font-bold text-white bg-green-600 rounded-lg hover:bg-green-700 transition-colors shadow-sm"
               >
-                {t("navbar.reportAnIssue")}
+                <span className="hidden sm:inline">{t("navbar.reportAnIssue")}</span>
+                <span className="sm:hidden">{t("navbar.report")}</span>
               </button>
             </div>
           ) : isLoggedIn ? (
@@ -249,7 +258,7 @@ export function Navbar() {
               </div>
 
               {/* Dashboard link */}
-              {(role === "super_admin" || role === "admin" || role === "employee") && (
+              {(role === "super_admin" || role === "admin" || role === "employee" || role === "volunteer_org") && (
                 <button onClick={handleCTA} className="px-4 py-2 text-sm font-bold text-slate-700 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors hidden sm:block">
                   {t("navbar.dashboard")}
                 </button>
@@ -281,7 +290,8 @@ export function Navbar() {
                 onClick={() => router.push("/report")}
                 className="px-4 py-2 text-sm font-bold text-white bg-green-600 rounded-lg hover:bg-green-700 transition-colors shadow-sm"
               >
-                {t("navbar.reportAnIssue")}
+                <span className="hidden sm:inline">{t("navbar.reportAnIssue")}</span>
+                <span className="sm:hidden">{t("navbar.report")}</span>
               </button>
             </div>
           )}

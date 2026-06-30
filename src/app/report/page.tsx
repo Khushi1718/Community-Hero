@@ -545,7 +545,7 @@ export default function ReportPage() {
   const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-800 font-sans p-4 sm:p-8 animate-fade-in">
+    <div className="min-h-screen bg-slate-50 text-slate-800 font-sans p-4 sm:p-8">
 
 
       <main className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
@@ -553,7 +553,7 @@ export default function ReportPage() {
         
         {/* State: AI Reject (Spam/Non-Civic) */}
         {isRejected && aiAnalysis ? (
-          <div className="bg-white border border-slate-200 rounded-[2rem] p-8 md:p-10 shadow-lg animate-fade-in-up mb-12">
+          <div className="bg-white border border-slate-200 rounded-[2rem] p-8 md:p-10 shadow-lg mb-12">
             <div className="text-center mb-8 border-b border-slate-100 pb-8">
               <div className="w-20 h-20 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-6">
                 <XCircle className="w-10 h-10 text-red-500" />
@@ -583,7 +583,7 @@ export default function ReportPage() {
 
         /* State: Review AI Prediction */
         isReviewing && aiAnalysis && draftIssue ? (
-          <div className="bg-white border border-slate-200 rounded-[2rem] p-8 shadow-xl mb-12 animate-fade-in-up">
+          <div className="bg-white border border-slate-200 rounded-[2rem] p-8 shadow-xl mb-12">
             <h2 className="text-2xl font-bold text-slate-900 mb-6 flex items-center gap-2">
               <Sparkles className="w-6 h-6 text-indigo-600" /> {t("report.review.title")}
             </h2>
@@ -651,7 +651,7 @@ export default function ReportPage() {
 
         /* State: Duplicate Pending Override */
         duplicateWarningId && pendingIssue ? (
-          <div className="bg-white border border-orange-200 rounded-[2rem] p-8 shadow-xl animate-fade-in-up mb-12 ring-4 ring-orange-50">
+          <div className="bg-white border border-orange-200 rounded-[2rem] p-8 shadow-xl mb-12 ring-4 ring-orange-50">
             <div className="text-center mb-6">
               <div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-4">
                 <AlertOctagon className="w-8 h-8 text-orange-600" />
@@ -688,7 +688,7 @@ export default function ReportPage() {
 
         /* State: Success */
         success && aiAnalysis && draftIssue ? (
-          <div className="bg-white border border-slate-200 rounded-[2rem] p-8 md:p-10 shadow-[0_8px_30px_rgb(0,0,0,0.04)] animate-fade-in-up mb-12">
+          <div className="bg-white border border-slate-200 rounded-[2rem] p-8 md:p-10 shadow-[0_8px_30px_rgb(0,0,0,0.04)] mb-12">
             <div className="text-center mb-8 border-b border-slate-100 pb-8 relative">
               <div className="w-20 h-20 bg-green-50 rounded-full flex items-center justify-center mx-auto mb-4">
                 <CheckCircle2 className="w-10 h-10 text-green-500" />
@@ -849,7 +849,7 @@ export default function ReportPage() {
           <div className="bg-white border border-slate-200 rounded-[2rem] p-8 shadow-[0_8px_30px_rgb(0,0,0,0.04)] mb-12 relative overflow-hidden">
             {/* SKELETON LOADER OVERLAY */}
             {isSubmitting && (
-              <div className="absolute inset-0 bg-white/95 backdrop-blur-sm z-50 flex flex-col items-center justify-center p-8 animate-fade-in">
+              <div className="absolute inset-0 bg-white/95 backdrop-blur-sm z-50 flex flex-col items-center justify-center p-8">
                  <div className="w-16 h-16 border-4 border-indigo-100 border-t-indigo-600 rounded-full animate-spin mb-6"></div>
                  <h3 className="text-xl font-bold text-slate-900 mb-2">{t("report.form.skeletonTitle")}</h3>
                  <p className="text-slate-500 text-sm mb-8">{t("report.form.skeletonSub")}</p>

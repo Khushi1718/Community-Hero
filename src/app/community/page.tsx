@@ -15,6 +15,7 @@ import { useRouter } from "next/navigation";
 import Footer from "@/components/Footer";
 import Image from "next/image";
 import { useTranslation } from "react-i18next";
+import { ModalPortal } from "@/components/ModalPortal";
 
 // -- INTERFACES --
 interface Post {
@@ -235,12 +236,27 @@ export default function CommunityHubPage() {
 
   useEffect(() => { loadData(); }, [loadData, filterPostType, sortType]);
 
+  // -- SCROLL TO TOP ON MOUNT --
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
+
   // -- SCROLL TO BOTTOM --
   useEffect(() => {
     if (activePostForComments && commentsEndRef.current) {
        commentsEndRef.current.scrollIntoView({ behavior: "smooth" });
     }
   }, [activePostForComments?.comments]);
+
+  // -- LOCK BODY SCROLL WHEN MODAL OPEN --
+  useEffect(() => {
+    if (selectedDriveForRegistration || selectedOrgForRegistration || activePostForComments) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => { document.body.style.overflow = ""; };
+  }, [selectedDriveForRegistration, selectedOrgForRegistration, activePostForComments]);
 
   // -- HANDLERS --
   const handleLike = async (postId: string) => {
@@ -388,8 +404,8 @@ export default function CommunityHubPage() {
     <div className="min-h-screen bg-white font-sans pb-0 animate-fade-in">
       
       {/* ─── BANNER SECTION ─── */}
-      <section className="w-full px-4 sm:px-6 lg:px-8 pt-1.5 pb-4 max-w-[1400px] mx-auto overflow-hidden">
-        <div className="w-full bg-[#edf9f4] rounded-3xl overflow-hidden shadow-sm border border-emerald-100 flex flex-col lg:flex-row items-stretch justify-between h-auto lg:h-[330px]">
+      <section className="w-full">
+        <div className="w-full bg-[#edf9f4] border-y border-emerald-100 flex flex-col lg:flex-row items-stretch justify-between h-auto lg:h-[420px]">
           {/* Left Panel */}
           <motion.div
             className="w-full lg:w-[55%] p-5 sm:p-6 lg:p-7 flex flex-col justify-center items-start text-left"
@@ -457,17 +473,11 @@ export default function CommunityHubPage() {
 
           {/* Right Panel */}
           <motion.div 
-            className="w-full lg:w-[45%] relative h-[160px] lg:h-full overflow-hidden"
+            className="w-full lg:w-[45%] relative h-[160px] lg:h-full overflow-hidden lg:rounded-l-[4rem] shadow-xl"
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.6, ease: "easeOut", delay: 0.2 }}
           >
-            {/* Soft wave divider between text and illustration */}
-            <div className="hidden lg:block absolute left-0 top-0 bottom-0 w-8 z-10 fill-[#edf9f4] text-[#edf9f4]">
-              <svg className="w-full h-full" viewBox="0 0 10 100" preserveAspectRatio="none">
-                <path d="M10 0 C 4 30, 0 70, 10 100 L 0 100 L 0 0 Z" />
-              </svg>
-            </div>
             <img 
               src="/images/community_volunteers.png" 
               alt="Community volunteers" 
@@ -540,7 +550,7 @@ export default function CommunityHubPage() {
                       </div>
                     </div>
                     <div className="flex items-center gap-3 text-slate-400">
-                      <div className="flex items-center gap-1" onClick={(e) => { e.stopPropagation(); handleLike(post._id); }}><Heart className={`w-4 h-4 ${hasLiked ? 'fill-red-500 text-red-500' : ''}`} /><span className="text-xs font-bold text-slate-700">{post.likes.length || 128}</span></div>
+                      <div className="flex items-center gap-1" onClick={(e) => { e.stopPropagation(); handleLike(post._id); }}><Heart className={`w-4 h-4 ${hasLiked ? 'fill-red-500 text-red-500' : ''}`} /><span className="text-xs font-bold text-slate-700">{post.likes?.length || 0}</span></div>
                       <button className="hover:text-slate-600" onClick={(e) => { e.stopPropagation(); setActivePostForComments(post); }}><MessageCircle className="w-4 h-4" /></button>
                       <button className="hover:text-slate-600" onClick={(e) => { e.stopPropagation(); handleShare(post); }}><Share2 className="w-4 h-4" /></button>
                       <button className="hover:text-slate-600"><MoreHorizontal className="w-5 h-5" /></button>
@@ -611,7 +621,7 @@ export default function CommunityHubPage() {
                   {/* Image Header */}
                   <div className="h-[160px] w-full relative bg-slate-100">
                     <div className="absolute top-3 left-3 bg-green-600 text-white text-[10px] font-black uppercase tracking-wider px-2 py-1 rounded shadow-sm z-10">{t("community.liveDrives.live")}</div>
-                    <img src={"https://images.unsplash.com/photo-1532996122724-e3c354a0b15b?auto=format&fit=crop&q=80&w=600"} alt="Drive" className="w-full h-full object-cover" />
+                    <img src={(drive as any).coverImage || "https://images.unsplash.com/photo-1532996122724-e3c354a0b15b?auto=format&fit=crop&q=80&w=600"} alt="Drive" className="w-full h-full object-cover" />
                   </div>
                   
                   {/* Content */}
@@ -759,9 +769,10 @@ export default function CommunityHubPage() {
 
       {/* ─── INSTAGRAM-STYLE COMMENTS MODAL ─── */}
       {activePostForComments && (
-        <div className="fixed inset-0 z-[1000] flex items-center justify-center p-0 md:p-12">
-          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setActivePostForComments(null)}></div>
-          <div className="relative w-full h-full md:h-auto md:max-h-full max-w-5xl bg-white md:rounded-2xl flex flex-col md:flex-row overflow-hidden shadow-2xl animate-in fade-in zoom-in-95 duration-200">
+        <ModalPortal>
+          <div className="fixed inset-0 z-[1000] flex items-center justify-center p-0 md:p-12">
+            <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setActivePostForComments(null)}></div>
+            <div className="relative w-full h-full md:h-auto md:max-h-full max-w-5xl bg-white md:rounded-2xl flex flex-col md:flex-row overflow-hidden shadow-2xl animate-in fade-in zoom-in-95 duration-200">
             <div className="hidden md:flex flex-1 bg-slate-900 items-center justify-center relative">
                <div className="w-full h-full flex">
                   <div className="w-1/2 h-full relative border-r border-slate-800">{activePostForComments.beforeImageUrls?.[0] && <img src={activePostForComments.beforeImageUrls[0]} alt="Before" className="w-full h-full object-cover" />}</div>
@@ -815,14 +826,16 @@ export default function CommunityHubPage() {
             </div>
           </div>
         </div>
+        </ModalPortal>
       )}
 
       {/* ─── JOIN COMMUNITY DRIVE MODAL ─── */}
       {selectedDriveForRegistration && (
-        <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setSelectedDriveForRegistration(null)}></div>
-          <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg relative z-10 max-h-[90vh] flex flex-col overflow-hidden animate-in fade-in zoom-in-95">
-            <div className="px-6 py-5 border-b border-slate-100 flex items-center justify-between bg-slate-50">
+        <ModalPortal>
+          <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4 sm:p-6 bg-black/50 backdrop-blur-sm">
+            <div className="absolute inset-0" onClick={() => setSelectedDriveForRegistration(null)}></div>
+            <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg max-h-[90vh] flex flex-col relative z-10 animate-in fade-in zoom-in-95 overflow-hidden">
+            <div className="px-6 py-5 border-b border-slate-100 flex items-center justify-between bg-slate-50 shrink-0">
               <h2 className="font-black text-xl text-slate-900">{t("community.modals.joinDrive.title")}</h2>
               <button onClick={() => setSelectedDriveForRegistration(null)} className="p-2 hover:bg-slate-200 rounded-full transition-colors">
                 <X className="w-5 h-5 text-slate-500" />
@@ -879,14 +892,15 @@ export default function CommunityHubPage() {
             </form>
           </div>
         </div>
+        </ModalPortal>
       )}
 
-      {/* ─── JOIN ORGANIZATION MODAL ─── */}
       {selectedOrgForRegistration && (
-        <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setSelectedOrgForRegistration(null)}></div>
-          <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg relative z-10 max-h-[90vh] flex flex-col overflow-hidden animate-in fade-in zoom-in-95">
-            <div className="px-6 py-5 border-b border-slate-100 flex items-center justify-between bg-slate-50">
+        <ModalPortal>
+          <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4 sm:p-6 bg-black/50 backdrop-blur-sm">
+            <div className="absolute inset-0" onClick={() => setSelectedOrgForRegistration(null)}></div>
+            <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg max-h-[90vh] flex flex-col relative z-10 animate-in fade-in zoom-in-95 overflow-hidden">
+            <div className="px-6 py-5 border-b border-slate-100 flex items-center justify-between bg-slate-50 shrink-0">
               <h2 className="font-black text-xl text-slate-900">{t("community.modals.joinOrg.title")}</h2>
               <button onClick={() => setSelectedOrgForRegistration(null)} className="p-2 hover:bg-slate-200 rounded-full transition-colors">
                 <X className="w-5 h-5 text-slate-500" />
@@ -936,6 +950,7 @@ export default function CommunityHubPage() {
             </form>
           </div>
         </div>
+        </ModalPortal>
       )}
 
       <Footer />

@@ -70,7 +70,7 @@ export default function ProfilePage() {
   const points = calculatedCompletedDrives;
 
   return (
-    <div className="min-h-screen bg-slate-50 font-sans pb-[120px] animate-fade-in">
+    <div className="min-h-screen bg-slate-50 font-sans pb-[120px]">
       
       {/* ─── HERO ─── */}
       <section className="bg-[#edf9f4] border-b border-emerald-100 pt-8 pb-8 text-[#0c2e1f]">

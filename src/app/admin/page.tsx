@@ -15,6 +15,7 @@ import { IssueStatus, AppUser, saveUser } from "@/lib/storage";
 import { Button } from "@/components/ui/Button";
 import { Card, CardHeader, CardContent } from "@/components/ui/Card";
 import { StatusBadge } from "@/components/ui/Badge";
+import { ModalPortal } from "@/components/ModalPortal";
 
 interface Issue {
   id: string;
@@ -111,6 +112,8 @@ export default function AdminPage() {
   const [driveInstructions, setDriveInstructions] = useState("");
   const [driveReqOrgCat, setDriveReqOrgCat] = useState("Cleanliness");
   const [convertingLoading, setConvertingLoading] = useState(false);
+  const [driveCoverImage, setDriveCoverImage] = useState("");
+  const [isUploading, setIsUploading] = useState(false);
 
   // Prompt 4B States
   const [healthData, setHealthData] = useState<any>(null);
@@ -144,6 +147,17 @@ export default function AdminPage() {
   const [newAdminPassword, setNewAdminPassword] = useState("");
 
   // ── Auth Guard ──────────────────────────────────────────────
+
+  // -- SCROLL LOCK FOR MODALS --
+  useEffect(() => {
+    if (createdOrgCredentials || convertingIssue || isPasswordModalOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => { document.body.style.overflow = ""; };
+  }, [createdOrgCredentials, convertingIssue, isPasswordModalOpen]);
+
   useEffect(() => {
     if (!loading) {
       if (!appUser) {
@@ -580,11 +594,11 @@ export default function AdminPage() {
                       >
                         {employees.map(emp => <option key={emp.email} value={emp.email}>{emp.name} ({emp.isAvailable !== false ? "On Duty" : "Off Duty"})</option>)}
                       </select>
-                      <button onClick={() => handleAssign(issue.id)} className="bg-purple-600 text-white px-4 py-2 rounded-none text-sm font-bold hover:bg-purple-700 transition-colors">Assign</button>
-                      <button onClick={() => setAssigningIssueId(null)} className="text-slate-500 px-3 py-2 rounded-none text-sm hover:bg-slate-200 transition-colors">Cancel</button>
+                      <button onClick={() => handleAssign(issue.id)} className="bg-purple-600 text-white px-4 py-2 rounded-full text-sm font-bold hover:bg-purple-700 transition-colors">Assign</button>
+                      <button onClick={() => setAssigningIssueId(null)} className="text-slate-500 px-3 py-2 rounded-full text-sm hover:bg-slate-200 transition-colors">Cancel</button>
                     </div>
                   ) : (
-                    <button onClick={() => setAssigningIssueId(issue.id)} className="flex items-center gap-2 bg-purple-50 hover:bg-purple-100 text-purple-700 border border-purple-200 px-4 py-2 rounded-none text-sm font-bold transition-colors">
+                    <button onClick={() => setAssigningIssueId(issue.id)} className="flex items-center gap-2 bg-purple-50 hover:bg-purple-100 text-purple-700 border border-purple-200 px-4 py-2 rounded-full text-sm font-bold transition-colors">
                       <Send className="w-4 h-4" /> {issue.assignedTo ? "Reassign" : "Assign Employee"}
                     </button>
                   )
@@ -592,7 +606,7 @@ export default function AdminPage() {
 
                 {/* Prompt 2: Convert to Community Drive */}
                 {issue.status === "Community Drive Active" ? (
-                  <span className="flex items-center gap-2 bg-indigo-50 text-indigo-700 border border-indigo-200 px-4 py-2 rounded-none text-sm font-bold">
+                  <span className="flex items-center gap-2 bg-indigo-50 text-indigo-700 border border-indigo-200 px-4 py-2 rounded-full text-sm font-bold">
                     <Activity className="w-4 h-4" /> Drive Active
                   </span>
                 ) : (
@@ -603,7 +617,7 @@ export default function AdminPage() {
                       setDriveDescription(issue.description || "");
                     }} 
                     disabled={["Work In Progress", "Travelling", "Reached Site", "Inspection Started", "Work Started"].includes(issue.status)}
-                    className={`flex items-center gap-2 px-4 py-2 rounded-none text-sm font-bold transition-colors border ${
+                    className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-bold transition-colors border ${
                       ["Work In Progress", "Travelling", "Reached Site", "Inspection Started", "Work Started"].includes(issue.status)
                         ? "bg-[#F4F9F5] text-slate-400 border-emerald-100 cursor-not-allowed opacity-50"
                         : "bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border-indigo-200"
@@ -617,17 +631,17 @@ export default function AdminPage() {
                 {/* Status Quick Actions */}
                 {issue.status === "Reported" || issue.status === "Open" ? (
                   <>
-                    <button onClick={() => handleStatusUpdate(issue.id, "In Progress", "Admin accepted — In Progress")} className="flex items-center gap-2 bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-200 px-4 py-2 rounded-none text-sm font-bold transition-colors">
+                    <button onClick={() => handleStatusUpdate(issue.id, "In Progress", "Admin accepted — In Progress")} className="flex items-center gap-2 bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-200 px-4 py-2 rounded-full text-sm font-bold transition-colors">
                       <Activity className="w-4 h-4" /> Accept
                     </button>
-                    <button onClick={() => handleStatusUpdate(issue.id, "Rejected", "Rejected by Admin")} className="flex items-center gap-2 bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 px-4 py-2 rounded-none text-sm font-bold transition-colors">
+                    <button onClick={() => handleStatusUpdate(issue.id, "Rejected", "Rejected by Admin")} className="flex items-center gap-2 bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 px-4 py-2 rounded-full text-sm font-bold transition-colors">
                       <X className="w-4 h-4" /> Reject
                     </button>
                   </>
                 ) : null}
 
                 {["Work Completed", "Awaiting Citizen Review"].includes(issue.status) && (
-                  <button onClick={() => handleStatusUpdate(issue.id, "Closed", "Verified & Closed by Admin")} className="flex items-center gap-2 bg-green-50 hover:bg-green-100 text-green-700 border border-green-200 px-4 py-2 rounded-none text-sm font-bold transition-colors">
+                  <button onClick={() => handleStatusUpdate(issue.id, "Closed", "Verified & Closed by Admin")} className="flex items-center gap-2 bg-green-50 hover:bg-green-100 text-green-700 border border-green-200 px-4 py-2 rounded-full text-sm font-bold transition-colors">
                     <CheckCircle2 className="w-4 h-4" /> Close Issue
                   </button>
                 )}
@@ -645,7 +659,7 @@ export default function AdminPage() {
                     </div>
                   </div>
                 ) : (
-                  <button onClick={() => setResolvingIssueId(issue.id)} className="flex items-center gap-2 bg-green-50 hover:bg-green-100 text-green-700 border border-green-200 px-4 py-2 rounded-none text-sm font-bold transition-colors">
+                  <button onClick={() => setResolvingIssueId(issue.id)} className="flex items-center gap-2 bg-green-50 hover:bg-green-100 text-green-700 border border-green-200 px-4 py-2 rounded-full text-sm font-bold transition-colors">
                     <UploadCloud className="w-4 h-4" /> Resolve
                   </button>
                 )}
@@ -693,7 +707,7 @@ export default function AdminPage() {
               onClick={() => setActiveTab(item.id)}
               className={`w-full flex items-center justify-between px-4 py-3.5 rounded-none font-bold transition-all text-sm ${
                 activeTab === item.id
-                  ? "bg-primary-600 text-white shadow-md shadow-primary-900/50"
+                  ? "bg-primary-600 text-white"
                   : "text-surface-300 hover:bg-emerald-900 hover:text-white"
               }`}
             >
@@ -858,10 +872,10 @@ export default function AdminPage() {
             <div className="space-y-6">
               <div className="flex gap-4">
                 <div className="flex-1 relative">
-                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-surface-400" />
-                  <input value={searchQuery} onChange={e => setSearchQuery(e.target.value)} placeholder="Search by ID, description, category…" className="w-full border-2 border-emerald-100 rounded-none pl-12 pr-4 py-3.5 text-sm font-medium bg-white focus:border-primary-500 focus:outline-none shadow-sm transition-colors placeholder:text-surface-400" />
+                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-surface-400 pointer-events-none" />
+                  <input value={searchQuery} onChange={e => setSearchQuery(e.target.value)} placeholder="Search by ID, description, category…" className="w-full border-2 border-emerald-100 rounded-full pr-4 py-3.5 text-sm font-medium bg-white focus:border-primary-500 focus:outline-none shadow-sm transition-colors placeholder:text-surface-400" style={{ paddingLeft: '3rem' }} />
                 </div>
-                <div className="flex items-center gap-2 bg-white border-2 border-emerald-100 rounded-none px-5 shadow-sm">
+                <div className="flex items-center gap-2 bg-white border-2 border-emerald-100 rounded-full px-5 shadow-sm">
                   <span className="text-sm font-black text-surface-600 uppercase tracking-wider">{filteredLive.length} issues</span>
                 </div>
               </div>
@@ -888,9 +902,9 @@ export default function AdminPage() {
               <div className="flex gap-4">
                 <div className="flex-1 relative">
                   <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-surface-400" />
-                  <input value={searchQuery} onChange={e => setSearchQuery(e.target.value)} placeholder="Search resolved issues…" className="w-full border-2 border-emerald-100 rounded-none pl-12 pr-4 py-3.5 text-sm font-medium bg-white focus:border-primary-500 focus:outline-none shadow-sm transition-colors placeholder:text-surface-400" />
+                  <input value={searchQuery} onChange={e => setSearchQuery(e.target.value)} placeholder="Search resolved issues…" className="w-full border-2 border-emerald-100 rounded-full pr-4 py-3.5 text-sm font-medium bg-white focus:border-primary-500 focus:outline-none shadow-sm transition-colors placeholder:text-surface-400" style={{ paddingLeft: '3rem' }} />
                 </div>
-                <div className="flex items-center gap-2 bg-white border-2 border-emerald-100 rounded-none px-5 shadow-sm">
+                <div className="flex items-center gap-2 bg-white border-2 border-emerald-100 rounded-full px-5 shadow-sm">
                   <span className="text-sm font-black text-surface-600 uppercase tracking-wider">{filteredResolved.length} resolved</span>
                 </div>
               </div>
@@ -1502,7 +1516,6 @@ export default function AdminPage() {
             );
           })()}
 
-          {/* ════ COMMUNITY DRIVES TAB ════ */}
           {/* ════ CERTIFICATES TAB ════ */}
           {activeTab === "certificates" && (
             <div className="space-y-6 animate-fade-in">
@@ -1761,19 +1774,24 @@ export default function AdminPage() {
 
       {/* ─── CREATED ORG CREDENTIALS MODAL ─── */}
       {createdOrgCredentials && (
-        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-[60] flex items-center justify-center p-4">
-          <div className="bg-white rounded-none w-full max-w-sm p-8 shadow-2xl">
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-xl font-bold text-success-700 flex items-center gap-2"><CheckCircle2 className="w-6 h-6"/> Success</h2>
+        <ModalPortal>
+          <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-[60] flex items-center justify-center p-4 sm:p-6">
+            <div className="absolute inset-0" onClick={() => setCreatedOrgCredentials(null)}></div>
+            <div className="bg-white rounded-none w-full max-w-sm max-h-[90vh] flex flex-col relative z-10 shadow-2xl overflow-hidden">
+              <div className="p-8 overflow-y-auto custom-scrollbar">
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-xl font-bold text-success-700 flex items-center gap-2"><CheckCircle2 className="w-6 h-6"/> Success</h2>
+              </div>
+              <p className="text-sm text-surface-600 mb-4">The organization was created and verified. Share these temporary credentials with the admin.</p>
+              <div className="bg-[#F4F9F5] border border-emerald-100 p-4 rounded-none space-y-3 mb-6">
+                 <div><p className="text-[10px] uppercase font-bold text-surface-500">Username</p><p className="font-mono font-bold text-surface-900">{createdOrgCredentials.username}</p></div>
+                 <div><p className="text-[10px] uppercase font-bold text-surface-500">Password</p><p className="font-mono font-bold text-surface-900">{createdOrgCredentials.password}</p></div>
+              </div>
+              <button onClick={() => setCreatedOrgCredentials(null)} className="w-full bg-emerald-900 hover:bg-emerald-900 text-white font-bold py-3 rounded-none transition-colors mt-auto">Close</button>
+              </div>
             </div>
-            <p className="text-sm text-surface-600 mb-4">The organization was created and verified. Share these temporary credentials with the admin.</p>
-            <div className="bg-[#F4F9F5] border border-emerald-100 p-4 rounded-none space-y-3 mb-6">
-               <div><p className="text-[10px] uppercase font-bold text-surface-500">Username</p><p className="font-mono font-bold text-surface-900">{createdOrgCredentials.username}</p></div>
-               <div><p className="text-[10px] uppercase font-bold text-surface-500">Password</p><p className="font-mono font-bold text-surface-900">{createdOrgCredentials.password}</p></div>
-            </div>
-            <button onClick={() => setCreatedOrgCredentials(null)} className="w-full bg-emerald-900 hover:bg-emerald-900 text-white font-bold py-3 rounded-none transition-colors">Close</button>
           </div>
-        </div>
+        </ModalPortal>
       )}
 
       {/* ─── ANALYTICS ─────────────────────────────────────────────── */}
@@ -1886,9 +1904,11 @@ export default function AdminPage() {
 
       {/* ─── CONVERT TO COMMUNITY DRIVE MODAL ─── */}
       {convertingIssue && (
-         <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 overflow-y-auto">
-           <div className="bg-white rounded-none w-full max-w-2xl shadow-2xl my-8">
-             <div className="flex justify-between items-center p-6 border-b border-emerald-100">
+         <ModalPortal>
+           <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 sm:p-6">
+             <div className="absolute inset-0" onClick={() => setConvertingIssue(null)}></div>
+             <div className="bg-white rounded-none w-full max-w-2xl max-h-[90vh] flex flex-col relative z-10 shadow-2xl overflow-hidden my-8">
+               <div className="flex justify-between items-center p-6 border-b border-emerald-100 shrink-0">
                <h2 className="text-xl font-bold text-surface-900 flex items-center gap-2">
                  <Users className="w-5 h-5 text-indigo-600" /> Create Community Drive
                </h2>
@@ -1908,7 +1928,8 @@ export default function AdminPage() {
                      description: driveDescription,
                      category: driveCategory,
                      requiredOrgCategory: driveReqOrgCat,
-                     instructions: driveInstructions
+                     instructions: driveInstructions,
+                     coverImageUrl: driveCoverImage
                    })
                  });
                  if (res.ok) {
@@ -1922,7 +1943,7 @@ export default function AdminPage() {
                } finally {
                  setConvertingLoading(false);
                }
-             }} className="p-6 space-y-4">
+             }} className="p-6 overflow-y-auto custom-scrollbar space-y-4 flex-1">
                
                <div className="bg-[#F4F9F5] p-4 rounded-none border border-emerald-100 flex gap-4 mb-2">
                  {convertingIssue.imageBase64 && <img src={convertingIssue.imageBase64} className="w-20 h-20 object-cover rounded-none" />}
@@ -1958,6 +1979,38 @@ export default function AdminPage() {
                    <label className="block text-xs font-bold text-surface-600 mb-1">Instructions for Organization</label>
                    <input value={driveInstructions} onChange={e=>setDriveInstructions(e.target.value)} className="w-full border p-2.5 rounded-none text-sm" placeholder="e.g. Bring extra gloves" />
                  </div>
+                 <div className="col-span-2">
+                   <label className="block text-xs font-bold text-surface-600 mb-1">Drive Cover Image</label>
+                   <input type="file" accept="image/*" onChange={async (e) => {
+                     const file = e.target.files?.[0];
+                     if (!file) return;
+                     setIsUploading(true);
+                     const reader = new FileReader();
+                     reader.readAsDataURL(file);
+                     reader.onload = async () => {
+                       const base64 = reader.result as string;
+                       try {
+                         const res = await fetch("/api/upload", {
+                           method: "POST",
+                           headers: { "Content-Type": "application/json" },
+                           body: JSON.stringify({ imageBase64: base64 })
+                         });
+                         if (res.ok) {
+                           const data = await res.json();
+                           setDriveCoverImage(data.url);
+                         } else {
+                           alert("Failed to upload image.");
+                         }
+                       } catch {
+                         alert("Upload error.");
+                       } finally {
+                         setIsUploading(false);
+                       }
+                     };
+                   }} className="w-full border p-2.5 rounded-none text-sm bg-white" />
+                   {isUploading && <p className="text-xs text-indigo-600 mt-1 font-bold">Uploading to Cloudinary...</p>}
+                   {driveCoverImage && <img src={driveCoverImage} alt="Cover Preview" className="mt-2 w-full h-32 object-cover rounded-sm border border-slate-200" />}
+                 </div>
                </div>
 
                <div className="pt-4 border-t border-emerald-100 flex gap-3 justify-end">
@@ -1966,9 +2019,10 @@ export default function AdminPage() {
                    {convertingLoading ? "Creating..." : <><Users className="w-4 h-4"/> Publish Drive</>}
                  </button>
                </div>
-             </form>
-           </div>
-         </div>
+              </form>
+            </div>
+          </div>
+         </ModalPortal>
       )}
 
       {/* ─── AREA ADOPTIONS ─────────────────────────────────────────── */}

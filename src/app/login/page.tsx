@@ -52,7 +52,7 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-[calc(100vh-70px)] flex items-center justify-center p-4 font-sans relative animate-fade-in">
+    <div className="min-h-[calc(100vh-70px)] flex items-center justify-center p-4 font-sans relative">
       {/* Background Image */}
       <div className="absolute inset-0 z-0">
         <Image

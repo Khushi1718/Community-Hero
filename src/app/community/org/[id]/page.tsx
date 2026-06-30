@@ -2,8 +2,9 @@
 
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { Building2, MapPin, Users, HeartHandshake, ShieldCheck, CheckCircle2, ArrowLeft, Trophy } from "lucide-react";
+import { Building2, MapPin, Users, HeartHandshake, ShieldCheck, CheckCircle2, ArrowLeft, Trophy, X } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
+import { ModalPortal } from "@/components/ModalPortal";
 
 export default function OrgDetailsPage() {
   const params = useParams() as { id: string };
@@ -34,6 +35,16 @@ export default function OrgDetailsPage() {
       })
       .catch(() => setIsLoading(false));
   }, [id]);
+
+  // -- SCROLL LOCK FOR MODALS --
+  useEffect(() => {
+    if (showJoinModal) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => { document.body.style.overflow = ""; };
+  }, [showJoinModal]);
 
   const handleJoin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -144,13 +155,19 @@ export default function OrgDetailsPage() {
       
       {/* Join Modal */}
       {showJoinModal && (
-         <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4">
+         <ModalPortal>
+         <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4 sm:p-6">
             <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={() => !isJoining && setShowJoinModal(false)}></div>
-            <div className="relative w-full max-w-lg bg-white rounded-3xl p-8 shadow-2xl animate-in zoom-in-95 duration-200 max-h-[90vh] overflow-y-auto">
-               <h2 className="text-2xl font-black text-slate-900 mb-2">Join {org.name}</h2>
-               <p className="text-sm text-slate-500 mb-6">Apply to become a core member of this organization.</p>
+            <div className="relative w-full max-w-lg bg-white rounded-3xl flex flex-col shadow-2xl animate-in zoom-in-95 duration-200 max-h-[90vh] overflow-hidden">
+               <div className="p-8 border-b border-slate-100 shrink-0 flex justify-between items-start">
+                 <div>
+                   <h2 className="text-2xl font-black text-slate-900 mb-2">Join {org.name}</h2>
+                   <p className="text-sm text-slate-500">Apply to become a core member of this organization.</p>
+                 </div>
+                 <button onClick={() => !isJoining && setShowJoinModal(false)} className="text-slate-400 hover:text-slate-600 bg-slate-50 p-2 rounded-full"><X className="w-5 h-5"/></button>
+               </div>
                
-               <form onSubmit={handleJoin} className="space-y-4">
+               <form onSubmit={handleJoin} className="p-8 overflow-y-auto custom-scrollbar flex-1 space-y-4">
                   <div className="grid grid-cols-2 gap-4">
                      <div>
                         <label className="text-xs font-bold text-slate-700 block mb-1">Full Name</label>
@@ -183,13 +200,15 @@ export default function OrgDetailsPage() {
                      <label className="text-xs font-bold text-slate-700 block mb-1">Why do you want to join?</label>
                      <textarea required value={joinMotivation} onChange={e=>setJoinMotivation(e.target.value)} className="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-green-500 focus:outline-none resize-none" rows={3}></textarea>
                   </div>
-                  
-                  <button type="submit" disabled={isJoining} className="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold py-4 rounded-xl shadow-lg active:scale-95 transition-all disabled:opacity-50 mt-4">
-                     {isJoining ? "Submitting..." : "Submit Application"}
-                  </button>
+                  <div className="pt-4 shrink-0 mt-4">
+                     <button type="submit" disabled={isJoining} className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-4 rounded-xl shadow-sm transition-colors flex items-center justify-center gap-2">
+                        {isJoining ? "Submitting..." : <><CheckCircle2 className="w-5 h-5"/> Submit Application</>}
+                     </button>
+                  </div>
                </form>
             </div>
          </div>
+         </ModalPortal>
       )}
     </div>
   );

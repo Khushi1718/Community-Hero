@@ -16,10 +16,10 @@ async function processDriveBackgroundChecks(drives: any[]) {
   for (const drive of drives) {
     let needsSave = false;
 
-    // 1. 48-Hour Expiry (WAITING_FOR_ORG)
+    // 1. 24-Hour Expiry (WAITING_FOR_ORG)
     if (drive.status === "WAITING_FOR_ORG" && drive.expiresAt && now > new Date(drive.expiresAt)) {
       drive.status = "FAILED";
-      drive.cancelReason = "No organization accepted the drive within 48 hours.";
+      drive.cancelReason = "No organization accepted the drive within 24 hours.";
       needsSave = true;
 
       // Restore employee on the issue
@@ -38,7 +38,7 @@ async function processDriveBackgroundChecks(drives: any[]) {
                  await Notification.create({
                      userId: adm.email, issueId: issue.issueId, type: "Drive_Failed",
                      title: "Community Drive Failed", 
-                     message: `Drive "${drive.title}" failed because no organization accepted within 48 hours. Issue has been reassigned to employee.`
+                     message: `Drive "${drive.title}" failed because no organization accepted within 24 hours. Issue has been reassigned to employee.`
                  });
              }
           }
@@ -124,7 +124,8 @@ export async function GET(request: NextRequest) {
          { orgId: orgId }, 
          { acceptedOrgId: orgId },
          { supportingOrgs: orgId },
-         { "partnerRequests.orgId": orgId }
+         { "partnerRequests.orgId": orgId },
+         { "orgRequests.orgId": orgId }
        ];
     }
     if (issueId) query.issueId = issueId;
@@ -166,6 +167,7 @@ export async function POST(request: NextRequest) {
             maxVolunteers: body.maxVolunteers,
             instructions: body.instructions,
             meetingLocation: body.meetingLocation,
+            coverImage: body.coverImage,
             status: "VOLUNTEER_REG_OPEN", // Instantly open for volunteers
             acceptedOrgId: org._id,
             acceptedOrgName: org.name,
@@ -181,6 +183,7 @@ export async function POST(request: NextRequest) {
              orgLogoUrl: org.logoUrl,
              title: `Upcoming Volunteer Drive: ${drive.title}`,
              category: drive.category,
+             imageUrl: drive.coverImage,
              location: {
                  address: drive.meetingLocation || drive.address || "TBD",
                  city: drive.city || org.city,
@@ -206,7 +209,7 @@ export async function POST(request: NextRequest) {
     }
 
     const expiresAt = new Date();
-    expiresAt.setHours(expiresAt.getHours() + 48);
+    expiresAt.setHours(expiresAt.getHours() + 24);
 
     const drive = await VolunteerDrive.create({
       issueId: issue.issueId,

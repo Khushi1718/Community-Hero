@@ -19,12 +19,7 @@ const WORK_CATEGORIES = [
   "River Cleaning", "Public Health", "Waste Segregation", "Other"
 ];
 
-const CATEGORY_ICONS: Record<string, string> = {
-  "Cleanliness": "🧹", "Tree Plantation": "🌳", "Plastic Collection": "♻️",
-  "Animal Welfare": "🐾", "Awareness Campaign": "📣", "Wall Painting": "🎨",
-  "Park Cleaning": "🏞️", "Lake Cleaning": "💧", "River Cleaning": "🌊",
-  "Public Health": "🏥", "Waste Segregation": "🗂️", "Other": "⭐"
-};
+
 
 export default function VolunteerOrgRegisterPage() {
   const router = useRouter();
@@ -115,7 +110,7 @@ export default function VolunteerOrgRegisterPage() {
   if (isSuccess) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-emerald-50 via-white to-teal-50 p-4">
-        <div className="max-w-md w-full text-center bg-white rounded-3xl p-10 shadow-2xl border border-emerald-100 animate-fade-in">
+        <div className="max-w-md w-full text-center bg-white rounded-3xl p-10 shadow-2xl border border-emerald-100">
           <div className="w-20 h-20 bg-emerald-50 rounded-full flex items-center justify-center mx-auto mb-6 border-4 border-emerald-200">
             <CheckCircle2 className="w-10 h-10 text-emerald-600" />
           </div>
@@ -150,13 +145,7 @@ export default function VolunteerOrgRegisterPage() {
   }
 
   // ── Input helper ────────────────────────────────────────────────────
-  const Input = ({
-    label, field, type = "text", placeholder = "", required = false,
-    hint = ""
-  }: {
-    label: string; field: string; type?: string; placeholder?: string;
-    required?: boolean; hint?: string;
-  }) => (
+  const renderInput = ({ label, field, type = "text", placeholder = "", required = false, hint = "" }: { label: string; field: string; type?: string; placeholder?: string; required?: boolean; hint?: string; }) => (
     <div>
       <label className="block text-xs font-bold text-slate-700 mb-1.5">
         {label} {required && <span className="text-red-500">*</span>}
@@ -164,8 +153,8 @@ export default function VolunteerOrgRegisterPage() {
       <input
         type={type}
         required={required}
-        value={(form as any)[field]}
-        onChange={e => updateForm(field, e.target.value)}
+        value={(form as any)[field] || ""}
+        onChange={e => updateForm(field as keyof typeof form, e.target.value)}
         placeholder={placeholder}
         className="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm text-slate-900 bg-slate-50 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 focus:outline-none transition-all"
       />
@@ -242,7 +231,7 @@ export default function VolunteerOrgRegisterPage() {
 
         {/* ── STEP 1: Organization Info ── */}
         {step === 1 && (
-          <div className="bg-white rounded-3xl border border-slate-200 shadow-sm p-8 space-y-6 animate-fade-in">
+          <div className="bg-white rounded-3xl border border-slate-200 shadow-sm p-8 space-y-6">
             <div className="flex items-center gap-3 mb-2">
               <div className="w-10 h-10 bg-emerald-50 rounded-xl flex items-center justify-center">
                 <Building2 className="w-5 h-5 text-emerald-600" />
@@ -255,7 +244,7 @@ export default function VolunteerOrgRegisterPage() {
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
               <div className="sm:col-span-2">
-                <Input label="Organization Name" field="name" required placeholder="e.g. Green Earth Foundation" />
+                {renderInput({ label: "Organization Name", field: "name", required: true, placeholder: "e.g. Green Earth Foundation"  })}
               </div>
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-1.5">
@@ -270,7 +259,7 @@ export default function VolunteerOrgRegisterPage() {
                 </select>
               </div>
               <div>
-                <Input label="Registration Number" field="registrationNumber" placeholder="e.g. NGO/2023/12345 (optional)" />
+                {renderInput({ label: "Registration Number", field: "registrationNumber", placeholder: "e.g. NGO/2023/12345 (optional)" })}
               </div>
               <div className="sm:col-span-2">
                 <label className="block text-xs font-bold text-slate-700 mb-1.5">
@@ -286,10 +275,10 @@ export default function VolunteerOrgRegisterPage() {
                 />
               </div>
               <div>
-                <Input label="Number of Active Members" field="activeMembers" type="number" required placeholder="e.g. 50" />
+                {renderInput({ label: "Number of Active Members", field: "activeMembers", type: "number", required: true, placeholder: "e.g. 50"  })}
               </div>
               <div>
-                <Input label="Website" field="website" type="url" placeholder="https://yourorg.com (optional)" />
+                {renderInput({ label: "Website", field: "website", type: "url", placeholder: "https://yourorg.com (optional)" })}
               </div>
             </div>
 
@@ -343,7 +332,7 @@ export default function VolunteerOrgRegisterPage() {
 
         {/* ── STEP 2: Location & Contact ── */}
         {step === 2 && (
-          <div className="bg-white rounded-3xl border border-slate-200 shadow-sm p-8 space-y-6 animate-fade-in">
+          <div className="bg-white rounded-3xl border border-slate-200 shadow-sm p-8 space-y-6">
             <div className="flex items-center gap-3 mb-2">
               <div className="w-10 h-10 bg-blue-50 rounded-xl flex items-center justify-center">
                 <MapPin className="w-5 h-5 text-blue-600" />
@@ -356,13 +345,13 @@ export default function VolunteerOrgRegisterPage() {
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
               <div>
-                <Input label="City" field="city" required placeholder="e.g. Jind" />
+                {renderInput({ label: "City", field: "city", required: true, placeholder: "e.g. Jind"  })}
               </div>
               <div>
-                <Input label="State" field="state" required placeholder="e.g. Haryana" />
+                {renderInput({ label: "State", field: "state", required: true, placeholder: "e.g. Haryana"  })}
               </div>
               <div className="sm:col-span-2">
-                <Input label="Full Address" field="address" required placeholder="e.g. 12 Gandhi Nagar, Near Civil Hospital" />
+                {renderInput({ label: "Full Address", field: "address", required: true, placeholder: "e.g. 12 Gandhi Nagar, Near Civil Hospital"  })}
               </div>
             </div>
 
@@ -373,17 +362,17 @@ export default function VolunteerOrgRegisterPage() {
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                 <div>
-                  <Input label="Contact Person Name" field="contactPersonName" required placeholder="e.g. Priya Sharma" />
+                  {renderInput({ label: "Contact Person Name", field: "contactPersonName", required: true, placeholder: "e.g. Priya Sharma"  })}
                 </div>
                 <div>
-                  <Input label="Contact Phone" field="contactPhone" type="tel" required placeholder="e.g. 9876543210" />
+                  {renderInput({ label: "Contact Phone", field: "contactPhone", type: "tel", required: true, placeholder: "e.g. 9876543210"  })}
                 </div>
                 <div className="sm:col-span-2">
-                  <Input
-                    label="Contact Email" field="contactEmail" type="email" required
-                    placeholder="e.g. info@yourorg.com"
-                    hint="This email will be used to log in to your organization dashboard."
-                  />
+                  {renderInput({
+                    label: "Contact Email", field: "contactEmail", type: "email", required: true,
+                    placeholder: "e.g. info@yourorg.com",
+                    hint: "This email will be used to log in to your organization dashboard."
+                  })}
                 </div>
               </div>
             </div>
@@ -404,7 +393,7 @@ export default function VolunteerOrgRegisterPage() {
 
         {/* ── STEP 3: Categories & Password ── */}
         {step === 3 && (
-          <div className="bg-white rounded-3xl border border-slate-200 shadow-sm p-8 space-y-6 animate-fade-in">
+          <div className="bg-white rounded-3xl border border-slate-200 shadow-sm p-8 space-y-6">
             <div className="flex items-center gap-3 mb-2">
               <div className="w-10 h-10 bg-purple-50 rounded-xl flex items-center justify-center">
                 <Briefcase className="w-5 h-5 text-purple-600" />
@@ -433,7 +422,6 @@ export default function VolunteerOrgRegisterPage() {
                         : "bg-slate-50 text-slate-600 border-slate-200 hover:border-emerald-300 hover:bg-emerald-50"
                     }`}
                   >
-                    <span className="text-sm">{CATEGORY_ICONS[cat]}</span>
                     <span className="leading-tight">{cat}</span>
                   </button>
                 ))}
@@ -451,10 +439,10 @@ export default function VolunteerOrgRegisterPage() {
               </p>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                 <div>
-                  <Input label="Password" field="password" type="password" required placeholder="••••••••" />
+                  {renderInput({ label: "Password", field: "password", type: "password", required: true, placeholder: "••••••••"  })}
                 </div>
                 <div>
-                  <Input label="Confirm Password" field="confirmPassword" type="password" required placeholder="••••••••" />
+                  {renderInput({ label: "Confirm Password", field: "confirmPassword", type: "password", required: true, placeholder: "••••••••"  })}
                 </div>
               </div>
             </div>

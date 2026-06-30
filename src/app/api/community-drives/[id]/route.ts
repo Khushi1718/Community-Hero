@@ -42,16 +42,11 @@ export async function PATCH(request: NextRequest, props: Props) {
             return NextResponse.json({ error: "Drive is no longer accepting organizations" }, { status: 400 });
         }
         
-        // Prevent duplicate requests
-        const existing = drive.orgRequests?.find(r => r.orgId.toString() === orgId);
-        if (existing) return NextResponse.json({ error: "You have already requested this drive." }, { status: 400 });
-
-        drive.orgRequests = drive.orgRequests || [];
-        drive.orgRequests.push({
-            orgId, orgName, trustScore, completedDrives, category, members,
-            status: "pending", message, requestedAt: now
-        });
-        drive.status = "ORG_PENDING_APPROVAL";
+        // Instant Approval Flow
+        drive.acceptedOrgId = orgId;
+        drive.acceptedOrgName = orgName;
+        drive.orgApprovedAt = now;
+        drive.status = "ORG_APPROVED";
 
         // Notify Admin
         if (drive.createdByAdmin) {
@@ -60,7 +55,7 @@ export async function PATCH(request: NextRequest, props: Props) {
                 await Notification.create({
                     userId: adminUser.email, issueId: drive.issueId, type: "Drive_Org_Accepted",
                     title: "Organization Accepted Drive",
-                    message: `${orgName} has requested to manage drive "${drive.title}". Please review.`
+                    message: `${orgName} has accepted to manage drive "${drive.title}".`
                 });
             }
         }
@@ -163,13 +158,14 @@ export async function PATCH(request: NextRequest, props: Props) {
       case "schedule_drive": {
          if (drive.status !== "ORG_APPROVED") return NextResponse.json({ error: "Invalid status" }, { status: 400 });
          
-         const { date, time, durationHours, requiredVolunteers, maxVolunteers, meetingLocation } = body;
+         const { date, time, durationHours, requiredVolunteers, maxVolunteers, meetingLocation, coverImage } = body;
          drive.date = new Date(date);
          drive.time = time;
          drive.durationHours = durationHours;
          drive.requiredVolunteers = requiredVolunteers;
          drive.maxVolunteers = maxVolunteers;
          drive.meetingLocation = meetingLocation;
+         if (coverImage) drive.coverImage = coverImage;
          drive.status = "VOLUNTEER_REG_OPEN";
          
          // Generate Community Post now that details are finalized
@@ -185,6 +181,7 @@ export async function PATCH(request: NextRequest, props: Props) {
                  orgLogoUrl: approvedOrg.logoUrl,
                  title: `Upcoming Volunteer Drive: ${drive.title}`,
                  category: drive.category || drive.requiredOrgCategory,
+                 imageUrl: drive.coverImage || undefined,
                  location: {
                      address: drive.meetingLocation || "TBD",
                      city: drive.city || approvedOrg.city,
@@ -293,6 +290,15 @@ export async function PATCH(request: NextRequest, props: Props) {
          }
          break;
       }
+
+      case "start_drive": {
+         if (drive.status === "REG_CLOSED" || drive.status === "VOLUNTEER_REG_OPEN") {
+            drive.status = "DRIVE_IN_PROGRESS";
+         } else {
+            return NextResponse.json({ error: "Cannot start drive in current status" }, { status: 400 });
+         }
+         break;
+      }
       
       case "volunteer_reject": {
          const { email } = body;
@@ -392,9 +398,9 @@ export async function PATCH(request: NextRequest, props: Props) {
       }
 
       case "request_cancel": {
-         const { reason, requestedBy } = body;
+         const { reason, requestedBy, orgName } = body;
          drive.cancelReason = reason;
-         drive.cancellationRequestedBy = requestedBy;
+         drive.cancellationRequestedBy = requestedBy || orgName;
          // Notify admin
          if (drive.createdByAdmin) {
              await Notification.create({
@@ -440,6 +446,11 @@ export async function PATCH(request: NextRequest, props: Props) {
                 }
             }
          }
+         
+         // Remove from community feed timeline
+         const CommunityPostModel = require('@/models/CommunityPost').CommunityPost;
+         await CommunityPostModel.deleteMany({ driveId: drive._id });
+         
          break;
       }
 
