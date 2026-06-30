@@ -1,7 +1,8 @@
 "use client";
 
-import { UserCircle, Wrench, Shield, Globe, Building, Network, ArrowRight, Bell, Cloud, HeartHandshake } from "lucide-react";
+import { UserCircle, Wrench, Shield, Globe, Building, ArrowRight, Bell, Cloud, HeartHandshake } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { motion, Variants } from "framer-motion";
 
 export default function UserEcosystem() {
   const { t } = useTranslation();
@@ -59,8 +60,72 @@ export default function UserEcosystem() {
     }
   ];
 
+  const containerVariants: Variants = {
+    hidden: {},
+    visible: {
+      transition: {
+        staggerChildren: 0.12
+      }
+    }
+  };
+
+  const cardVariants: Variants = {
+    hidden: { opacity: 0, y: 40 },
+    visible: { 
+      opacity: 1, 
+      y: 0,
+      transition: { duration: 0.6, ease: "easeOut" as const }
+    },
+    hover: {
+      y: -8,
+      scale: 1.015,
+      boxShadow: "0 25px 35px -12px rgba(16, 185, 129, 0.08)",
+      borderColor: "#a7f3d0",
+      transition: { duration: 0.3, ease: "easeOut" as const }
+    }
+  };
+
+  const iconVariants: Variants = {
+    hover: { 
+      scale: 1.15,
+      backgroundColor: "#d1e7dd",
+      color: "#0f5132",
+      borderColor: "#badbcc",
+      transition: { duration: 0.3 }
+    }
+  };
+
+  const integrationsContainerVariants: Variants = {
+    hidden: {},
+    visible: {
+      transition: {
+        staggerChildren: 0.35
+      }
+    }
+  };
+
+  const integrationNodeVariants: Variants = {
+    hidden: { opacity: 0, y: 25, scale: 0.95 },
+    visible: {
+      opacity: 1,
+      y: 0,
+      scale: 1,
+      transition: { duration: 0.6, ease: "easeOut" as const }
+    }
+  };
+
+  const arrowVariants: Variants = {
+    hidden: { opacity: 0, scale: 0.8, x: -15 },
+    visible: {
+      opacity: 1,
+      scale: 1,
+      x: 0,
+      transition: { duration: 0.5, ease: "easeOut" as const }
+    }
+  };
+
   return (
-    <section className="py-12 bg-slate-50 border-b border-slate-200 relative animate-fade-in">
+    <section className="py-12 bg-slate-50 border-b border-slate-200 relative overflow-hidden">
       <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-16 max-w-3xl mx-auto">
           <h2 className="text-sm font-black text-slate-500 uppercase tracking-widest mb-4">{t("home.ecosystem.tag")}</h2>
@@ -69,13 +134,27 @@ export default function UserEcosystem() {
           </h3>
         </div>
 
-        <div className="flex overflow-x-auto snap-x snap-mandatory pb-6 -mx-4 px-4 md:-mx-0 md:px-0 md:pb-0 md:grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+        <motion.div 
+          variants={containerVariants}
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, margin: "-80px" }}
+          className="flex overflow-x-auto snap-x snap-mandatory pb-6 -mx-4 px-4 md:-mx-0 md:px-0 md:pb-0 md:grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
+        >
           {roles.map((role, idx) => (
-            <div key={idx} className="w-[85vw] shrink-0 snap-center md:w-auto rounded-xl p-7 border border-green-200 bg-white shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all duration-300 shadow-green-500/5">
+            <motion.div 
+              key={idx} 
+              variants={cardVariants}
+              whileHover="hover"
+              className="w-[85vw] shrink-0 snap-center md:w-auto rounded-xl p-7 border border-green-200 bg-white shadow-lg transition-all duration-300 shadow-green-500/5 cursor-default"
+            >
               <div className="flex items-center gap-4 mb-5">
-                <div className="w-12 h-12 rounded-lg flex items-center justify-center shrink-0 bg-green-50 text-green-600 border border-green-100">
+                <motion.div 
+                  variants={iconVariants}
+                  className="w-12 h-12 rounded-lg flex items-center justify-center shrink-0 bg-green-50 text-green-600 border border-green-100 transition-colors"
+                >
                   <role.icon className="w-6 h-6 stroke-[2.5]" />
-                </div>
+                </motion.div>
                 <h4 className="text-xl font-extrabold text-slate-900">{role.title}</h4>
               </div>
               
@@ -89,9 +168,9 @@ export default function UserEcosystem() {
                   </li>
                 ))}
               </ul>
-            </div>
+            </motion.div>
           ))}
-        </div>
+        </motion.div>
 
         {/* Integrations Banner */}
         <div className="mt-16 bg-white border border-slate-200 rounded-xl p-8 shadow-sm flex flex-col lg:flex-row items-center justify-between gap-10">
@@ -102,43 +181,55 @@ export default function UserEcosystem() {
             </p>
           </div>
           
-          <div className="lg:w-2/3 flex items-center justify-between w-full gap-2 overflow-x-auto pb-4 lg:pb-0">
+          <motion.div 
+            variants={integrationsContainerVariants}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, margin: "-40px" }}
+            className="lg:w-2/3 flex items-center justify-between w-full gap-2 overflow-x-auto pb-4 lg:pb-0"
+          >
             {/* Flow diagram */}
-            <div className="flex flex-col items-center gap-3 min-w-[100px]">
+            <motion.div variants={integrationNodeVariants} className="flex flex-col items-center gap-3 min-w-[100px]">
               <div className="w-16 h-16 rounded-full bg-slate-50 border border-slate-200 flex items-center justify-center text-slate-600 shadow-sm">
                 <Building className="w-7 h-7" />
               </div>
               <span className="text-xs font-bold text-slate-700 text-center">{t("home.ecosystem.integration.crm")}</span>
-            </div>
+            </motion.div>
             
-            <ArrowRight className="w-5 h-5 text-slate-300 shrink-0" />
+            <motion.div variants={arrowVariants}>
+              <ArrowRight className="w-5 h-5 text-slate-300 shrink-0" />
+            </motion.div>
             
             {/* Normal Google Cloud Pub/Sub Node */}
-            <div className="flex flex-col items-center gap-3 min-w-[100px]">
+            <motion.div variants={integrationNodeVariants} className="flex flex-col items-center gap-3 min-w-[100px]">
               <div className="w-16 h-16 rounded-full bg-blue-50 border border-blue-100 flex items-center justify-center text-blue-600 shadow-sm">
                 <Cloud className="w-7 h-7" />
               </div>
               <span className="text-xs font-bold text-slate-700 text-center">{t("home.ecosystem.integration.pubsub")}</span>
-            </div>
+            </motion.div>
 
-            <ArrowRight className="w-5 h-5 text-slate-300 shrink-0" />
+            <motion.div variants={arrowVariants}>
+              <ArrowRight className="w-5 h-5 text-slate-300 shrink-0" />
+            </motion.div>
 
-            <div className="flex flex-col items-center gap-3 min-w-[100px]">
+            <motion.div variants={integrationNodeVariants} className="flex flex-col items-center gap-3 min-w-[100px]">
               <div className="w-16 h-16 rounded-full bg-green-50 border border-green-100 flex items-center justify-center text-green-600 shadow-sm">
                 <Shield className="w-7 h-7" />
               </div>
               <span className="text-xs font-bold text-slate-700 text-center">{t("home.ecosystem.integration.platform")}</span>
-            </div>
+            </motion.div>
 
-            <ArrowRight className="w-5 h-5 text-slate-300 shrink-0" />
+            <motion.div variants={arrowVariants}>
+              <ArrowRight className="w-5 h-5 text-slate-300 shrink-0" />
+            </motion.div>
 
-            <div className="flex flex-col items-center gap-3 min-w-[100px]">
+            <motion.div variants={integrationNodeVariants} className="flex flex-col items-center gap-3 min-w-[100px]">
               <div className="w-16 h-16 rounded-full bg-purple-50 border border-purple-100 flex items-center justify-center text-purple-600 shadow-sm">
                 <Bell className="w-7 h-7" />
               </div>
               <span className="text-xs font-bold text-slate-700 text-center">{t("home.ecosystem.integration.sync")}</span>
-            </div>
-          </div>
+            </motion.div>
+          </motion.div>
         </div>
       </div>
     </section>

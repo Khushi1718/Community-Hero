@@ -57,8 +57,8 @@ export default function ProfilePage() {
   if (!data) return <div className="min-h-screen flex items-center justify-center">{t("profile.error")}</div>;
 
   const totalReports = myIssues.length;
-  const resolvedReports = myIssues.filter(i => i.status === "Resolved").length;
-  const pendingReports = myIssues.filter(i => i.status === "Open" || i.status === "In Progress").length;
+  const resolvedReports = myIssues.filter(i => i.status && ["resolved", "closed", "completed"].includes(i.status.toLowerCase())).length;
+  const pendingReports = totalReports - resolvedReports;
 
   const citizen = data.citizen;
   const drives = data.drives || [];
@@ -73,39 +73,39 @@ export default function ProfilePage() {
     <div className="min-h-screen bg-slate-50 font-sans pb-[120px] animate-fade-in">
       
       {/* ─── HERO ─── */}
-      <section className="bg-white border-b border-slate-300 pt-10 pb-10">
+      <section className="bg-[#edf9f4] border-b border-emerald-100 pt-8 pb-8 text-[#0c2e1f]">
          <div className="max-w-[1200px] mx-auto px-4">
             <div className="flex flex-col md:flex-row items-center md:items-start justify-between gap-8">
                <div className="flex flex-col md:flex-row items-center md:items-start gap-6 text-center md:text-left">
-                  <div className="w-24 h-24 rounded bg-slate-100 flex items-center justify-center border border-slate-300 shrink-0 shadow-sm">
-                     <span className="text-4xl font-bold text-slate-700">{((user?.displayName || appUser?.name || "C")[0]).toUpperCase()}</span>
+                  <div className="w-24 h-24 rounded-2xl bg-white flex items-center justify-center border border-emerald-100 shrink-0 shadow-sm">
+                     <span className="text-4xl font-extrabold text-emerald-800">{((user?.displayName || appUser?.name || "C")[0]).toUpperCase()}</span>
                   </div>
                   <div className="mt-2">
-                     <h1 className="text-2xl font-bold text-slate-900 mb-1 flex items-center justify-center md:justify-start gap-2">
+                     <h1 className="text-2xl font-black text-[#0f2d1e] mb-1 flex items-center justify-center md:justify-start gap-2">
                        {user?.displayName || appUser?.name || "Verified Citizen"}
-                       <span className="inline-flex items-center gap-1 bg-blue-50 border border-blue-200 text-blue-700 text-[10px] font-bold px-2 py-0.5 rounded uppercase tracking-wider">
+                       <span className="inline-flex items-center gap-1 bg-[#1b7e51]/10 border border-[#1b7e51]/20 text-[#1b7e51] text-[10px] font-black px-2 py-0.5 rounded uppercase tracking-wider">
                          {t("profile.hero.badge")}
                        </span>
                      </h1>
                      <p className="text-slate-600 text-sm mb-3">{user?.email || appUser?.email}</p>
-                     <p className="text-xs font-semibold text-slate-500 uppercase tracking-widest">
+                     <p className="text-xs font-bold text-slate-500 uppercase tracking-widest">
                        {t("profile.hero.level", { level: Math.floor((points || 0) / 100) + 1 })}
                      </p>
                   </div>
                </div>
                
-               <div className="flex gap-0 border border-slate-200 rounded bg-slate-50 shadow-sm divide-x divide-slate-200">
+               <div className="flex gap-0 border border-emerald-100 rounded-2xl bg-white shadow-sm divide-x divide-slate-100 overflow-hidden">
                   <div className="p-4 px-6 text-center min-w-[100px]">
-                     <p className="text-2xl font-bold text-slate-900">{points}</p>
-                     <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">{t("profile.hero.points")}</p>
+                     <p className="text-2xl font-black text-[#0f2d1e]">{points}</p>
+                     <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{t("profile.hero.points")}</p>
                   </div>
                   <div className="p-4 px-6 text-center min-w-[100px]">
-                     <p className="text-2xl font-bold text-slate-900">{calculatedHours}</p>
-                     <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">{t("profile.hero.hours")}</p>
+                     <p className="text-2xl font-black text-[#0f2d1e]">{calculatedHours}</p>
+                     <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{t("profile.hero.hours")}</p>
                   </div>
                   <div className="p-4 px-6 text-center min-w-[100px]">
-                     <p className="text-2xl font-bold text-slate-900">{calculatedCompletedDrives}</p>
-                     <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">{t("profile.hero.drives")}</p>
+                     <p className="text-2xl font-black text-[#0f2d1e]">{calculatedCompletedDrives}</p>
+                     <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{t("profile.hero.drives")}</p>
                   </div>
                </div>
             </div>

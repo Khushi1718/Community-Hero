@@ -3,10 +3,7 @@
 import { useAuth } from "@/lib/auth-context";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { FileText, AlertTriangle, ChevronRight, CheckCircle2, Clock, Activity, Star, Send, X, MapPin, Camera } from "lucide-react";
-import { Card, CardHeader, CardContent, CardFooter } from "@/components/ui/Card";
-import { Button } from "@/components/ui/Button";
-import { StatusBadge } from "@/components/ui/Badge";
+import { FileText, AlertTriangle, ChevronRight, CheckCircle2, Clock, Activity, Star, X, MapPin } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
 interface Issue {
@@ -46,8 +43,6 @@ export default function MyReportsPage() {
   const [feedbackRating, setFeedbackRating] = useState(0);
   const [feedbackComment, setFeedbackComment] = useState("");
   const [isSubmittingFeedback, setIsSubmittingFeedback] = useState(false);
-
-  const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
 
   useEffect(() => {
     if (!loading) {
@@ -106,22 +101,22 @@ export default function MyReportsPage() {
     active: i => ["Reported", "Assigned", "Employee Accepted", "Travelling", "Reached Site"].includes(i.status),
     inprogress: i => ["Inspection Started", "Inspection Completed", "Work Started", "Work In Progress", "Waiting For Materials", "Paused", "Repair Completed"].includes(i.status),
     awaiting: i => ["Awaiting Admin Verification", "Awaiting Citizen Review"].includes(i.status),
-    completed: i => i.status === "Awaiting Citizen Review",
-    closed: i => ["Closed", "Rejected"].includes(i.status),
+    completed: i => ["Awaiting Citizen Review", "Completed", "Resolved"].includes(i.status),
+    closed: i => ["Closed", "Rejected", "Completed", "Resolved", "Awaiting Citizen Review", "Repair Completed"].includes(i.status),
   };
   const filteredIssues = allIssues.filter(filterMap[filterTab]);
 
   const FILTER_TABS: { id: FilterTab; label: string; count?: number }[] = [
-    { id: "all", label: t("myReports.filters.all"), count: allIssues.length },
-    { id: "active", label: t("myReports.filters.active"), count: allIssues.filter(filterMap.active).length },
-    { id: "inprogress", label: t("myReports.filters.inprogress"), count: allIssues.filter(filterMap.inprogress).length },
-    { id: "awaiting", label: t("myReports.filters.awaiting"), count: allIssues.filter(filterMap.awaiting).length },
-    { id: "closed", label: t("myReports.filters.closed"), count: allIssues.filter(filterMap.closed).length },
+    { id: "all", label: t("myReports.filterTabs.all"), count: allIssues.length },
+    { id: "active", label: t("myReports.filterTabs.active"), count: allIssues.filter(filterMap.active).length },
+    { id: "inprogress", label: t("myReports.filterTabs.inprogress"), count: allIssues.filter(filterMap.inprogress).length },
+    { id: "awaiting", label: t("myReports.filterTabs.awaiting"), count: allIssues.filter(filterMap.awaiting).length },
+    { id: "closed", label: t("myReports.filterTabs.closed"), count: allIssues.filter(filterMap.closed).length },
   ];
 
   if (loading || isFetching) return (
-    <div className="min-h-screen flex items-center justify-center bg-surface-50">
-      <div className="w-8 h-8 border-4 border-primary-500 border-t-transparent rounded-full animate-spin" />
+    <div className="min-h-screen flex items-center justify-center bg-slate-50">
+      <div className="w-8 h-8 border-4 border-green-500 border-t-transparent rounded-full animate-spin" />
     </div>
   );
 
@@ -130,18 +125,16 @@ export default function MyReportsPage() {
       <main className="max-w-5xl mx-auto px-4 sm:px-6 py-8 animate-fade-in">
         
         {/* Banner */}
-        <div className="bg-white rounded-3xl border border-slate-200 p-8 shadow-sm flex flex-col md:flex-row items-center justify-between mb-8 relative overflow-hidden">
-           <div className="flex items-center gap-6 z-10 relative">
-             <div className="w-16 h-16 rounded-2xl border-2 border-green-600 flex items-center justify-center shrink-0 bg-white">
-               <FileText className="w-8 h-8 text-green-700" />
+        <div className="bg-gradient-to-r from-[#edf9f4] to-white rounded-3xl border border-emerald-100 p-6 sm:p-7 shadow-xs flex items-center justify-between mb-8 relative overflow-hidden">
+           <div className="flex items-center gap-5 z-10 relative">
+             <div className="w-14 h-14 rounded-2xl border border-emerald-200 flex items-center justify-center shrink-0 bg-white shadow-xs">
+               <FileText className="w-7 h-7 text-emerald-700" />
              </div>
              <div>
-               <h1 className="text-3xl md:text-4xl font-black text-slate-900 mb-2">{t("myReports.title")}</h1>
-               <p className="text-slate-500 font-medium">{t("myReports.subtitle")}</p>
+               <h1 className="text-2xl md:text-3xl font-black text-[#0f2d1e] mb-1">{t("myReports.title")}</h1>
+               <p className="text-slate-600 text-sm font-medium">{t("myReports.subtitle")}</p>
              </div>
            </div>
-           {/* Decorative Illustration placeholder */}
-           <div className="hidden md:block absolute right-0 bottom-0 top-0 w-1/2 opacity-90 pointer-events-none bg-[url('https://cdni.iconscout.com/illustration/premium/thumb/environment-care-illustration-download-in-svg-png-gif-file-formats--tree-saving-protection-plant-ecology-pack-nature-illustrations-3965561.png')] bg-contain bg-right bg-no-repeat"></div>
         </div>
 
         {/* Filters */}
@@ -150,21 +143,21 @@ export default function MyReportsPage() {
             <button
               key={tabItem.id}
               onClick={() => setFilterTab(tabItem.id)}
-              className={`flex items-center gap-2 whitespace-nowrap px-5 py-2.5 rounded-full text-sm font-bold transition-all shadow-sm ${filterTab === tabItem.id ? "bg-[#1B4332] text-white border border-[#1B4332]" : "bg-white text-slate-700 border border-slate-200 hover:bg-slate-50"}`}
+              className={`flex items-center gap-2 whitespace-nowrap px-5 py-2.5 rounded-full text-sm font-bold transition-all shadow-sm ${filterTab === tabItem.id ? "bg-green-800 text-white border border-green-800" : "bg-white text-slate-700 border border-slate-200 hover:bg-slate-50"}`}
             >
               {tabItem.label}
-              <span className={`text-[11px] px-2 py-0.5 rounded-full font-black ${filterTab === tabItem.id ? "bg-white/20 text-white" : "text-slate-500 bg-slate-100"}`}>{tabItem.count || 0}</span>
+              <span className={`text-xs px-2 py-0.5 rounded-full ${filterTab === tabItem.id ? "bg-green-700 text-white" : "bg-slate-100 text-slate-500"}`}>{tabItem.count || 0}</span>
             </button>
           ))}
         </div>
 
-        {/* Issue List */}
-        <div className="space-y-4 mb-10">
+        {/* List of Reports */}
+        <div className="space-y-4 mb-8">
           {filteredIssues.length === 0 ? (
-            <div className="text-center py-16 px-4 bg-white rounded-3xl border border-slate-200 shadow-sm">
-               <CheckCircle2 className="w-12 h-12 text-slate-300 mx-auto mb-4" />
-               <h3 className="text-xl font-bold text-slate-800 mb-2">{t("myReports.noReports.title")}</h3>
-               <p className="text-slate-500 mb-6 max-w-sm mx-auto">{t("myReports.noReports.desc")}</p>
+            <div className="bg-white rounded-3xl border border-slate-200 p-12 text-center shadow-sm">
+               <AlertTriangle className="w-12 h-12 text-slate-300 mx-auto mb-4" />
+               <h3 className="text-lg font-black text-slate-900 mb-2">{t("myReports.noReports.title")}</h3>
+               <p className="text-sm font-medium text-slate-500 mb-6">{t("myReports.noReports.desc")}</p>
                <button onClick={() => router.push("/report")} className="bg-green-700 text-white font-bold px-6 py-3 rounded-xl hover:bg-green-800 transition-colors">{t("myReports.noReports.button")}</button>
             </div>
           ) : (
@@ -322,19 +315,19 @@ export default function MyReportsPage() {
                {/* Timeline */}
                {issueTimeline.length > 0 && (
                  <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
-                   <h3 className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-5 flex items-center gap-2"><Activity className="w-4 h-4 text-blue-500" />{t("myReports.modal.timeline")}</h3>
-                   <div className="relative border-l-2 border-slate-100 ml-4 space-y-6">
-                     {issueTimeline.map((event, i) => (
-                       <div key={i} className="relative pl-6">
-                         <div className="absolute w-4 h-4 rounded-full -left-[9px] top-0.5 bg-white border-2 border-blue-400 shadow-sm" />
-                         <p className="text-sm font-bold text-slate-800">{event.comment || event.action}</p>
-                         <div className="flex items-center gap-2 mt-1 flex-wrap">
-                           {event.actorName && <span className="text-[11px] font-semibold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-md">{event.actorName}</span>}
-                           <span className="text-[11px] font-medium text-slate-400">{new Date(event.timestamp).toLocaleString()}</span>
-                         </div>
-                       </div>
-                     ))}
-                   </div>
+                    <h3 className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-5 flex items-center gap-2"><Activity className="w-4 h-4 text-blue-500" />{t("myReports.modal.timeline")}</h3>
+                    <div className="relative border-l-2 border-slate-100 ml-4 space-y-6">
+                      {issueTimeline.map((event, i) => (
+                        <div key={i} className="relative pl-6">
+                          <div className="absolute w-4 h-4 rounded-full -left-[9px] top-0.5 bg-white border-2 border-blue-400 shadow-sm" />
+                          <p className="text-sm font-bold text-slate-800">{event.comment || event.action}</p>
+                          <div className="flex items-center gap-2 mt-1 flex-wrap">
+                            {event.actorName && <span className="text-[11px] font-semibold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-md">{event.actorName}</span>}
+                            <span className="text-[11px] font-medium text-slate-400">{new Date(event.timestamp).toLocaleString()}</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
                  </div>
                )}
              </div>

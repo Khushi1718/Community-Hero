@@ -101,38 +101,38 @@
       "roles": {
         "citizen": {
           "title": "Citizen",
-          "item1": "Report civic issues instantly",
-          "item2": "Upload verified photos/videos",
-          "item3": "Track issue progress live",
-          "item4": "Earn civic trust scores"
+          "item1": "Instant mobile reporting with GPS",
+          "item2": "Attach media evidence & coordinates",
+          "item3": "Real-time status updates & tracking",
+          "item4": "Earn recognition & impact badges"
         },
         "employee": {
           "title": "Municipal Employee",
-          "item1": "Receive assigned tasks",
-          "item2": "Navigate via GPS routing",
-          "item3": "Request field materials",
-          "item4": "Capture official evidence"
+          "item1": "Smart auto-assigned field tasks",
+          "item2": "Integrated turn-by-turn routing",
+          "item3": "Instant equipment & materials requests",
+          "item4": "Submit before/after AI-verified proof"
         },
         "admin": {
           "title": "City Admin",
-          "item1": "Manage city jurisdiction",
-          "item2": "Review AI analytics",
-          "item3": "Approve task completions",
-          "item4": "Monitor live operations"
+          "item1": "Dynamic jurisdictional oversight",
+          "item2": "Access predictive AI trends & analytics",
+          "item3": "Validate verified field completions",
+          "item4": "Track real-time city-wide operations"
         },
         "superadmin": {
           "title": "Super Admin",
-          "item1": "Oversee national network",
-          "item2": "Create city administrators",
-          "item3": "Analyze macro performance",
-          "item4": "Maintain platform governance"
+          "item1": "Global platform administration",
+          "item2": "Provision municipal configurations",
+          "item3": "Analyze macro-performance metrics",
+          "item4": "Establish secure platform governance"
         },
         "partner": {
           "title": "Partner Organizations",
-          "item1": "Launch community drives",
-          "item2": "Recruit local volunteers",
-          "item3": "Build dynamic Trust Scores",
-          "item4": "Issue verified certificates"
+          "item1": "Organize green & cleanup drives",
+          "item2": "Mobilize verified neighborhood volunteers",
+          "item3": "Measure collective civic footprint",
+          "item4": "Grant blockchain-ready certificates"
         }
       },
       "integration": {
@@ -147,7 +147,11 @@
     "coverage": {
       "tag": "National Scale",
       "title": "Live Network Coverage.",
-      "desc": "Our ecosystem scales organically. Below is the live footprint of active municipal administrators operating on Community Hero."
+      "desc": "Our ecosystem scales organically. Below is the live footprint of active municipal administrators operating on Community Hero.",
+      "activeCities": "Active Cities",
+      "registeredAdmins": "Registered Admins",
+      "activeReports": "Active Reports",
+      "resolvedIssues": "Resolved Issues"
     },
     "cta": {
       "tag": "For NGOs & Volunteer Groups",

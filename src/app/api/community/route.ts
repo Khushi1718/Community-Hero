@@ -17,14 +17,32 @@ export async function GET(request: NextRequest) {
     const statsOnly = searchParams.get("statsOnly") === "true";
 
     if (statsOnly) {
+      const thirtyDaysAgo = new Date();
+      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
       // Real aggregate stats from MongoDB
-      const [totalResolved, totalIssues, posts, totalDrives, verifiedOrgs, users] = await Promise.all([
+      const [
+        totalResolved, 
+        totalIssues, 
+        posts, 
+        totalDrives, 
+        verifiedOrgs, 
+        users,
+        resolvedThisMonth,
+        issuesThisMonth,
+        drivesThisMonth,
+        orgsThisMonth
+      ] = await Promise.all([
         Issue.countDocuments({ status: "Closed" }),
         Issue.countDocuments({}),
         CommunityPost.find({}).select("resolutionTimeHours department").lean(),
         VolunteerDrive.countDocuments({}),
         VolunteerOrganization.countDocuments({ status: "VERIFIED" }),
-        User.find({ "communityInfo.volunteerHours": { $gt: 0 } }).select("communityInfo").lean()
+        User.find({ "communityInfo.volunteerHours": { $gt: 0 } }).select("communityInfo").lean(),
+        Issue.countDocuments({ status: "Closed", $or: [{ resolvedAt: { $gte: thirtyDaysAgo } }, { updatedAt: { $gte: thirtyDaysAgo } }] }),
+        Issue.countDocuments({ createdAt: { $gte: thirtyDaysAgo } }),
+        VolunteerDrive.countDocuments({ createdAt: { $gte: thirtyDaysAgo } }),
+        VolunteerOrganization.countDocuments({ status: "VERIFIED", createdAt: { $gte: thirtyDaysAgo } })
       ]);
 
       const avgResolutionHours = posts.length > 0
@@ -46,7 +64,11 @@ export async function GET(request: NextRequest) {
         totalDrives,
         verifiedOrgs,
         totalVolunteerHours,
-        activeVolunteers
+        activeVolunteers,
+        resolvedThisMonth,
+        issuesThisMonth,
+        drivesThisMonth,
+        orgsThisMonth
       });
     }
 

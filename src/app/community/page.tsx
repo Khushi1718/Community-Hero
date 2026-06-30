@@ -52,6 +52,10 @@ interface Stats {
   verifiedOrgs: number;
   totalVolunteerHours: number;
   activeVolunteers: number;
+  resolvedThisMonth: number;
+  issuesThisMonth: number;
+  drivesThisMonth: number;
+  orgsThisMonth: number;
 }
 
 interface Drive {
@@ -93,7 +97,8 @@ export default function CommunityHubPage() {
   const [orgs, setOrgs] = useState<Organization[]>([]);
   const [stats, setStats] = useState<Stats>({ 
     totalResolved: 0, totalIssues: 0, avgResolutionHours: 0, topDepartment: "—",
-    totalDrives: 0, verifiedOrgs: 0, totalVolunteerHours: 0, activeVolunteers: 0
+    totalDrives: 0, verifiedOrgs: 0, totalVolunteerHours: 0, activeVolunteers: 0,
+    resolvedThisMonth: 0, issuesThisMonth: 0, drivesThisMonth: 0, orgsThisMonth: 0
   });
   
   const [isLoading, setIsLoading] = useState(true);
@@ -383,63 +388,93 @@ export default function CommunityHubPage() {
     <div className="min-h-screen bg-white font-sans pb-0 animate-fade-in">
       
       {/* ─── BANNER SECTION ─── */}
-      <section className="w-full px-4 sm:px-6 lg:px-8 py-12 md:py-16 flex flex-col lg:flex-row items-center justify-between bg-white border-b border-slate-100 overflow-hidden max-w-[1400px] mx-auto gap-12">
-        <motion.div
-            className="w-full lg:w-1/2 flex flex-col items-start text-left"
+      <section className="w-full px-4 sm:px-6 lg:px-8 pt-1.5 pb-4 max-w-[1400px] mx-auto overflow-hidden">
+        <div className="w-full bg-[#edf9f4] rounded-3xl overflow-hidden shadow-sm border border-emerald-100 flex flex-col lg:flex-row items-stretch justify-between h-auto lg:h-[330px]">
+          {/* Left Panel */}
+          <motion.div
+            className="w-full lg:w-[55%] p-5 sm:p-6 lg:p-7 flex flex-col justify-center items-start text-left"
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.5, ease: "easeOut" }}
           >
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-md bg-green-50 text-green-700 text-[10px] font-black tracking-widest uppercase mb-6 border border-green-100">
-            <Leaf className="w-3.5 h-3.5" /> {t("community.hero.tag")}
-          </div>
-          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black text-slate-900 mb-6 leading-tight tracking-tight">
-            {t("community.hero.title")}
-          </h1>
-          <p className="text-slate-500 font-medium mb-10 text-base sm:text-lg max-w-xl leading-relaxed">
-            {t("community.hero.subtitle")}
-          </p>
-          
-          <motion.div
-            className="w-full flex flex-row items-center justify-start gap-8 sm:gap-12"
-            variants={{ hidden: {}, show: { transition: { staggerChildren: 0.1 } } }}
-            initial="hidden"
-            animate="show"
-          >
-            {[
-              { icon: <CheckCircle2 className="w-5 h-5 text-green-600" />, value: stats.totalResolved || posts.filter(p => p.resolutionSummary).length, label: t("community.hero.issuesResolved") },
-              { icon: <Building2 className="w-5 h-5 text-blue-600" />, value: stats.verifiedOrgs || orgs.length, label: t("community.hero.partnerNgos") },
-              { icon: <Users className="w-5 h-5 text-amber-500" />, value: stats.totalDrives || drives.length, label: t("community.hero.activeDrives") },
-            ].map(({ icon, value, label }) => (
-              <motion.div
-                key={label}
-                variants={{ hidden: { opacity: 0, y: 10 }, show: { opacity: 1, y: 0 } }}
-                transition={{ duration: 0.4 }}
-                className="flex flex-col items-start group cursor-default"
+            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black text-[#0f2d1e] mb-1.5 leading-tight tracking-tight">
+              Stronger Together,<br />Better Tomorrow
+            </h1>
+            <p className="text-slate-600 font-medium mb-2.5 text-sm sm:text-base max-w-xl leading-relaxed">
+              Join hands with verified organizations and citizens to solve local challenges and build a cleaner, safer, stronger community.
+            </p>
+            
+            <div className="flex flex-wrap gap-4 items-center">
+              <a
+                href="#live-drives"
+                className="bg-[#1b7e51] hover:bg-[#14603d] text-white font-black py-2.5 px-5 rounded-xl flex items-center gap-2 transition-all shadow-sm hover:shadow-md cursor-pointer text-sm"
               >
-                <div className="flex items-center gap-2 mb-2">
-                  <div className="flex items-center justify-center bg-slate-50 border border-slate-100 w-10 h-10 rounded-full group-hover:bg-slate-100 transition-colors shrink-0">{icon}</div>
-                  <span className="font-black text-2xl sm:text-3xl text-slate-900 leading-none">{value}</span>
-                </div>
-                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-none mt-1 ml-1">{label}</span>
-              </motion.div>
-            ))}
-          </motion.div>
-        </motion.div>
+                <Award className="w-4 h-4 text-white" />
+                Join a Drive
+              </a>
+              <a
+                href="#organizations"
+                className="bg-white border border-[#1b7e51] hover:bg-emerald-50/50 text-[#1b7e51] font-black py-2.5 px-5 rounded-xl transition-all cursor-pointer text-sm"
+              >
+                Explore Organizations
+              </a>
+            </div>
 
-        <motion.div 
-          className="w-full lg:w-1/2 relative h-[300px] sm:h-[400px] rounded-3xl overflow-hidden shadow-lg border border-slate-100"
-          initial={{ opacity: 0, x: 20 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.6, ease: "easeOut", delay: 0.2 }}
-        >
-          <img 
-            src="https://images.unsplash.com/photo-1593113565694-c8c27e69d200?auto=format&fit=crop&q=80&w=1200" 
-            alt="Community volunteers" 
-            className="w-full h-full object-cover"
-          />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
-        </motion.div>
+            {/* Integrated Stats Grid */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 w-full mt-4 pt-4 border-t border-emerald-200/40">
+              <div>
+                <p className="text-2xl font-black text-[#0f2d1e] leading-none">{stats.verifiedOrgs || orgs.length}</p>
+                <p className="text-[10px] font-bold text-slate-500 mt-1.5 uppercase tracking-wider">Organizations</p>
+                <p className="text-[9px] font-black mt-0.5 text-emerald-700">
+                  +{stats.orgsThisMonth || 0} this month
+                </p>
+              </div>
+              <div>
+                <p className="text-2xl font-black text-[#0f2d1e] leading-none">{stats.totalDrives || drives.length}</p>
+                <p className="text-[10px] font-bold text-slate-500 mt-1.5 uppercase tracking-wider">Active Drives</p>
+                <p className="text-[9px] font-black mt-0.5 text-blue-700">
+                  +{stats.drivesThisMonth || 0} this month
+                </p>
+              </div>
+              <div>
+                <p className="text-2xl font-black text-[#0f2d1e] leading-none">
+                  {stats.totalResolved || posts.filter(p => p.resolutionSummary).length}
+                </p>
+                <p className="text-[10px] font-bold text-slate-500 mt-1.5 uppercase tracking-wider">Resolved</p>
+                <p className="text-[9px] font-black mt-0.5 text-amber-700">
+                  +{stats.resolvedThisMonth || 0} this month
+                </p>
+              </div>
+              <div>
+                <p className="text-2xl font-black text-[#0f2d1e] leading-none">{stats.totalIssues}</p>
+                <p className="text-[10px] font-bold text-slate-500 mt-1.5 uppercase tracking-wider">Total Reports</p>
+                <p className="text-[9px] font-black mt-0.5 text-purple-700">
+                  +{stats.issuesThisMonth || 0} this month
+                </p>
+              </div>
+            </div>
+          </motion.div>
+
+          {/* Right Panel */}
+          <motion.div 
+            className="w-full lg:w-[45%] relative h-[160px] lg:h-full overflow-hidden"
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.6, ease: "easeOut", delay: 0.2 }}
+          >
+            {/* Soft wave divider between text and illustration */}
+            <div className="hidden lg:block absolute left-0 top-0 bottom-0 w-8 z-10 fill-[#edf9f4] text-[#edf9f4]">
+              <svg className="w-full h-full" viewBox="0 0 10 100" preserveAspectRatio="none">
+                <path d="M10 0 C 4 30, 0 70, 10 100 L 0 100 L 0 0 Z" />
+              </svg>
+            </div>
+            <img 
+              src="/images/community_volunteers.png" 
+              alt="Community volunteers" 
+              className="w-full h-full object-cover"
+            />
+          </motion.div>
+        </div>
       </section>
 
       {/* ─── QUICK NAV STRIP ─── */}
@@ -464,7 +499,7 @@ export default function CommunityHubPage() {
       </div>
 
       {/* ─── RESOLVED ISSUES SECTION ─── */}
-      <section id="resolved-issues" className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 mt-12">
+      <section id="resolved-issues" className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 mt-4">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-4">
           <div>
             <h2 className="text-2xl font-black text-slate-900 mb-1">{t("community.resolvedIssues.title")}</h2>
