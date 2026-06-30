@@ -2,9 +2,11 @@
 
 import { useAuth } from "@/lib/auth-context";
 import { useRouter, usePathname } from "next/navigation";
-import { Shield, Home, MapPin, FileText, Users, User, LogOut, Bell, X, Check } from "lucide-react";
+import { Shield, Home, MapPin, FileText, Users, User, LogOut, Bell, X, Check, Globe } from "lucide-react";
 import { UserButton } from "@clerk/nextjs";
 import { useEffect, useState, useRef, useCallback } from "react";
+import { useTranslation } from "react-i18next";
+import { useLocale } from "@/lib/i18n-provider";
 
 interface Notification {
   _id: string;
@@ -20,9 +22,15 @@ export function Navbar() {
   const { user, appUser, role, loading, logoutMock } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
+  const { t } = useTranslation();
+  const { locale, setLocale } = useLocale();
+  
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [showNotifDropdown, setShowNotifDropdown] = useState(false);
+  const [showLangDropdown, setShowLangDropdown] = useState(false);
+  
   const notifRef = useRef<HTMLDivElement>(null);
+  const langRef = useRef<HTMLDivElement>(null);
   const pollRef = useRef<NodeJS.Timeout | null>(null);
 
   const userEmail = user?.email || appUser?.email;
@@ -52,6 +60,9 @@ export function Navbar() {
       if (notifRef.current && !notifRef.current.contains(e.target as Node)) {
         setShowNotifDropdown(false);
       }
+      if (langRef.current && !langRef.current.contains(e.target as Node)) {
+        setShowLangDropdown(false);
+      }
     };
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
@@ -78,26 +89,26 @@ export function Navbar() {
   };
 
   const navItems = [
-    { name: "Home", path: "/", icon: Home },
+    { name: t("navbar.home"), path: "/", icon: Home },
     ...(role === "citizen" ? [
-      { name: "Report", path: "/report", icon: MapPin },
-      { name: "My Reports", path: "/my-reports", icon: FileText },
+      { name: t("navbar.report"), path: "/report", icon: MapPin },
+      { name: t("navbar.myReports"), path: "/my-reports", icon: FileText },
     ] : []),
-    { name: "Community", path: "/community", icon: Users },
+    { name: t("navbar.community"), path: "/community", icon: Users },
     ...(role === "citizen" ? [
-      { name: "Profile", path: "/profile", icon: User },
+      { name: t("navbar.profile"), path: "/profile", icon: User },
     ] : []),
   ];
 
   const isLoggedIn = !!(user || appUser);
 
   return (
-    <nav className="w-full glass-panel sticky top-0 z-[999] border-b border-surface-200/50">
+    <nav className="w-full glass-panel sticky top-0 z-[999] border-b border-surface-200/50 animate-fade-in bg-white/80 backdrop-blur-md">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
         {/* Logo */}
         <div className="flex items-center gap-2 cursor-pointer" onClick={() => router.push("/")}>
           <img src="/images/logo.png" alt="Community Hero Logo" className="w-8 h-8 object-contain" />
-          <span className="font-bold text-slate-800 tracking-tight hidden sm:block">Community Hero</span>
+          <span className="font-bold text-slate-800 tracking-tight hidden sm:block">{t("common.title")}</span>
         </div>
 
         {/* Center Nav */}
@@ -129,6 +140,42 @@ export function Navbar() {
 
         {/* Right Actions */}
         <div className="flex gap-3 items-center">
+          {/* Language Switcher */}
+          <div className="relative" ref={langRef}>
+            <button
+              onClick={() => setShowLangDropdown(!showLangDropdown)}
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 transition-colors rounded-xl h-9 border border-slate-200"
+              aria-label="Change Language"
+              aria-expanded={showLangDropdown}
+            >
+              <Globe className="w-3.5 h-3.5 text-slate-500 animate-spin-slow" />
+              <span>{locale === "en" ? "English" : "हिन्दी"}</span>
+              <span className="text-[9px] opacity-70">▼</span>
+            </button>
+            {showLangDropdown && (
+              <div className="absolute right-0 top-full mt-2 w-32 bg-white border border-slate-200 rounded-xl shadow-2xl z-[9999] overflow-hidden animate-fade-in">
+                <div className="py-1">
+                  <button
+                    onClick={() => { setLocale("en"); setShowLangDropdown(false); }}
+                    className={`w-full text-left px-4 py-2.5 text-xs font-bold transition-colors ${
+                      locale === "en" ? "bg-green-50 text-green-700" : "text-slate-700 hover:bg-slate-50"
+                    }`}
+                  >
+                    English
+                  </button>
+                  <button
+                    onClick={() => { setLocale("hi"); setShowLangDropdown(false); }}
+                    className={`w-full text-left px-4 py-2.5 text-xs font-bold transition-colors ${
+                      locale === "hi" ? "bg-green-50 text-green-700" : "text-slate-700 hover:bg-slate-50"
+                    }`}
+                  >
+                    हिन्दी
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+
           {loading ? (
             /* Show login buttons while auth resolves — looks correct for all visitors */
             <div className="flex items-center gap-3">
@@ -136,13 +183,13 @@ export function Navbar() {
                 onClick={() => router.push("/login")}
                 className="px-4 py-2 text-sm font-bold text-slate-700 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors"
               >
-                Login
+                {t("navbar.login")}
               </button>
               <button
                 onClick={() => router.push("/report")}
                 className="px-4 py-2 text-sm font-bold text-white bg-green-600 rounded-lg hover:bg-green-700 transition-colors shadow-sm"
               >
-                Report an Issue
+                {t("navbar.reportAnIssue")}
               </button>
             </div>
           ) : isLoggedIn ? (
@@ -164,11 +211,11 @@ export function Navbar() {
                 {showNotifDropdown && (
                   <div className="absolute right-0 top-full mt-2 w-80 bg-white border border-slate-200 rounded-2xl shadow-2xl z-50 overflow-hidden">
                     <div className="p-4 border-b border-slate-100 flex items-center justify-between">
-                      <h3 className="font-bold text-slate-900 text-sm">Notifications</h3>
+                      <h3 className="font-bold text-slate-900 text-sm">{t("navbar.notifications")}</h3>
                       <div className="flex items-center gap-2">
                         {unreadCount > 0 && (
                           <button onClick={markAllRead} className="text-xs text-blue-600 font-bold hover:underline flex items-center gap-1">
-                            <Check className="w-3 h-3" />Mark all read
+                            <Check className="w-3 h-3" />{t("navbar.markAllRead")}
                           </button>
                         )}
                         <button onClick={() => setShowNotifDropdown(false)}><X className="w-4 h-4 text-slate-400 hover:text-slate-600" /></button>
@@ -178,7 +225,7 @@ export function Navbar() {
                       {notifications.length === 0 ? (
                         <div className="p-6 text-center">
                           <Bell className="w-8 h-8 text-slate-300 mx-auto mb-2" />
-                          <p className="text-slate-500 text-sm">No notifications</p>
+                          <p className="text-slate-500 text-sm">{t("navbar.noNotifications")}</p>
                         </div>
                       ) : notifications.map(notif => (
                         <div
@@ -204,7 +251,7 @@ export function Navbar() {
               {/* Dashboard link */}
               {(role === "super_admin" || role === "admin" || role === "employee") && (
                 <button onClick={handleCTA} className="px-4 py-2 text-sm font-bold text-slate-700 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors hidden sm:block">
-                  Dashboard
+                  {t("navbar.dashboard")}
                 </button>
               )}
 
@@ -213,7 +260,7 @@ export function Navbar() {
                 <button
                   onClick={() => { logoutMock(); router.push("/"); }}
                   className="p-2 text-slate-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                  title="Sign Out"
+                  title={t("navbar.logout")}
                 >
                   <LogOut className="w-4 h-4" />
                 </button>
@@ -228,13 +275,13 @@ export function Navbar() {
                 onClick={() => router.push("/login")}
                 className="px-4 py-2 text-sm font-bold text-slate-700 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors"
               >
-                Login
+                {t("navbar.login")}
               </button>
               <button 
                 onClick={() => router.push("/report")}
                 className="px-4 py-2 text-sm font-bold text-white bg-green-600 rounded-lg hover:bg-green-700 transition-colors shadow-sm"
               >
-                Report an Issue
+                {t("navbar.reportAnIssue")}
               </button>
             </div>
           )}

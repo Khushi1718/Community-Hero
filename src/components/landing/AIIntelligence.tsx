@@ -1,31 +1,34 @@
 "use client";
 
 import { Scan, Cpu, Crosshair, Binary, Map, Mail, Cloud, ShieldAlert, ShieldCheck, Award, Server } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 export default function AIIntelligence() {
+  const { t } = useTranslation();
+
   const features = [
-    { icon: Scan, title: "AI Computer Vision", desc: "Extracts deep insights from citizen-uploaded imagery using Gemini Vision." },
-    { icon: Cloud, title: "Google Cloud Pub/Sub", desc: "Real-time, secure data exchange with external municipal legacy systems." },
-    { icon: Map, title: "Geospatial Mapping", desc: "Live tracking and precise GPS coordination for all field operations." },
-    { icon: Mail, title: "Automated SMTP Mail", desc: "Reliable email sending and real-time notifications for citizens and staff." },
-    { icon: Crosshair, title: "Duplicate Detection", desc: "Prevents spam by spatially matching incoming issues with active reports." },
-    { icon: Binary, title: "Metadata Verification", desc: "Examines EXIF data to ensure temporal and geospatial accuracy of evidence." },
-    { icon: Cpu, title: "Smart Task Assignment", desc: "Automatically routes validated tasks to the correct municipal department." },
-    { icon: Award, title: "Cryptographic Certificates", desc: "Generates verifiable digital certificates for civic volunteers and NGOs." },
+    { icon: Scan, title: t("home.infrastructure.features.vision.title"), desc: t("home.infrastructure.features.vision.desc") },
+    { icon: Cloud, title: t("home.infrastructure.features.pubsub.title"), desc: t("home.infrastructure.features.pubsub.desc") },
+    { icon: Map, title: t("home.infrastructure.features.mapping.title"), desc: t("home.infrastructure.features.mapping.desc") },
+    { icon: Mail, title: t("home.infrastructure.features.smtp.title"), desc: t("home.infrastructure.features.smtp.desc") },
+    { icon: Crosshair, title: t("home.infrastructure.features.duplicate.title"), desc: t("home.infrastructure.features.duplicate.desc") },
+    { icon: Binary, title: t("home.infrastructure.features.verification.title"), desc: t("home.infrastructure.features.verification.desc") },
+    { icon: Cpu, title: t("home.infrastructure.features.assignment.title"), desc: t("home.infrastructure.features.assignment.desc") },
+    { icon: Award, title: t("home.infrastructure.features.certificates.title"), desc: t("home.infrastructure.features.certificates.desc") },
   ];
 
   return (
-    <section className="py-12 bg-white border-y border-slate-200">
+    <section className="py-12 bg-white border-y border-slate-200 animate-fade-in">
       <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-16 max-w-3xl mx-auto">
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-blue-50 border border-blue-100 text-blue-700 text-xs font-bold tracking-widest uppercase mb-6">
-            <Server className="w-4 h-4" /> Core Platform Infrastructure
+            <Server className="w-4 h-4" /> {t("home.infrastructure.tag")}
           </div>
           <h3 className="text-3xl md:text-5xl font-extrabold text-slate-900 leading-tight mb-6">
-            Secure, Scalable, and Smart.
+            {t("home.infrastructure.title")}
           </h3>
           <p className="text-slate-600 font-medium text-lg leading-relaxed">
-            Our platform leverages industry-leading technologies to ensure high reliability, data integrity, and automated efficiency for municipal governance.
+            {t("home.infrastructure.desc")}
           </p>
         </div>
 

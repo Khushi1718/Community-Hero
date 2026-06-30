@@ -7,6 +7,7 @@ import { FileText, AlertTriangle, ChevronRight, CheckCircle2, Clock, Activity, S
 import { Card, CardHeader, CardContent, CardFooter } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { StatusBadge } from "@/components/ui/Badge";
+import { useTranslation } from "react-i18next";
 
 interface Issue {
   id: string;
@@ -34,6 +35,7 @@ type FilterTab = "all" | "active" | "inprogress" | "awaiting" | "completed" | "c
 export default function MyReportsPage() {
   const { user, role, loading } = useAuth();
   const router = useRouter();
+  const { t } = useTranslation();
   const [allIssues, setAllIssues] = useState<Issue[]>([]);
   const [isFetching, setIsFetching] = useState(true);
   const [filterTab, setFilterTab] = useState<FilterTab>("all");
@@ -110,11 +112,11 @@ export default function MyReportsPage() {
   const filteredIssues = allIssues.filter(filterMap[filterTab]);
 
   const FILTER_TABS: { id: FilterTab; label: string; count?: number }[] = [
-    { id: "all", label: "All", count: allIssues.length },
-    { id: "active", label: "Active", count: allIssues.filter(filterMap.active).length },
-    { id: "inprogress", label: "In Progress", count: allIssues.filter(filterMap.inprogress).length },
-    { id: "awaiting", label: "Awaiting Review", count: allIssues.filter(filterMap.awaiting).length },
-    { id: "closed", label: "Closed", count: allIssues.filter(filterMap.closed).length },
+    { id: "all", label: t("myReports.filters.all"), count: allIssues.length },
+    { id: "active", label: t("myReports.filters.active"), count: allIssues.filter(filterMap.active).length },
+    { id: "inprogress", label: t("myReports.filters.inprogress"), count: allIssues.filter(filterMap.inprogress).length },
+    { id: "awaiting", label: t("myReports.filters.awaiting"), count: allIssues.filter(filterMap.awaiting).length },
+    { id: "closed", label: t("myReports.filters.closed"), count: allIssues.filter(filterMap.closed).length },
   ];
 
   if (loading || isFetching) return (
@@ -125,7 +127,7 @@ export default function MyReportsPage() {
 
   return (
     <div className="min-h-screen bg-slate-50 font-sans pb-[80px]">
-      <main className="max-w-5xl mx-auto px-4 sm:px-6 py-8">
+      <main className="max-w-5xl mx-auto px-4 sm:px-6 py-8 animate-fade-in">
         
         {/* Banner */}
         <div className="bg-white rounded-3xl border border-slate-200 p-8 shadow-sm flex flex-col md:flex-row items-center justify-between mb-8 relative overflow-hidden">
@@ -134,8 +136,8 @@ export default function MyReportsPage() {
                <FileText className="w-8 h-8 text-green-700" />
              </div>
              <div>
-               <h1 className="text-3xl md:text-4xl font-black text-slate-900 mb-2">My Reports</h1>
-               <p className="text-slate-500 font-medium">Track and manage your submitted issues</p>
+               <h1 className="text-3xl md:text-4xl font-black text-slate-900 mb-2">{t("myReports.title")}</h1>
+               <p className="text-slate-500 font-medium">{t("myReports.subtitle")}</p>
              </div>
            </div>
            {/* Decorative Illustration placeholder */}
@@ -144,14 +146,14 @@ export default function MyReportsPage() {
 
         {/* Filters */}
         <div className="flex gap-3 overflow-x-auto pb-4 mb-4 no-scrollbar">
-          {FILTER_TABS.map(t => (
+          {FILTER_TABS.map(tabItem => (
             <button
-              key={t.id}
-              onClick={() => setFilterTab(t.id)}
-              className={`flex items-center gap-2 whitespace-nowrap px-5 py-2.5 rounded-full text-sm font-bold transition-all shadow-sm ${filterTab === t.id ? "bg-[#1B4332] text-white border border-[#1B4332]" : "bg-white text-slate-700 border border-slate-200 hover:bg-slate-50"}`}
+              key={tabItem.id}
+              onClick={() => setFilterTab(tabItem.id)}
+              className={`flex items-center gap-2 whitespace-nowrap px-5 py-2.5 rounded-full text-sm font-bold transition-all shadow-sm ${filterTab === tabItem.id ? "bg-[#1B4332] text-white border border-[#1B4332]" : "bg-white text-slate-700 border border-slate-200 hover:bg-slate-50"}`}
             >
-              {t.label === "All" ? "All" : t.label}
-              <span className={`text-[11px] px-2 py-0.5 rounded-full font-black ${filterTab === t.id ? "bg-white/20 text-white" : "text-slate-500 bg-slate-100"}`}>{t.count || 0}</span>
+              {tabItem.label}
+              <span className={`text-[11px] px-2 py-0.5 rounded-full font-black ${filterTab === tabItem.id ? "bg-white/20 text-white" : "text-slate-500 bg-slate-100"}`}>{tabItem.count || 0}</span>
             </button>
           ))}
         </div>
@@ -161,9 +163,9 @@ export default function MyReportsPage() {
           {filteredIssues.length === 0 ? (
             <div className="text-center py-16 px-4 bg-white rounded-3xl border border-slate-200 shadow-sm">
                <CheckCircle2 className="w-12 h-12 text-slate-300 mx-auto mb-4" />
-               <h3 className="text-xl font-bold text-slate-800 mb-2">No Reports Found</h3>
-               <p className="text-slate-500 mb-6 max-w-sm mx-auto">You haven't reported any issues matching these filters.</p>
-               <button onClick={() => router.push("/report")} className="bg-green-700 text-white font-bold px-6 py-3 rounded-xl hover:bg-green-800 transition-colors">Report an Issue</button>
+               <h3 className="text-xl font-bold text-slate-800 mb-2">{t("myReports.noReports.title")}</h3>
+               <p className="text-slate-500 mb-6 max-w-sm mx-auto">{t("myReports.noReports.desc")}</p>
+               <button onClick={() => router.push("/report")} className="bg-green-700 text-white font-bold px-6 py-3 rounded-xl hover:bg-green-800 transition-colors">{t("myReports.noReports.button")}</button>
             </div>
           ) : (
             filteredIssues.map(issue => (
@@ -179,31 +181,31 @@ export default function MyReportsPage() {
 
                  {/* Content */}
                  <div className="flex-1 w-full min-w-0">
-                    <h3 className="font-black text-xl text-slate-900 mb-3 truncate">{issue.aiAnalysis.category}</h3>
+                    <h3 className="font-black text-xl text-slate-900 mb-3 truncate">{t(`categories.${issue.aiAnalysis.category}`, issue.aiAnalysis.category) as string}</h3>
                     
                     <div className="flex flex-wrap items-center gap-3 mb-4">
                       <span className="bg-slate-100 text-slate-600 text-xs font-bold px-3 py-1.5 rounded-lg border border-slate-200">{issue.id}</span>
                       <span className="flex items-center gap-1.5 text-slate-500 text-xs font-bold border border-slate-200 rounded-lg px-3 py-1.5 bg-white"><Clock className="w-3.5 h-3.5" />{new Date(issue.timestamp).toLocaleDateString("en-GB", {day:"numeric", month:"short", year:"numeric"})}</span>
                       <span className={`text-[11px] font-black uppercase tracking-wider px-3 py-1.5 rounded-lg flex items-center gap-1.5
-                         ${issue.status.includes('Active') || issue.status.includes('Closed') ? 'bg-green-100 text-green-700' : ''}
-                         ${issue.status.includes('Progress') || issue.status.includes('Reported') ? 'bg-blue-100 text-blue-700' : ''}
+                         ${issue.status.includes('Active') || issue.status.includes('Closed') || issue.status.includes('Completed') ? 'bg-green-100 text-green-700' : ''}
+                         ${issue.status.includes('Progress') || issue.status.includes('Reported') || issue.status.includes('Assigned') ? 'bg-blue-100 text-blue-700' : ''}
                          ${issue.status.includes('Review') || issue.status.includes('Awaiting') ? 'bg-purple-100 text-purple-700' : ''}
                       `}>
                         {issue.status.includes('Closed') && <CheckCircle2 className="w-3.5 h-3.5"/>}
                         {issue.status.includes('Progress') && <Clock className="w-3.5 h-3.5"/>}
                         {issue.status.includes('Review') && <AlertTriangle className="w-3.5 h-3.5"/>}
-                        {issue.status}
+                        {t(`status.${issue.status}`, issue.status) as string}
                       </span>
                     </div>
 
                     <p className="text-xs font-bold text-slate-500 flex items-center gap-2 mb-5 truncate">
                       <MapPin className="w-4 h-4 text-slate-400 shrink-0" />
-                      {issue.address || issue.city || "Location recorded"}
+                      {issue.address || issue.city || t("myReports.issueCard.unknownLocation")}
                     </p>
 
                     <div>
                       <div className="flex justify-between items-end mb-2">
-                         <span className="text-xs font-black text-slate-700">Resolution Progress</span>
+                         <span className="text-xs font-black text-slate-700">{t("myReports.progress")}</span>
                          <span className={`text-xs font-black ${issue.progressPercentage === 100 ? 'text-green-600' : 'text-blue-600'}`}>{issue.progressPercentage || 0}%</span>
                       </div>
                       <div className="w-full bg-slate-100 rounded-full h-2.5 overflow-hidden">
@@ -227,29 +229,29 @@ export default function MyReportsPage() {
                  <FileText className="w-6 h-6" />
               </div>
               <div>
-                 <h4 className="font-black text-slate-900 text-sm mb-0.5">Can't find your report?</h4>
-                 <p className="text-xs font-medium text-slate-500">Pull down to refresh or check your filters.</p>
+                 <h4 className="font-black text-slate-900 text-sm mb-0.5">{t("myReports.refreshBanner.title")}</h4>
+                 <p className="text-xs font-medium text-slate-500">{t("myReports.refreshBanner.subtitle")}</p>
               </div>
            </div>
            <button onClick={loadIssues} className="bg-white border border-green-200 text-green-700 font-bold px-6 py-2.5 rounded-xl text-sm hover:bg-green-50 transition-colors shadow-sm flex items-center gap-2 w-full sm:w-auto justify-center">
              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
-             Refresh
+             {t("myReports.refreshBanner.button")}
            </button>
         </div>
       </main>
 
       {/* Modal View for detailed issue tracking */}
       {selectedIssue && (
-         <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center p-0 sm:p-4">
+         <div className="fixed inset-0 z-[1000] flex justify-end items-end sm:items-stretch">
            <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity" onClick={() => setSelectedIssue(null)} />
-           <div className="relative bg-white rounded-t-[2rem] sm:rounded-3xl w-full max-w-2xl max-h-[90vh] flex flex-col shadow-2xl z-10 overflow-hidden animate-fade-in">
+           <div className="relative bg-white rounded-t-[2rem] sm:rounded-l-[2rem] sm:rounded-tr-none w-full sm:max-w-xl h-[85vh] sm:h-full flex flex-col shadow-2xl z-10 overflow-hidden animate-slide-in-right">
              <div className="p-6 border-b border-slate-100 flex items-start justify-between flex-shrink-0 bg-white sticky top-0 z-20">
                <div>
                  <div className="flex items-center gap-2 mb-2">
                    <span className="font-mono text-xs font-semibold text-slate-500 bg-slate-100 px-2.5 py-1 rounded-md">{selectedIssue.id}</span>
-                   <span className="bg-slate-100 text-slate-700 text-[10px] font-black uppercase px-2 py-1 rounded-md">{selectedIssue.status}</span>
+                   <span className="bg-slate-100 text-slate-700 text-[10px] font-black uppercase px-2 py-1 rounded-md">{t(`status.${selectedIssue.status}`, selectedIssue.status) as string}</span>
                  </div>
-                 <h2 className="text-2xl font-black text-slate-900 tracking-tight">{selectedIssue.aiAnalysis.category}</h2>
+                 <h2 className="text-2xl font-black text-slate-900 tracking-tight">{t(`categories.${selectedIssue.aiAnalysis.category}`, selectedIssue.aiAnalysis.category) as string}</h2>
                </div>
                <button onClick={() => setSelectedIssue(null)} className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 hover:bg-slate-200 hover:text-slate-900 transition-colors"><X className="w-5 h-5" /></button>
              </div>
@@ -258,12 +260,69 @@ export default function MyReportsPage() {
                {selectedIssue.imageBase64 && (
                  <img src={selectedIssue.imageBase64} alt="Issue" className="w-full h-56 object-cover rounded-2xl shadow-sm" />
                )}
-               <p className="text-sm font-medium text-slate-700 bg-white p-4 rounded-xl border border-slate-200 shadow-sm">{selectedIssue.description}</p>
+               {selectedIssue.description && selectedIssue.description !== "-" && (
+                 <p className="text-sm font-medium text-slate-700 bg-white p-4 rounded-xl border border-slate-200 shadow-sm">{selectedIssue.description}</p>
+               )}
+
+               {/* Citizen Feedback Form */}
+               {(selectedIssue.status === "Closed" || selectedIssue.status === "Resolved" || selectedIssue.status === "Awaiting Citizen Review") && (
+                 <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm space-y-4">
+                   <h3 className="text-sm font-bold text-slate-800 flex items-center gap-2">
+                     <Star className="w-4 h-4 text-amber-500 fill-amber-500" />
+                     {selectedIssue.citizenFeedback?.rating ? t("myReports.modal.feedback.thankYou") : t("myReports.modal.feedback.title")}
+                   </h3>
+                   
+                   <div className="flex gap-2 text-2xl">
+                     {[1, 2, 3, 4, 5].map((star) => (
+                       <button
+                         key={star}
+                         type="button"
+                         onClick={() => {
+                           if (!selectedIssue.citizenFeedback?.rating) {
+                             setFeedbackRating(star);
+                           }
+                         }}
+                         className={`${
+                           star <= (feedbackRating || selectedIssue.citizenFeedback?.rating || 0)
+                             ? "text-amber-400"
+                             : "text-slate-200"
+                         } transition-colors`}
+                         disabled={!!selectedIssue.citizenFeedback?.rating}
+                       >
+                         ★
+                       </button>
+                     ))}
+                   </div>
+
+                   {!selectedIssue.citizenFeedback?.rating ? (
+                     <div className="space-y-3">
+                       <textarea
+                         placeholder={t("myReports.modal.feedback.placeholder")}
+                         value={feedbackComment}
+                         onChange={(e) => setFeedbackComment(e.target.value)}
+                         className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-sm focus:ring-2 focus:ring-blue-500"
+                         rows={3}
+                       />
+                       <button
+                         onClick={submitFeedback}
+                         disabled={isSubmittingFeedback || !feedbackRating}
+                         className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 rounded-xl text-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                       >
+                         {isSubmittingFeedback ? t("myReports.modal.feedback.submitting") : t("myReports.modal.feedback.submit")}
+                       </button>
+                     </div>
+                   ) : (
+                     <p className="text-sm text-slate-600 bg-slate-50 p-3 rounded-xl border border-slate-100 italic">
+                       "{selectedIssue.citizenFeedback.comment || t("myReports.modal.feedback.comment")}"
+                     </p>
+                   )}
+                 </div>
+               )}
                
                {/* Timeline */}
                {issueTimeline.length > 0 && (
                  <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
-                   <h3 className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-5 flex items-center gap-2"><Activity className="w-4 h-4 text-blue-500" />Activity Timeline</h3>
+                   <h3 className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-5 flex items-center gap-2"><Activity className="w-4 h-4 text-blue-500" />{t("myReports.modal.timeline")}</h3>
                    <div className="relative border-l-2 border-slate-100 ml-4 space-y-6">
                      {issueTimeline.map((event, i) => (
                        <div key={i} className="relative pl-6">

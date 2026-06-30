@@ -1,6 +1,11 @@
+"use client";
+
 import { ClipboardCheck, Users, Award, BarChart2, Users2 } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 export default function AboutUs() {
+  const { t } = useTranslation();
+
   return (
     <section className="bg-white border-b border-slate-200 font-sans">
       <div className="max-w-[1400px] mx-auto">
@@ -8,17 +13,17 @@ export default function AboutUs() {
         <div className="flex flex-col lg:flex-row min-h-[500px]">
           {/* Left Text */}
           <div className="flex-1 px-4 sm:px-6 lg:px-8 py-16 lg:py-24 flex flex-col justify-center">
-            <h2 className="text-4xl font-bold text-[#0f172a] mb-3">About Community Hero</h2>
+            <h2 className="text-4xl font-bold text-[#0f172a] mb-3">{t("home.about.title")}</h2>
             <h3 className="text-[#2e7d32] font-semibold text-lg mb-8">
-              Empowering Citizens. Strengthening Communities. Transforming Cities.
+              {t("home.about.subtitle")}
             </h3>
             
             <p className="text-[#334155] text-base leading-relaxed mb-6 font-medium">
-              Community Hero is an AI-powered civic engagement platform designed to bridge the gap between citizens, government authorities, NGOs, and volunteers. We believe that <strong className="font-semibold text-black">creating better cities</strong> requires more than just reporting problems—it requires <strong className="font-semibold text-black">collaboration, transparency, and active community participation.</strong>
+              {t("home.about.desc1")}
             </p>
             
             <p className="text-[#334155] text-base leading-relaxed font-medium">
-              Traditional complaint systems often leave citizens without updates, while many community-driven initiatives struggle to reach volunteers and measure their impact. Community Hero brings everything together on a single intelligent platform where civic issues can be reported, analyzed, tracked, and resolved while encouraging people to become part of the solution.
+              {t("home.about.desc2")}
             </p>
           </div>
           
@@ -53,9 +58,9 @@ export default function AboutUs() {
               <div className="w-12 h-12 rounded-full bg-green-50 flex items-center justify-center text-[#2e7d32] mb-4 border border-green-100 shrink-0">
                 <ClipboardCheck className="w-6 h-6" />
               </div>
-              <h4 className="font-bold text-[#0f172a] text-lg mb-3 shrink-0">Citizen Reporters</h4>
+              <h4 className="font-bold text-[#0f172a] text-lg mb-3 shrink-0">{t("home.about.roles.citizen.title")}</h4>
               <p className="text-[#475569] text-sm leading-relaxed font-medium flex-grow">
-                Citizens easily report local issues like potholes or broken streetlights with GPS evidence. AI triage categorizes these reports, ensuring they are routed to the right departments instantly for rapid, transparent resolution.
+                {t("home.about.roles.citizen.desc")}
               </p>
             </div>
             
@@ -63,9 +68,9 @@ export default function AboutUs() {
               <div className="w-12 h-12 rounded-full bg-green-50 flex items-center justify-center text-[#2e7d32] mb-4 border border-green-100 shrink-0">
                 <Users className="w-6 h-6" />
               </div>
-              <h4 className="font-bold text-[#0f172a] text-lg mb-3 shrink-0">Community Drives</h4>
+              <h4 className="font-bold text-[#0f172a] text-lg mb-3 shrink-0">{t("home.about.roles.community.title")}</h4>
               <p className="text-[#475569] text-sm leading-relaxed font-medium flex-grow">
-                Verified organizations can launch local community drives and recruit enthusiastic volunteers directly through the platform. Participants collaborate to address challenges collectively, building stronger, resilient neighborhoods through structured civic participation.
+                {t("home.about.roles.community.desc")}
               </p>
             </div>
             
@@ -73,19 +78,19 @@ export default function AboutUs() {
               <div className="w-12 h-12 rounded-full bg-green-50 flex items-center justify-center text-[#2e7d32] mb-4 border border-green-100 shrink-0">
                 <Award className="w-6 h-6" />
               </div>
-              <h4 className="font-bold text-[#0f172a] text-lg mb-3 shrink-0">Municipal Employees</h4>
+              <h4 className="font-bold text-[#0f172a] text-lg mb-3 shrink-0">{t("home.about.roles.employee.title")}</h4>
               <p className="text-[#475569] text-sm leading-relaxed font-medium flex-grow">
-                Field workers receive verified tasks with exact coordinates. Once repairs are completed, employees must upload timestamped, geofenced 'After' photos via the app to securely close out the issue and maintain public accountability.
+                {t("home.about.roles.employee.desc")}
               </p>
             </div>
-
+ 
             <div className="flex flex-col h-full w-[85vw] shrink-0 snap-center md:w-auto">
               <div className="w-12 h-12 rounded-full bg-green-50 flex items-center justify-center text-[#2e7d32] mb-4 border border-green-100 shrink-0">
                 <BarChart2 className="w-6 h-6" />
               </div>
-              <h4 className="font-bold text-[#0f172a] text-lg mb-3 shrink-0">City Administrators</h4>
+              <h4 className="font-bold text-[#0f172a] text-lg mb-3 shrink-0">{t("home.about.roles.admin.title")}</h4>
               <p className="text-[#475569] text-sm leading-relaxed font-medium flex-grow">
-                Local admins manage municipal operations through dynamic dashboards. They can seamlessly allocate resources, monitor field employee performance, and track city-wide resolution metrics in real-time, ensuring optimal efficiency and maximizing public satisfaction.
+                {t("home.about.roles.admin.desc")}
               </p>
             </div>
             
@@ -93,12 +98,12 @@ export default function AboutUs() {
               <div className="w-12 h-12 rounded-full bg-green-50 flex items-center justify-center text-[#2e7d32] mb-4 border border-green-100 shrink-0">
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
               </div>
-              <h4 className="font-bold text-[#0f172a] text-lg mb-3 shrink-0">Superadmin Oversight</h4>
+              <h4 className="font-bold text-[#0f172a] text-lg mb-3 shrink-0">{t("home.about.roles.superadmin.title")}</h4>
               <p className="text-[#475569] text-sm leading-relaxed font-medium flex-grow">
-                Superadmins maintain platform integrity by verifying NGOs and overseeing multi-city operations. They ensure the ecosystem remains secure and scalable, acting as the ultimate authority for system configurations and high-level trust verification.
+                {t("home.about.roles.superadmin.desc")}
               </p>
             </div>
-
+ 
           </div>
         </div>
       </div>
@@ -114,15 +119,15 @@ export default function AboutUs() {
           
           <div className="text-center md:text-left">
             <h3 className="text-2xl font-bold text-[#1b5e20] mb-1">
-              Together, we don't just report problems—we solve them.
+              {t("home.about.cta.title")}
             </h3>
             <p className="text-slate-500 font-medium text-base">
-              Let's build cleaner, safer, smarter, and more sustainable communities.
+              {t("home.about.cta.subtitle")}
             </p>
           </div>
         </div>
       </div>
-
+ 
     </section>
   );
 }

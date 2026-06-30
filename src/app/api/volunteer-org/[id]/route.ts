@@ -74,7 +74,8 @@ export async function PATCH(
     } = body;
 
     // --- Admin verification actions ---
-    if (action) {
+    const adminActions = ["approved", "rejected", "suspended", "reactivated", "info_requested"];
+    if (action && adminActions.includes(action)) {
       const historyEntry = {
         action,
         actorEmail: actorEmail || "system",

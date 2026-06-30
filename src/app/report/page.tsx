@@ -6,6 +6,7 @@ import { useEffect, useState, useRef } from "react";
 import { Camera, MapPin, CheckCircle2, Sparkles, AlertTriangle, ShieldCheck, Clock, XCircle, Send, AlertOctagon, Video, Film, BarChart2, Zap, Info, Leaf, Users } from "lucide-react";
 import { saveIssue, getIssues, Issue } from "@/lib/storage";
 import { EvidenceCapture, CaptureMetadata } from "@/components/EvidenceCapture";
+import { useTranslation } from "react-i18next";
 
 interface AIAnalysis {
   category: string;
@@ -57,6 +58,7 @@ function parseLocation(loc: string) {
 export default function ReportPage() {
   const { user, role, loading, logoutMock } = useAuth();
   const router = useRouter();
+  const { t, i18n } = useTranslation();
 
   const [description, setDescription] = useState("");
   const [location, setLocation] = useState("");
@@ -302,6 +304,7 @@ export default function ReportPage() {
             longitude: meta.longitude,
             timestamp: meta.timestamp,
             cameraSource: meta.cameraSource,
+            locale: i18n.language
           })
         });
 
@@ -330,7 +333,8 @@ export default function ReportPage() {
           return;
         }
 
-        const newIssue = buildIssue(imageBase64, normalized, meta);
+        setImageBase64(frames[0]);
+        const newIssue = buildIssue(frames[0], normalized, meta);
         setManualCategory(normalized.category);
         setManualDepartment(normalized.department);
         setDraftIssue(newIssue);
@@ -351,7 +355,8 @@ export default function ReportPage() {
           longitude: meta.longitude,
           location,
           timestamp,
-          cameraSource: meta.cameraSource || "Level 1 (In-App)"
+          cameraSource: meta.cameraSource || "Level 1 (In-App)",
+          locale: i18n.language
         })
       });
 
@@ -540,7 +545,7 @@ export default function ReportPage() {
   const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-800 font-sans p-4 sm:p-8">
+    <div className="min-h-screen bg-slate-50 text-slate-800 font-sans p-4 sm:p-8 animate-fade-in">
 
 
       <main className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
@@ -553,12 +558,12 @@ export default function ReportPage() {
               <div className="w-20 h-20 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-6">
                 <XCircle className="w-10 h-10 text-red-500" />
               </div>
-              <h2 className="text-3xl font-bold text-slate-900 mb-4">Submission Rejected</h2>
-              <p className="text-slate-600">Our AI detected that this is likely a non-civic issue or spam.</p>
+              <h2 className="text-3xl font-bold text-slate-900 mb-4">{t("report.rejection.title")}</h2>
+              <p className="text-slate-600">{t("report.rejection.subtitle")}</p>
             </div>
             <div className="bg-red-50 p-6 rounded-2xl border border-red-100 mb-8">
               <h3 className="font-bold text-red-800 mb-3 flex items-center gap-2">
-                <ShieldCheck className="w-5 h-5" /> Agent Reasoning
+                <ShieldCheck className="w-5 h-5" /> {t("report.rejection.reasoningTitle")}
               </h3>
               <ul className="space-y-2 text-red-700 text-sm">
                 {aiAnalysis.reasoningPoints.map((p, i) => (
@@ -566,12 +571,12 @@ export default function ReportPage() {
                 ))}
               </ul>
               <div className="mt-4 pt-4 border-t border-red-200 flex justify-between items-center">
-                <span className="text-sm font-bold text-red-800 uppercase tracking-wide">Trust Engine Score</span>
-                <span className="font-bold text-red-600">{aiAnalysis.trust.checks.spamScore}% Spam Likelihood</span>
+                <span className="text-sm font-bold text-red-800 uppercase tracking-wide">{t("report.success.trustTitle")}</span>
+                <span className="font-bold text-red-600">{aiAnalysis.trust.checks.spamScore}% {t("report.rejection.spamScore")}</span>
               </div>
             </div>
             <button onClick={resetForm} className="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium py-4 rounded-xl transition-colors">
-              Try Again with a Different Image
+              {t("report.rejection.tryAgain")}
             </button>
           </div>
         ) : 
@@ -580,13 +585,13 @@ export default function ReportPage() {
         isReviewing && aiAnalysis && draftIssue ? (
           <div className="bg-white border border-slate-200 rounded-[2rem] p-8 shadow-xl mb-12 animate-fade-in-up">
             <h2 className="text-2xl font-bold text-slate-900 mb-6 flex items-center gap-2">
-              <Sparkles className="w-6 h-6 text-indigo-600" /> Review AI Prediction
+              <Sparkles className="w-6 h-6 text-indigo-600" /> {t("report.review.title")}
             </h2>
             
             {aiAnalysis.trust.checks.confidenceScore < 70 && (
               <div className="mb-6 bg-amber-50 border border-amber-200 p-4 rounded-xl flex items-start gap-3">
                 <AlertTriangle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
-                <p className="text-sm text-amber-800 font-medium">The AI has low confidence ({aiAnalysis.trust.checks.confidenceScore}%) in this prediction. Please carefully verify and correct the category if needed.</p>
+                <p className="text-sm text-amber-800 font-medium">{t("report.review.lowConfidence", { score: aiAnalysis.trust.checks.confidenceScore })}</p>
               </div>
             )}
 
@@ -594,7 +599,7 @@ export default function ReportPage() {
               <div>
                 <img src={draftIssue.imageBase64} alt="Reported issue" className="w-full h-48 object-cover rounded-xl border border-slate-200 mb-4" />
                 <div className="bg-slate-50 p-4 rounded-xl border border-slate-100">
-                  <p className="text-xs text-slate-500 font-bold uppercase tracking-wider mb-2">AI Reasoning</p>
+                  <p className="text-xs text-slate-500 font-bold uppercase tracking-wider mb-2">{t("report.review.reasoningTitle")}</p>
                   <ul className="space-y-1 text-sm text-slate-700">
                     {aiAnalysis.reasoningPoints?.map((p, i) => (
                       <li key={i} className="flex items-start gap-2"><span className="text-indigo-400 shrink-0">•</span> <span className="break-words min-w-0 flex-1">{p}</span></li>
@@ -605,29 +610,29 @@ export default function ReportPage() {
               
               <div className="space-y-6">
                 <div>
-                  <label className="block text-sm font-bold text-slate-700 mb-2">Predicted Category</label>
+                  <label className="block text-sm font-bold text-slate-700 mb-2">{t("report.review.predictedCategory")}</label>
                   <select 
                     value={manualCategory}
                     onChange={e => setManualCategory(e.target.value)}
                     className="w-full bg-white border border-slate-300 rounded-xl px-4 py-3 text-slate-800 font-medium focus:ring-2 focus:ring-indigo-500"
                   >
-                    {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+                    {CATEGORIES.map(c => <option key={c} value={c}>{t(`categories.${c}`, c)}</option>)}
                   </select>
                 </div>
                 
                 <div>
-                  <label className="block text-sm font-bold text-slate-700 mb-2">Route to Department</label>
+                  <label className="block text-sm font-bold text-slate-700 mb-2">{t("report.review.routeDepartment")}</label>
                   <select 
                     value={manualDepartment}
                     onChange={e => setManualDepartment(e.target.value)}
                     className="w-full bg-white border border-slate-300 rounded-xl px-4 py-3 text-slate-800 font-medium focus:ring-2 focus:ring-indigo-500"
                   >
-                    {DEPARTMENTS.map(d => <option key={d} value={d}>{d}</option>)}
+                    {DEPARTMENTS.map(d => <option key={d} value={d}>{t(`departments.${d}`, d)}</option>)}
                   </select>
                 </div>
 
                 <div className="bg-slate-50 p-4 rounded-xl border border-slate-100 flex justify-between items-center">
-                  <span className="text-sm font-bold text-slate-600">AI Confidence:</span>
+                  <span className="text-sm font-bold text-slate-600">{t("report.review.confidence")}</span>
                   <span className={`text-lg font-black ${aiAnalysis.trust.checks.confidenceScore >= 80 ? 'text-green-600' : aiAnalysis.trust.checks.confidenceScore >= 70 ? 'text-amber-600' : 'text-red-600'}`}>{aiAnalysis.trust.checks.confidenceScore}%</span>
                 </div>
               </div>
@@ -635,10 +640,10 @@ export default function ReportPage() {
 
             <div className="flex gap-4">
               <button onClick={resetForm} className="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-4 rounded-xl transition-colors">
-                Cancel
+                {t("report.review.cancel")}
               </button>
               <button onClick={handleConfirmSubmit} className="flex-[2] bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-4 rounded-xl transition-colors shadow-lg flex items-center justify-center gap-2">
-                <CheckCircle2 className="w-5 h-5" /> Confirm & Submit
+                <CheckCircle2 className="w-5 h-5" /> {t("report.review.confirm")}
               </button>
             </div>
           </div>
@@ -651,16 +656,16 @@ export default function ReportPage() {
               <div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-4">
                 <AlertOctagon className="w-8 h-8 text-orange-600" />
               </div>
-              <h2 className="text-2xl font-bold text-slate-900">Possible Duplicate Detected</h2>
+              <h2 className="text-2xl font-bold text-slate-900">{t("report.duplicate.title")}</h2>
               <p className="text-slate-600 mt-2">
-                A similar <strong>{aiAnalysis?.category}</strong> was reported near your location within the last 30 days (Issue ID: {duplicateWarningId}).
+                {t("report.duplicate.subtitle", { category: aiAnalysis?.category, id: duplicateWarningId })}
               </p>
             </div>
             
             <div className="bg-orange-50 p-6 rounded-2xl mb-8 flex items-start gap-4">
                <AlertTriangle className="w-6 h-6 text-orange-600 flex-shrink-0" />
                <p className="text-orange-800 text-sm leading-relaxed">
-                 To save municipal resources, we group duplicates together. If this is the exact same issue, please confirm it. If this is a completely different issue that just happens to be nearby, you can override this warning.
+                 {t("report.duplicate.warning")}
                </p>
             </div>
 
@@ -669,13 +674,13 @@ export default function ReportPage() {
                 onClick={confirmDuplicate}
                 className="bg-orange-600 hover:bg-orange-700 text-white font-medium py-3 px-4 rounded-xl transition-colors flex justify-center items-center gap-2"
               >
-                <CheckCircle2 className="w-5 h-5" /> Yes, Group as Duplicate
+                <CheckCircle2 className="w-5 h-5" /> {t("report.duplicate.confirm")}
               </button>
               <button 
                 onClick={overrideDuplicate}
                 className="bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium py-3 px-4 rounded-xl transition-colors flex justify-center items-center gap-2"
               >
-                No, This is Different
+                <XCircle className="w-5 h-5" /> {t("report.duplicate.override")}
               </button>
             </div>
           </div>
@@ -688,7 +693,7 @@ export default function ReportPage() {
               <div className="w-20 h-20 bg-green-50 rounded-full flex items-center justify-center mx-auto mb-4">
                 <CheckCircle2 className="w-10 h-10 text-green-500" />
               </div>
-              <h2 className="text-3xl font-bold text-slate-900 mb-2 tracking-tight">Issue Successfully Reported</h2>
+              <h2 className="text-3xl font-bold text-slate-900 mb-2 tracking-tight">{t("report.success.title")}</h2>
               <div className="inline-block bg-slate-100 border border-slate-200 text-slate-700 font-mono font-bold px-4 py-2 rounded-lg mb-6 shadow-sm text-lg tracking-wider">
                 {draftIssue.id}
               </div>
@@ -698,38 +703,38 @@ export default function ReportPage() {
                 {assignmentStatus === "finding" ? (
                   <div className="flex flex-col items-center justify-center py-4">
                     <div className="w-8 h-8 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin mb-4"></div>
-                    <p className="text-indigo-700 font-bold animate-pulse">Finding Responsible Department...</p>
-                    <p className="text-sm text-slate-500 mt-2">AI is matching priority and jurisdiction.</p>
+                    <p className="text-indigo-700 font-bold animate-pulse">{t("report.success.findingDepartment")}</p>
+                    <p className="text-sm text-slate-500 mt-2">{t("report.success.findingSub")}</p>
                   </div>
                 ) : (
                   <div className="animate-fade-in">
                     <div className="flex items-center justify-between mb-4">
                       <h3 className="font-bold text-slate-900 flex items-center gap-2">
                         <Send className="w-5 h-5 text-indigo-600" />
-                        Current Status: {draftIssue.assignedTo ? "Assigned" : "Unassigned"}
+                        {t("report.success.status")} {draftIssue.assignedTo ? t("report.success.assigned") : t("report.success.unassigned")}
                       </h3>
                       <span className="bg-red-100 text-red-700 font-black text-xs uppercase px-3 py-1 rounded-full border border-red-200">
-                        {aiAnalysis.severity} Priority
+                        {aiAnalysis.severity} {t("report.success.severity")}
                       </span>
                     </div>
                     
                     <div className="grid grid-cols-2 gap-y-4 gap-x-6 text-sm">
                       <div>
-                        <p className="text-slate-500 font-medium">Assigned Department</p>
+                        <p className="text-slate-500 font-medium">{t("report.success.assignedDept")}</p>
                         <p className="font-bold text-slate-800">{draftIssue.assignedDepartment || manualDepartment}</p>
                       </div>
                       <div>
-                        <p className="text-slate-500 font-medium">Assigned Employee</p>
+                        <p className="text-slate-500 font-medium">{t("report.success.assignedEmp")}</p>
                         <p className={`font-bold ${draftIssue.assignedTo ? 'text-slate-800' : 'text-red-500'}`}>
-                          {draftIssue.assignedTo || "No Admins Available"}
+                          {draftIssue.assignedTo || t("report.success.noAdmins")}
                         </p>
                       </div>
                       <div>
-                        <p className="text-slate-500 font-medium">Expected Resolution Time</p>
-                        <p className="font-bold text-slate-800">24 Hours (ETA)</p>
+                        <p className="text-slate-500 font-medium">{t("report.success.eta")}</p>
+                        <p className="font-bold text-slate-800">{t("report.success.etaVal")}</p>
                       </div>
                       <div>
-                         <p className="text-slate-500 font-medium">SLA Countdown</p>
+                         <p className="text-slate-500 font-medium">{t("report.success.sla")}</p>
                          <p className="font-bold text-indigo-600 font-mono">23:59:59</p>
                       </div>
                     </div>
@@ -743,19 +748,19 @@ export default function ReportPage() {
                <div className="absolute top-0 left-0 w-1 h-full bg-gradient-to-b from-blue-500 to-indigo-500"></div>
                <div className="flex items-center gap-2 mb-4">
                  <Sparkles className="w-5 h-5 text-indigo-600" />
-                 <h3 className="font-bold text-slate-800">Gemini Vision Agent Analysis</h3>
+                 <h3 className="font-bold text-slate-800">{t("report.success.visionTitle")}</h3>
                </div>
                
-               <div className="grid grid-cols-2 gap-4 mb-4">
+               <div className="grid grid-cols-2 gap-4 mb-6">
                  <div className="bg-white p-4 rounded-xl border border-slate-100 shadow-sm">
-                   <p className="text-xs text-slate-500 uppercase font-semibold mb-1 tracking-wider">Category</p>
-                   <p className="font-medium text-slate-800">{aiAnalysis.category}</p>
+                   <p className="text-xs text-slate-500 uppercase font-semibold mb-1 tracking-wider">{t("report.success.category")}</p>
+                   <p className="font-medium text-slate-800">{t(`categories.${aiAnalysis.category}`, aiAnalysis.category)}</p>
                  </div>
                  <div className="bg-white p-4 rounded-xl border border-slate-100 shadow-sm flex items-start justify-between">
                    <div>
-                     <p className="text-xs text-slate-500 uppercase font-semibold mb-1 tracking-wider">Severity</p>
+                     <p className="text-xs text-slate-500 uppercase font-semibold mb-1 tracking-wider">{t("report.success.severityLabel")}</p>
                      <p className={`font-medium ${aiAnalysis.severity === 'High' || aiAnalysis.severity === 'Critical' ? 'text-red-600' : 'text-amber-600'}`}>
-                       {aiAnalysis.severity}
+                       {t(`status.${aiAnalysis.severity}`, aiAnalysis.severity)}
                      </p>
                    </div>
                    {(aiAnalysis.severity === 'High' || aiAnalysis.severity === 'Critical') && (
@@ -768,7 +773,7 @@ export default function ReportPage() {
                <div className="bg-white p-5 rounded-xl border border-slate-100 shadow-sm">
                  <p className="text-xs text-slate-500 uppercase font-bold mb-3 tracking-wider flex items-center gap-2">
                     <CheckCircle2 className="w-4 h-4 text-indigo-500" />
-                    Agent Reasoning
+                    {t("report.success.reasoning")}
                  </p>
                  <ul className="space-y-2 text-sm text-slate-700 leading-relaxed">
                    {aiAnalysis.reasoningPoints?.map((point, idx) => (
@@ -786,7 +791,7 @@ export default function ReportPage() {
                <div className="flex items-center justify-between mb-6">
                  <div className="flex items-center gap-2">
                    <ShieldCheck className="w-5 h-5 text-slate-700" />
-                   <h3 className="font-bold text-slate-800">Trust Engine Verification</h3>
+                   <h3 className="font-bold text-slate-800">{t("report.success.trustTitle")}</h3>
                  </div>
                  <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider
                     ${aiAnalysis.trust.status === 'Likely Genuine' ? 'bg-green-100 text-green-700' : ''}
@@ -801,7 +806,7 @@ export default function ReportPage() {
                  <div className="flex items-center justify-between p-3 bg-slate-50 rounded-xl border border-slate-100">
                     <div className="flex items-center gap-3">
                       <MapPin className="w-4 h-4 text-slate-400" />
-                      <span className="text-sm font-medium text-slate-700">GPS Coords Provided</span>
+                      <span className="text-sm font-medium text-slate-700">{t("report.success.gpsCheck")}</span>
                     </div>
                     {aiAnalysis.trust.checks.hasGPS ? <CheckCircle2 className="w-5 h-5 text-green-500" /> : <XCircle className="w-5 h-5 text-red-500" />}
                  </div>
@@ -809,7 +814,7 @@ export default function ReportPage() {
                  <div className="flex items-center justify-between p-3 bg-slate-50 rounded-xl border border-slate-100">
                     <div className="flex items-center gap-3">
                       <Clock className="w-4 h-4 text-slate-400" />
-                      <span className="text-sm font-medium text-slate-700">Fresh Capture (Metadata)</span>
+                      <span className="text-sm font-medium text-slate-700">{t("report.success.timeCheck")}</span>
                     </div>
                     {aiAnalysis.trust.checks.isFresh ? <CheckCircle2 className="w-5 h-5 text-green-500" /> : <XCircle className="w-5 h-5 text-red-500" />}
                  </div>
@@ -817,19 +822,25 @@ export default function ReportPage() {
                  <div className="flex items-center justify-between p-3 bg-slate-50 rounded-xl border border-slate-100">
                     <div className="flex items-center gap-3">
                       <Sparkles className="w-4 h-4 text-slate-400" />
-                      <span className="text-sm font-medium text-slate-700">Vision Confidence &gt; 80%</span>
+                      <span className="text-sm font-medium text-slate-700">{t("report.form.visionConfidenceCheck")}</span>
                     </div>
                     {aiAnalysis.trust.checks.confidenceScore >= 80 ? <CheckCircle2 className="w-5 h-5 text-green-500" /> : <AlertTriangle className="w-5 h-5 text-amber-500" />}
                  </div>
                </div>
             </div>
 
-            <div className="text-center">
+            <div className="text-center flex gap-4">
+              <button
+                onClick={() => router.push("/my-reports")}
+                className="flex-1 bg-white border border-slate-200 text-slate-700 font-bold py-3.5 rounded-xl hover:bg-slate-50 transition-colors shadow-sm"
+              >
+                {t("report.success.viewReports")}
+              </button>
               <button
                 onClick={resetForm}
-                className="bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium px-6 py-3 rounded-xl transition-colors"
+                className="flex-1 bg-[#4CAF50] hover:bg-[#43a047] text-white font-bold py-3.5 rounded-xl transition-all shadow-[0_4px_14px_rgba(76,175,80,0.3)]"
               >
-                Report Another Issue
+                {t("report.success.reportAnother")}
               </button>
             </div>
           </div>
@@ -840,8 +851,8 @@ export default function ReportPage() {
             {isSubmitting && (
               <div className="absolute inset-0 bg-white/95 backdrop-blur-sm z-50 flex flex-col items-center justify-center p-8 animate-fade-in">
                  <div className="w-16 h-16 border-4 border-indigo-100 border-t-indigo-600 rounded-full animate-spin mb-6"></div>
-                 <h3 className="text-xl font-bold text-slate-900 mb-2">AI Agent is Analyzing...</h3>
-                 <p className="text-slate-500 text-sm mb-8">Running Trust Engine and routing logic</p>
+                 <h3 className="text-xl font-bold text-slate-900 mb-2">{t("report.form.skeletonTitle")}</h3>
+                 <p className="text-slate-500 text-sm mb-8">{t("report.form.skeletonSub")}</p>
                  
                  {/* Skeleton blocks */}
                  <div className="w-full max-w-md space-y-4">
@@ -860,15 +871,15 @@ export default function ReportPage() {
                 <Camera className="w-6 h-6 text-white" />
               </div>
               <div>
-                <h2 className="text-2xl font-bold text-slate-900">Raise an Issue</h2>
-                <p className="text-slate-500 text-sm">Help improve your neighborhood</p>
+                <h2 className="text-2xl font-bold text-slate-900">{t("report.form.title")}</h2>
+                <p className="text-slate-500 text-sm">{t("report.form.subtitle")}</p>
               </div>
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-6">
               {/* Camera / Video Trigger */}
               <div>
-                <label className="block text-sm font-bold text-slate-700 mb-2">Evidence Capture <span className="text-red-500">*</span></label>
+                <label className="block text-sm font-bold text-slate-700 mb-2">{t("report.form.image")} <span className="text-red-500">*</span></label>
                 {imageBase64 ? (
                   <div className="relative rounded-2xl overflow-hidden shadow-sm group">
                     {captureType === "video" ? (
@@ -879,7 +890,7 @@ export default function ReportPage() {
                         </p>
                         {aiAnalysis && (
                           <span className="bg-emerald-600/80 text-white text-xs font-bold px-3 py-1 rounded-full">
-                            {aiAnalysis.category} detected ({aiAnalysis.confidence ?? aiAnalysis.trust?.checks?.confidenceScore ?? 0}% confidence)
+                            {t(`categories.${aiAnalysis.category}`, aiAnalysis.category)} {t("report.form.detected")} ({aiAnalysis.confidence ?? aiAnalysis.trust?.checks?.confidenceScore ?? 0}% confidence)
                           </span>
                         )}
                       </div>
@@ -889,7 +900,7 @@ export default function ReportPage() {
                         {aiAnalysis && (
                           <div className="absolute bottom-4 left-4 right-4 flex justify-center pointer-events-none">
                             <span className="bg-emerald-600/90 backdrop-blur-sm shadow-xl text-white text-xs font-bold px-4 py-2 rounded-full border border-emerald-500">
-                              {aiAnalysis.category} detected ({aiAnalysis.confidence ?? aiAnalysis.trust?.checks?.confidenceScore ?? 0}% confidence)
+                              {t(`categories.${aiAnalysis.category}`, aiAnalysis.category)} {t("report.form.detected")} ({aiAnalysis.confidence ?? aiAnalysis.trust?.checks?.confidenceScore ?? 0}% confidence)
                             </span>
                           </div>
                         )}
@@ -897,7 +908,7 @@ export default function ReportPage() {
                     )}
                     <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                       <button type="button" onClick={() => setShowCapture(true)} className="bg-white/20 backdrop-blur-md text-white font-medium px-4 py-2 rounded-xl flex items-center gap-2 hover:bg-white/30 transition-colors">
-                        <Camera className="w-5 h-5" /> Retake Evidence
+                        <Camera className="w-5 h-5" /> {t("report.form.changeEvidence")}
                       </button>
                     </div>
                   </div>
@@ -909,21 +920,21 @@ export default function ReportPage() {
                             <div className="bg-green-100 p-3 rounded-full group-hover:bg-green-200 transition-colors">
                               <Camera className="w-6 h-6 text-green-700" />
                             </div>
-                            <span className="font-bold text-sm text-slate-700">Take Photo</span>
+                            <span className="font-bold text-sm text-slate-700">{t("report.form.takePhoto")}</span>
                          </button>
                          <button type="button" onClick={() => setShowCapture(true)} className="w-full sm:flex-1 bg-white border-2 border-indigo-100 shadow-sm rounded-2xl py-4 sm:py-5 flex flex-col items-center gap-3 hover:bg-indigo-50 hover:border-indigo-300 transition-all active:scale-95 group">
                             <div className="bg-indigo-100 p-3 rounded-full group-hover:bg-indigo-200 transition-colors">
                               <Video className="w-6 h-6 text-indigo-700" />
                             </div>
-                            <span className="font-bold text-sm text-slate-700">Record Video</span>
+                            <span className="font-bold text-sm text-slate-700">{t("report.form.recordVideo")}</span>
                          </button>
                       </div>
-                      <p className="text-xs text-slate-400 font-medium hidden sm:block">or drag and drop files here</p>
+                      <p className="text-xs text-slate-400 font-medium hidden sm:block">{t("report.form.dragDrop")}</p>
                     </div>
                     <div className="flex-1 flex flex-col gap-4 w-full">
-                       <div className="flex items-center gap-3 text-sm text-slate-600 font-medium"><MapPin className="w-5 h-5 text-green-600"/> GPS & timestamp auto attached</div>
-                       <div className="flex items-center gap-3 text-sm text-slate-600 font-medium"><Sparkles className="w-5 h-5 text-green-600"/> AI analyzes every frame</div>
-                       <div className="flex items-center gap-3 text-sm text-slate-600 font-medium"><Film className="w-5 h-5 text-green-600"/> Supports JPG, PNG, MP4 (Max 50MB)</div>
+                       <div className="flex items-center gap-3 text-sm text-slate-600 font-medium"><MapPin className="w-5 h-5 text-green-600"/> {t("report.form.gpsAttached")}</div>
+                       <div className="flex items-center gap-3 text-sm text-slate-600 font-medium"><Sparkles className="w-5 h-5 text-green-600"/> {t("report.form.aiAnalyzes")}</div>
+                       <div className="flex items-center gap-3 text-sm text-slate-600 font-medium"><Film className="w-5 h-5 text-green-600"/> {t("report.form.supportsFormat")}</div>
                     </div>
                   </div>
                 )}
@@ -931,12 +942,12 @@ export default function ReportPage() {
 
               {/* Description */}
               <div>
-                <label className="block text-sm font-bold text-slate-700 mb-2">Description <span className="text-red-500">*</span></label>
+                <label className="block text-sm font-bold text-slate-700 mb-2">{t("report.form.description")} <span className="text-red-500">*</span></label>
                 <div className="relative">
                   <textarea
                     value={description}
                     onChange={(e) => setDescription(e.target.value)}
-                    placeholder="E.g., Huge pothole on the main road, causing traffic issues."
+                    placeholder={t("report.form.descriptionPlaceholder")}
                     className="w-full bg-slate-50 border border-slate-200 rounded-xl py-3 px-4 text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all min-h-[120px]"
                     maxLength={500}
                     required
@@ -950,28 +961,28 @@ export default function ReportPage() {
               {/* Location Fields */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <label className="block text-sm font-bold text-slate-700 mb-2">State <span className="text-red-500">*</span></label>
+                  <label className="block text-sm font-bold text-slate-700 mb-2">{t("report.form.state")} <span className="text-red-500">*</span></label>
                   <div className="relative">
                     <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                     <input
                       type="text"
                       value={stateName}
                       onChange={(e) => setStateName(e.target.value)}
-                      placeholder="Select State"
+                      placeholder={t("report.form.statePlaceholder")}
                       className="w-full bg-slate-50 border border-slate-200 rounded-xl py-3 pl-10 pr-4 text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-green-500"
                       required
                     />
                   </div>
                 </div>
                 <div>
-                  <label className="block text-sm font-bold text-slate-700 mb-2">City <span className="text-red-500">*</span></label>
+                  <label className="block text-sm font-bold text-slate-700 mb-2">{t("report.form.city")} <span className="text-red-500">*</span></label>
                   <div className="relative">
                     <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                     <input
                       type="text"
                       value={cityName}
                       onChange={(e) => setCityName(e.target.value)}
-                      placeholder="Select City"
+                      placeholder={t("report.form.cityPlaceholder")}
                       className="w-full bg-slate-50 border border-slate-200 rounded-xl py-3 pl-10 pr-4 text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-green-500"
                       required
                     />
@@ -980,21 +991,19 @@ export default function ReportPage() {
               </div>
               
               <div>
-                <label className="block text-sm font-bold text-slate-700 mb-2">Detailed Address / Colony <span className="text-red-500">*</span></label>
+                <label className="block text-sm font-bold text-slate-700 mb-2">{t("report.form.address")} <span className="text-red-500">*</span></label>
                 <div className="relative">
                   <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                   <input
                     type="text"
                     value={address}
                     onChange={(e) => setAddress(e.target.value)}
-                    placeholder="E.g., Hanuman Nagar, Street 4, Near Green Park"
+                    placeholder={t("report.form.addressPlaceholder")}
                     className="w-full bg-slate-50 border border-slate-200 rounded-xl py-3 pl-10 pr-4 text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-green-500"
                     required
                   />
                 </div>
               </div>
-
-              {/* Location on Map removed */}
 
               {/* GPS Status */}
               {!gpsCoords && (
@@ -1002,15 +1011,15 @@ export default function ReportPage() {
                   <div className="flex gap-3">
                     <AlertTriangle className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
                     <div>
-                      <p className="text-sm font-bold text-red-800">GPS is Required</p>
-                      <p className="text-xs text-red-700 mt-1">To prevent false reports, GPS must be captured when you take the photo/video.<br/>Please enable your location services.</p>
+                      <p className="text-sm font-bold text-red-800">{t("report.gpsError.title")}</p>
+                      <p className="text-xs text-red-700 mt-1">{t("report.gpsError.desc")}</p>
                     </div>
                   </div>
                   <div className="w-10 h-10 opacity-50 bg-[url('https://cdn-icons-png.flaticon.com/512/854/854878.png')] bg-contain bg-no-repeat bg-center mix-blend-multiply"></div>
                 </div>
               )}
 
-              {/* AI Feedback tips from video analysis */}
+              {/* AI Feedback tips */}
               {aiAnalysis?.userFeedback && aiAnalysis.userFeedback.length > 0 && (
                 <div className="bg-amber-50 border border-amber-200 p-4 rounded-xl space-y-2">
                   {aiAnalysis.userFeedback.map((tip, i) => (
@@ -1030,9 +1039,9 @@ export default function ReportPage() {
                 <div className="absolute inset-0 bg-white/20 -translate-x-full group-hover:animate-[shimmer_1.5s_infinite]"></div>
                 <div className="flex items-center gap-2">
                   <Sparkles className="w-5 h-5" />
-                  <span>Submit & Analyze with Gemini</span>
+                  <span>{t("report.form.submit")}</span>
                 </div>
-                <span className="text-[10px] font-medium text-white/80">AI will review your report and route it to the right authorities</span>
+                <span className="text-[10px] font-medium text-white/80">{t("report.form.submitHelp")}</span>
               </button>
             </form>
           </div>
@@ -1043,46 +1052,45 @@ export default function ReportPage() {
         <div className="space-y-6">
            <div className="bg-white border border-slate-200 p-6 rounded-3xl shadow-sm relative overflow-hidden">
              <div className="absolute top-0 right-0 w-32 h-32 bg-green-50 rounded-bl-full -z-10" />
-             <h3 className="flex items-center gap-2 font-bold text-slate-800 mb-4"><Leaf className="w-5 h-5 text-green-600"/> Why Your Report Matters</h3>
+             <h3 className="flex items-center gap-2 font-bold text-slate-800 mb-4"><Leaf className="w-5 h-5 text-green-600"/> {t("report.tips.whyTitle")}</h3>
              <p className="text-sm text-slate-600 mb-4 leading-relaxed relative z-10">
-               Your report directly helps create a cleaner, safer, and more vibrant community for everyone. Local authorities rely on these inputs to allocate resources efficiently.
+               {t("report.tips.whyDesc")}
              </p>
              <div className="space-y-4 mb-6 relative z-10">
                <div className="flex items-start gap-3 bg-slate-50 p-3 rounded-xl border border-slate-100">
                  <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center shrink-0"><Clock className="w-4 h-4 text-blue-700" /></div>
                  <div>
-                   <h4 className="text-xs font-bold text-slate-800">40% Faster Resolution</h4>
-                   <p className="text-xs text-slate-600 leading-snug mt-1">Issues reported with photo evidence are resolved significantly faster.</p>
+                   <h4 className="text-xs font-bold text-slate-800">{t("report.tips.stat1Title")}</h4>
+                   <p className="text-xs text-slate-600 leading-snug mt-1">{t("report.tips.stat1Desc")}</p>
                  </div>
                </div>
                <div className="flex items-start gap-3 bg-slate-50 p-3 rounded-xl border border-slate-100">
                  <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center shrink-0"><Users className="w-4 h-4 text-green-700" /></div>
                  <div>
-                   <h4 className="text-xs font-bold text-slate-800">Community Driven</h4>
-                   <p className="text-xs text-slate-600 leading-snug mt-1">Join thousands of verified citizens actively contributing to community upkeep.</p>
+                   <h4 className="text-xs font-bold text-slate-800">{t("report.tips.stat2Title")}</h4>
+                   <p className="text-xs text-slate-600 leading-snug mt-1">{t("report.tips.stat2Desc")}</p>
                  </div>
                </div>
              </div>
-             <div className="w-full h-32 bg-[url('https://cdni.iconscout.com/illustration/premium/thumb/environment-care-illustration-download-in-svg-png-gif-file-formats--tree-saving-protection-plant-ecology-pack-nature-illustrations-3965561.png')] bg-contain bg-no-repeat bg-center opacity-80 mix-blend-multiply mt-2"></div>
            </div>
 
            <div className="bg-white border border-slate-200 p-6 rounded-3xl shadow-sm">
-             <h3 className="flex items-center gap-2 font-bold text-slate-800 mb-4"><Sparkles className="w-5 h-5 text-green-600"/> Tips for a Good Report</h3>
+             <h3 className="flex items-center gap-2 font-bold text-slate-800 mb-4"><Sparkles className="w-5 h-5 text-green-600"/> {t("report.tips.tipsTitle")}</h3>
              <ul className="space-y-3">
-               <li className="flex items-center gap-3 text-sm text-slate-600 font-medium"><CheckCircle2 className="w-4 h-4 text-green-500 shrink-0"/> Capture clear photos or videos</li>
-               <li className="flex items-center gap-3 text-sm text-slate-600 font-medium"><CheckCircle2 className="w-4 h-4 text-green-500 shrink-0"/> Ensure GPS is enabled</li>
-               <li className="flex items-center gap-3 text-sm text-slate-600 font-medium"><CheckCircle2 className="w-4 h-4 text-green-500 shrink-0"/> Provide accurate location</li>
-               <li className="flex items-center gap-3 text-sm text-slate-600 font-medium"><CheckCircle2 className="w-4 h-4 text-green-500 shrink-0"/> Add a detailed description</li>
+               <li className="flex items-center gap-3 text-sm text-slate-600 font-medium"><CheckCircle2 className="w-4 h-4 text-green-500 shrink-0"/> {t("report.tips.tip1")}</li>
+               <li className="flex items-center gap-3 text-sm text-slate-600 font-medium"><CheckCircle2 className="w-4 h-4 text-green-500 shrink-0"/> {t("report.tips.tip2")}</li>
+               <li className="flex items-center gap-3 text-sm text-slate-600 font-medium"><CheckCircle2 className="w-4 h-4 text-green-500 shrink-0"/> {t("report.tips.tip3")}</li>
+               <li className="flex items-center gap-3 text-sm text-slate-600 font-medium"><CheckCircle2 className="w-4 h-4 text-green-500 shrink-0"/> {t("report.tips.tip4")}</li>
              </ul>
            </div>
 
            <div className="bg-white border border-slate-200 p-6 rounded-3xl shadow-sm">
-             <h3 className="flex items-center gap-2 font-bold text-slate-800 mb-4"><ShieldCheck className="w-5 h-5 text-green-700"/> We Ensure Trust & Transparency</h3>
+             <h3 className="flex items-center gap-2 font-bold text-slate-800 mb-4"><ShieldCheck className="w-5 h-5 text-green-700"/> {t("report.tips.trustTitle")}</h3>
              <ul className="space-y-3">
-               <li className="flex items-center gap-3 text-sm text-slate-600 font-medium"><Zap className="w-4 h-4 text-green-600 shrink-0"/> AI verification to prevent fake reports</li>
-               <li className="flex items-center gap-3 text-sm text-slate-600 font-medium"><Send className="w-4 h-4 text-green-600 shrink-0"/> Auto-routing to the right department</li>
-               <li className="flex items-center gap-3 text-sm text-slate-600 font-medium"><Clock className="w-4 h-4 text-green-600 shrink-0"/> Status updates at every step</li>
-               <li className="flex items-center gap-3 text-sm text-slate-600 font-medium"><CheckCircle2 className="w-4 h-4 text-green-600 shrink-0"/> 100% Transparent process</li>
+               <li className="flex items-center gap-3 text-sm text-slate-600 font-medium"><Zap className="w-4 h-4 text-green-600 shrink-0"/> {t("report.tips.trust1")}</li>
+               <li className="flex items-center gap-3 text-sm text-slate-600 font-medium"><Send className="w-4 h-4 text-green-600 shrink-0"/> {t("report.tips.trust2")}</li>
+               <li className="flex items-center gap-3 text-sm text-slate-600 font-medium"><Clock className="w-4 h-4 text-green-600 shrink-0"/> {t("report.tips.trust3")}</li>
+               <li className="flex items-center gap-3 text-sm text-slate-600 font-medium"><CheckCircle2 className="w-4 h-4 text-green-600 shrink-0"/> {t("report.tips.trust4")}</li>
              </ul>
            </div>
         </div>

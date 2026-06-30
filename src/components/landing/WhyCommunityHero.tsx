@@ -1,46 +1,54 @@
 "use client";
 
 import Image from "next/image";
+import { useTranslation } from "react-i18next";
 
 export default function WhyCommunityHero() {
+  const { t } = useTranslation();
+
   const features = [
     {
-      title: "AI Triage & Anti-Spoofing",
-      desc: "To combat duplicate complaints, our models cross-reference geospatial data. Hardcoded EXIF analysis and temporal validation prevent image spoofing and filter out manipulated media before it reaches city admins.",
+      title: t("home.why.features.ai.title"),
+      desc: t("home.why.features.ai.desc"),
       image: "/images/ai.png"
     },
     {
-      title: "Verified Accountability",
-      desc: "Tickets cannot be closed arbitrarily. Municipal employees must use in-app live camera capture to upload geofenced, timestamped 'After' photos from the exact location, proving the repair was genuinely completed.",
+      title: t("home.why.features.accountability.title"),
+      desc: t("home.why.features.accountability.desc"),
       image: "/images/verified.png"
     },
     {
-      title: "Immutable Audit Logs",
-      desc: "Every major state transition is securely tracked in immutable admin audit logs. This establishes a clear, auditable, public-facing timeline that helps bridge the trust gap between citizens and local government.",
+      title: t("home.why.features.audit.title"),
+      desc: t("home.why.features.audit.desc"),
       image: "/images/audit.png"
     },
     {
-      title: "Encrypted Privacy & Routing",
-      desc: "Citizen privacy is protected through end-to-end encrypted data transmission. Meanwhile, the platform leverages AI to securely assess and prioritize high-risk reports, escalating them to emergency teams.",
+      title: t("home.why.features.privacy.title"),
+      desc: t("home.why.features.privacy.desc"),
       image: "/images/routing.png"
+    },
+    {
+      title: t("home.why.features.bilingual.title"),
+      desc: t("home.why.features.bilingual.desc"),
+      image: "https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&q=80&w=600"
     }
   ];
 
   return (
-    <section className="py-24 bg-white border-y border-slate-200">
+    <section className="py-24 bg-white border-y border-slate-200 animate-fade-in">
       <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
         
         <div className="max-w-4xl mx-auto text-center mb-16">
-          <h2 className="text-sm font-black text-blue-700 uppercase tracking-widest mb-4">Security & Transparency</h2>
+          <h2 className="text-sm font-black text-blue-700 uppercase tracking-widest mb-4">{t("home.why.tag")}</h2>
           <h3 className="text-3xl md:text-4xl lg:text-5xl font-black text-slate-900 leading-tight mb-6">
-            Accountability built into <span className="text-green-600">every step.</span>
+            {t("home.why.title")}
           </h3>
           <p className="text-lg text-slate-600 font-medium leading-relaxed max-w-3xl mx-auto">
-            Community Hero is designed with bank-grade security to prevent spam, improve verification accuracy, and foster public trust through a cryptographically auditable workflow.
+            {t("home.why.desc")}
           </p>
         </div>
 
-        <div className="flex overflow-x-auto snap-x snap-mandatory pb-6 -mx-4 px-4 md:-mx-0 md:px-0 md:pb-0 md:grid sm:grid-cols-2 lg:grid-cols-4 gap-6 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+        <div className="flex overflow-x-auto snap-x snap-mandatory pb-6 -mx-4 px-4 md:-mx-0 md:px-0 md:pb-0 md:grid sm:grid-cols-2 lg:grid-cols-5 gap-6 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
           {features.map((feature, idx) => (
             <div key={idx} className="w-[85vw] shrink-0 snap-center md:w-auto group bg-green-50/50 hover:bg-green-50 border border-green-100 rounded-2xl p-5 transition-colors flex flex-col h-full">
               <div className="relative h-48 mb-5 overflow-hidden bg-slate-100 border border-green-200/50 rounded-lg shadow-sm">

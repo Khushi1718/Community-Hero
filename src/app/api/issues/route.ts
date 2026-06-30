@@ -278,7 +278,15 @@ export async function POST(request: NextRequest) {
       isAvailable: { $ne: false } // match true or missing (default true per schema)
     });
 
-    if (candidateStaff.length > 0 && !routeToOrg) {
+    const confidence = body.aiAnalysis?.confidence ?? 100;
+    const CONFIDENCE_THRESHOLD = 75;
+    const isConfidenceLow = confidence < CONFIDENCE_THRESHOLD;
+
+    if (isConfidenceLow) {
+      console.log(`[AI Routing] AI Confidence (${confidence}%) below threshold (${CONFIDENCE_THRESHOLD}%). Routing to Administrator for manual verification.`);
+    }
+
+    if (candidateStaff.length > 0 && !routeToOrg && !isConfidenceLow) {
       let selectedStaff = candidateStaff[0];
 
       // Dynamic AI Routing if more than 1 candidate and API key exists
@@ -448,6 +456,15 @@ Respond ONLY with a valid JSON object:
             type: "Assignment"
         });
       }
+    } else if (isConfidenceLow) {
+      await TimelineEvent.create({
+        issueId: newIssue._id,
+        action: "Reported",
+        actorName: "System AI",
+        actorRole: "system",
+        isPublic: true,
+        comment: `AI Confidence score (${confidence}%) is below threshold (${CONFIDENCE_THRESHOLD}%). Routed to Administrator for manual verification.`
+      });
     }
 
     if (routeToOrg) {

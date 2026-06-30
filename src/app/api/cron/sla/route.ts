@@ -62,16 +62,17 @@ Based on these factors, decide the best escalation action:
 1. "NUDGE": Send a reminder. Best if employee has low workload (<3 tasks) or issue is P3_Medium.
 2. "ESCALATE_ADMIN": Escalate to admin and increase priority. Best if issue is P1_Critical or employee is heavily overloaded (>5 tasks).
 3. "SUGGEST_ORG": Route to volunteer orgs. Best if issue is low priority and employee is overloaded.
+4. "REASSIGN": Reassign to a different employee in the same department. Best if current employee has >3 tasks, but other staff are available with lower workloads.
 
 Respond ONLY with a valid JSON object:
 {
-  "action": "NUDGE" | "ESCALATE_ADMIN" | "SUGGEST_ORG",
+  "action": "NUDGE" | "ESCALATE_ADMIN" | "SUGGEST_ORG" | "REASSIGN",
   "reasoning": "Brief explanation of why this action was chosen."
 }`;
           const result = await model.generateContent(prompt);
           const responseText = result.response.text();
           const parsed = JSON.parse(responseText);
-          if (parsed.action && ["NUDGE", "ESCALATE_ADMIN", "SUGGEST_ORG"].includes(parsed.action)) {
+          if (parsed.action && ["NUDGE", "ESCALATE_ADMIN", "SUGGEST_ORG", "REASSIGN"].includes(parsed.action)) {
             action = parsed.action;
             reasoning = parsed.reasoning || "";
           }
@@ -81,6 +82,59 @@ Respond ONLY with a valid JSON object:
       }
 
       console.log(`[SLA Cron] Issue ${issue.issueId} AI Action: ${action} - ${reasoning}`);
+
+      if (action === "REASSIGN") {
+        const candidateStaff = await User.find({
+          role: "employee",
+          department: issue.assignedDepartment,
+          isAvailable: { $ne: false },
+          _id: { $ne: issue.assignedTo }
+        });
+
+        let lowestWorkloadStaff = null;
+        let lowestCount = Infinity;
+
+        for (const candidate of candidateStaff) {
+          const count = await Issue.countDocuments({
+            assignedTo: candidate._id,
+            status: { $in: ["Assigned", "In Progress", "Work Started", "Site Visit Scheduled"] }
+          });
+          if (count < lowestCount) {
+            lowestCount = count;
+            lowestWorkloadStaff = candidate;
+          }
+        }
+
+        if (lowestWorkloadStaff) {
+          const oldName = issue.assignedToName || "previous employee";
+          issue.assignedTo = lowestWorkloadStaff._id;
+          issue.assignedToName = lowestWorkloadStaff.name;
+          issue.status = "Assigned";
+
+          if (issue.assignedAdmin) {
+            const admin = await User.findById(issue.assignedAdmin);
+            if (admin) {
+              await Notification.create({
+                userId: admin.email,
+                issueId: issue.issueId,
+                title: "AI Auto-Reassignment",
+                message: `Issue ${issue.issueId} autonomously reassigned from ${oldName} to ${lowestWorkloadStaff.name} due to SLA breach. Reason: ${reasoning}`,
+                type: "System"
+              });
+            }
+          }
+
+          await Notification.create({
+            userId: lowestWorkloadStaff.email,
+            issueId: issue.issueId,
+            title: "New Re-assigned Task",
+            message: `You have been assigned to ${issue.issueId} (overdue task reassigned by AI).`,
+            type: "Assignment"
+          });
+        } else {
+          action = "ESCALATE_ADMIN";
+        }
+      }
 
       if (action === "ESCALATE_ADMIN") {
         if (issue.priority === "P3_Medium") issue.priority = "P2_High";

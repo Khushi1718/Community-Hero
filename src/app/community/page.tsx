@@ -13,6 +13,8 @@ import { Card, CardHeader, CardContent } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { useRouter } from "next/navigation";
 import Footer from "@/components/Footer";
+import Image from "next/image";
+import { useTranslation } from "react-i18next";
 
 // -- INTERFACES --
 interface Post {
@@ -85,6 +87,7 @@ interface Organization {
 // -- MAIN COMPONENT --
 export default function CommunityHubPage() {
   const { user, appUser } = useAuth();
+  const { t } = useTranslation();
   const [posts, setPosts] = useState<Post[]>([]);
   const [drives, setDrives] = useState<Drive[]>([]);
   const [orgs, setOrgs] = useState<Organization[]>([]);
@@ -377,55 +380,65 @@ export default function CommunityHubPage() {
   );
 
   return (
-    <div className="min-h-screen bg-white font-sans pb-0">
+    <div className="min-h-screen bg-white font-sans pb-0 animate-fade-in">
       
       {/* ─── BANNER SECTION ─── */}
-      <section className="relative w-full px-4 sm:px-6 lg:px-8 py-24 flex flex-col items-center text-center overflow-hidden">
-        {/* Background Image & Overlay */}
-        <div 
-          className="absolute inset-0 z-0 bg-cover bg-center"
-          style={{ backgroundImage: "url('/images/new_hero_bg.png')" }}
-        />
-        <div className="absolute inset-0 z-0 bg-black/70 backdrop-blur-sm" />
-
+      <section className="w-full px-4 sm:px-6 lg:px-8 py-12 md:py-16 flex flex-col lg:flex-row items-center justify-between bg-white border-b border-slate-100 overflow-hidden max-w-[1400px] mx-auto gap-12">
         <motion.div
-            className="z-10 w-full max-w-4xl flex flex-col items-center relative"
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.7, ease: "easeOut" }}
+            className="w-full lg:w-1/2 flex flex-col items-start text-left"
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.5, ease: "easeOut" }}
           >
-          <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-white mb-4 sm:mb-6 leading-tight tracking-tight px-2">
-            Community <span className="text-green-400">Impact</span> & Initiatives
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-md bg-green-50 text-green-700 text-[10px] font-black tracking-widest uppercase mb-6 border border-green-100">
+            <Leaf className="w-3.5 h-3.5" /> {t("community.hero.tag")}
+          </div>
+          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black text-slate-900 mb-6 leading-tight tracking-tight">
+            {t("community.hero.title")}
           </h1>
-          <p className="text-gray-200 font-medium mb-8 sm:mb-12 text-base sm:text-lg md:text-xl max-w-2xl px-4">
-            Discover active community drives, connect with verified local organizations, and track our collective progress.
+          <p className="text-slate-500 font-medium mb-10 text-base sm:text-lg max-w-xl leading-relaxed">
+            {t("community.hero.subtitle")}
           </p>
+          
           <motion.div
-            className="flex flex-col sm:flex-row flex-wrap w-full sm:w-auto justify-center gap-3 sm:gap-4 px-4 sm:px-0"
-            variants={{ hidden: {}, show: { transition: { staggerChildren: 0.15 } } }}
+            className="w-full flex flex-row items-center justify-start gap-8 sm:gap-12"
+            variants={{ hidden: {}, show: { transition: { staggerChildren: 0.1 } } }}
             initial="hidden"
             animate="show"
           >
             {[
-              { icon: <Leaf className="w-5 h-5 text-green-400" />, value: stats.totalResolved || posts.filter(p => p.resolutionSummary).length, label: "Issues Resolved" },
-              { icon: <Users className="w-5 h-5 text-blue-400" />, value: stats.verifiedOrgs || orgs.length, label: "Organizations" },
-              { icon: <CheckCircle2 className="w-5 h-5 text-green-400" />, value: stats.totalDrives || drives.length, label: "Active Drives" },
+              { icon: <CheckCircle2 className="w-5 h-5 text-green-600" />, value: stats.totalResolved || posts.filter(p => p.resolutionSummary).length, label: t("community.hero.issuesResolved") },
+              { icon: <Building2 className="w-5 h-5 text-blue-600" />, value: stats.verifiedOrgs || orgs.length, label: t("community.hero.partnerNgos") },
+              { icon: <Users className="w-5 h-5 text-amber-500" />, value: stats.totalDrives || drives.length, label: t("community.hero.activeDrives") },
             ].map(({ icon, value, label }) => (
               <motion.div
                 key={label}
-                variants={{ hidden: { opacity: 0, y: 20, scale: 0.95 }, show: { opacity: 1, y: 0, scale: 1 } }}
-                transition={{ duration: 0.5, ease: "easeOut" }}
-                whileHover={{ scale: 1.05, backgroundColor: "rgba(0,0,0,0.55)" }}
-                className="flex items-center w-full sm:w-auto gap-4 bg-black/40 backdrop-blur-md border border-white/10 px-5 py-3.5 rounded-2xl shadow-xl cursor-default"
+                variants={{ hidden: { opacity: 0, y: 10 }, show: { opacity: 1, y: 0 } }}
+                transition={{ duration: 0.4 }}
+                className="flex flex-col items-start group cursor-default"
               >
-                <div className="flex items-center justify-center bg-white/10 w-10 h-10 rounded-xl shrink-0">{icon}</div>
-                <div className="flex flex-col text-left">
-                  <span className="font-bold text-2xl text-white leading-none mb-1.5">{value}</span>
-                  <span className="text-[10px] font-bold text-gray-300 uppercase tracking-widest leading-none">{label}</span>
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="flex items-center justify-center bg-slate-50 border border-slate-100 w-10 h-10 rounded-full group-hover:bg-slate-100 transition-colors shrink-0">{icon}</div>
+                  <span className="font-black text-2xl sm:text-3xl text-slate-900 leading-none">{value}</span>
                 </div>
+                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-none mt-1 ml-1">{label}</span>
               </motion.div>
             ))}
           </motion.div>
+        </motion.div>
+
+        <motion.div 
+          className="w-full lg:w-1/2 relative h-[300px] sm:h-[400px] rounded-3xl overflow-hidden shadow-lg border border-slate-100"
+          initial={{ opacity: 0, x: 20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.6, ease: "easeOut", delay: 0.2 }}
+        >
+          <img 
+            src="https://images.unsplash.com/photo-1593113565694-c8c27e69d200?auto=format&fit=crop&q=80&w=1200" 
+            alt="Community volunteers" 
+            className="w-full h-full object-cover"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
         </motion.div>
       </section>
 
@@ -433,9 +446,9 @@ export default function CommunityHubPage() {
       <div className="w-full bg-green-900 border-b border-green-950 shadow-md sticky top-0 z-40">
         <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-center md:justify-start gap-8 h-12 overflow-x-auto whitespace-nowrap custom-scrollbar">
           {[
-            { href: "#resolved-issues", label: "Resolved Issues" },
-            { href: "#live-drives",     label: "Explore Drives"  },
-            { href: "#organizations",  label: "View Organizations" },
+            { href: "#resolved-issues", label: t("community.nav.resolved") },
+            { href: "#live-drives",     label: t("community.nav.explore")  },
+            { href: "#organizations",  label: t("community.nav.organizations") },
           ].map(({ href, label }) => (
             <a
               key={href}
@@ -454,23 +467,23 @@ export default function CommunityHubPage() {
       <section id="resolved-issues" className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 mt-12">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-4">
           <div>
-            <h2 className="text-2xl font-black text-slate-900 mb-1">Resolved Issues</h2>
-            <p className="text-sm font-medium text-slate-500">See real issues reported by citizens and resolved by our heroes.</p>
+            <h2 className="text-2xl font-black text-slate-900 mb-1">{t("community.resolvedIssues.title")}</h2>
+            <p className="text-sm font-medium text-slate-500">{t("community.resolvedIssues.subtitle")}</p>
           </div>
-          <button className="px-5 py-2 border border-slate-200 text-slate-700 font-bold rounded-xl text-sm hover:bg-slate-50 transition-colors shadow-sm bg-white">View All</button>
+          <button className="px-5 py-2 border border-slate-200 text-slate-700 font-bold rounded-xl text-sm hover:bg-slate-50 transition-colors shadow-sm bg-white">{t("community.resolvedIssues.viewAll")}</button>
         </div>
         
         <div className="flex gap-3 mb-8 overflow-x-auto pb-2">
-          <button className="px-5 py-2.5 font-bold rounded-xl text-sm whitespace-nowrap transition-all bg-green-700 text-white shadow-md">All Posts</button>
-          <button className="px-5 py-2.5 font-bold rounded-xl text-sm whitespace-nowrap transition-all bg-white border border-slate-200 text-slate-700 hover:bg-slate-50">Recently Resolved</button>
-          <button className="px-5 py-2.5 font-bold rounded-xl text-sm whitespace-nowrap transition-all bg-white border border-slate-200 text-slate-700 hover:bg-slate-50">Most Liked</button>
-          <button className="px-5 py-2.5 font-bold rounded-xl text-sm whitespace-nowrap transition-all bg-white border border-slate-200 text-slate-700 hover:bg-slate-50">Following</button>
+          <button className="px-5 py-2.5 font-bold rounded-xl text-sm whitespace-nowrap transition-all bg-green-700 text-white shadow-md">{t("community.resolvedIssues.allPosts")}</button>
+          <button className="px-5 py-2.5 font-bold rounded-xl text-sm whitespace-nowrap transition-all bg-white border border-slate-200 text-slate-700 hover:bg-slate-50">{t("community.resolvedIssues.recentlyResolved")}</button>
+          <button className="px-5 py-2.5 font-bold rounded-xl text-sm whitespace-nowrap transition-all bg-white border border-slate-200 text-slate-700 hover:bg-slate-50">{t("community.resolvedIssues.mostLiked")}</button>
+          <button className="px-5 py-2.5 font-bold rounded-xl text-sm whitespace-nowrap transition-all bg-white border border-slate-200 text-slate-700 hover:bg-slate-50">{t("community.resolvedIssues.following")}</button>
         </div>
 
         <div className="h-[600px] overflow-y-auto pr-2 flex flex-col items-center space-y-6 custom-scrollbar">
           {posts.slice(0, 4).length === 0 ? (
             <div className="bg-white rounded-3xl border border-slate-200 p-16 text-center shadow-sm">
-              <h3 className="text-xl font-black text-slate-900 mb-2">No resolved issues found</h3>
+              <h3 className="text-xl font-black text-slate-900 mb-2">{t("community.resolvedIssues.noIssues")}</h3>
             </div>
           ) : (
             posts.slice(0, 4).map(post => {
@@ -485,10 +498,10 @@ export default function CommunityHubPage() {
                       </div>
                       <div>
                         <div className="flex items-center gap-2">
-                           <p className="font-bold text-slate-900 text-sm">{post.title}</p>
-                           <span className="bg-green-100 text-green-700 text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full">Resolved</span>
+                           <p className="font-bold text-slate-900 text-sm">{t(`categories.${post.title}`, post.title)}</p>
+                           <span className="bg-green-100 text-green-700 text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full">{t("community.resolvedIssues.resolved")}</span>
                         </div>
-                        <p className="text-xs text-slate-500 mt-0.5">Reported by {post.reportedByName || "Citizen"} • {new Date(post.reportedAt || post.resolvedAt).toLocaleDateString("en-GB", {day:"numeric", month:"short", year:"numeric"})}</p>
+                        <p className="text-xs text-slate-500 mt-0.5">{t("community.resolvedIssues.reportedBy")} {post.reportedByName || t("common.citizen")} • {new Date(post.reportedAt || post.resolvedAt).toLocaleDateString("en-GB", {day:"numeric", month:"short", year:"numeric"})}</p>
                       </div>
                     </div>
                     <div className="flex items-center gap-3 text-slate-400">
@@ -502,14 +515,14 @@ export default function CommunityHubPage() {
                   {/* Images */}
                   <div className="flex gap-1 h-[250px] mb-4 relative rounded-xl overflow-hidden bg-slate-50 border border-slate-100">
                     <div className="w-1/2 h-full relative group p-2">
-                      <div className="absolute top-4 left-4 bg-slate-600 text-white text-[10px] font-bold px-2 py-1 rounded shadow-sm z-10">Before</div>
+                      <div className="absolute top-4 left-4 bg-slate-600 text-white text-[10px] font-bold px-2 py-1 rounded shadow-sm z-10">{t("community.resolvedIssues.before")}</div>
                       <img src={post.beforeImageUrls?.[0] || "https://images.unsplash.com/photo-1518005020951-eccb494ad742?auto=format&fit=crop&w=600&q=80"} alt="Before" className="w-full h-full object-cover rounded-lg transition-transform group-hover:scale-105" />
                     </div>
                     <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-8 h-8 bg-white rounded-full flex items-center justify-center shadow-md z-20">
                        <ChevronRight className="w-4 h-4 text-slate-400" />
                     </div>
                     <div className="w-1/2 h-full relative group p-2">
-                      <div className="absolute top-4 left-4 bg-slate-600 text-white text-[10px] font-bold px-2 py-1 rounded shadow-sm z-10">After</div>
+                      <div className="absolute top-4 left-4 bg-slate-600 text-white text-[10px] font-bold px-2 py-1 rounded shadow-sm z-10">{t("community.resolvedIssues.after")}</div>
                       <img src={post.afterImageUrls?.[0] || "https://images.unsplash.com/photo-1473686884638-34860b2964e5?auto=format&fit=crop&w=600&q=80"} alt="After" className="w-full h-full object-cover rounded-lg transition-transform group-hover:scale-105" />
                     </div>
                   </div>
@@ -517,10 +530,10 @@ export default function CommunityHubPage() {
                   {/* Footer */}
                   <div className="flex items-end justify-between">
                      <div>
-                       <p className="text-xs font-bold text-slate-600 flex items-center gap-1.5 mb-1"><MapPin className="w-4 h-4 text-slate-400" /> {post.location.address || post.location.city || "Unknown Location"}</p>
-                       <p className="text-xs font-bold text-slate-600 flex items-center gap-1.5"><ShieldCheck className="w-4 h-4 text-green-500" /> Resolved by {post.resolvedByName || post.department || "Municipal Corporation"} <CheckCircle2 className="w-3.5 h-3.5 text-green-500" /></p>
+                       <p className="text-xs font-bold text-slate-600 flex items-center gap-1.5 mb-1"><MapPin className="w-4 h-4 text-slate-400" /> {post.location.address || post.location.city || t("community.resolvedIssues.unknownLocation")}</p>
+                       <p className="text-xs font-bold text-slate-600 flex items-center gap-1.5"><ShieldCheck className="w-4 h-4 text-green-500" /> {t("community.resolvedIssues.resolvedBy")} {post.resolvedByName || t(`departments.${post.department}`, post.department) || t("report.success.assignedDept")} <CheckCircle2 className="w-3.5 h-3.5 text-green-500" /></p>
                      </div>
-                     <p className="text-xs font-bold text-slate-400">{new Date(post.resolvedAt).toLocaleDateString("en-GB", {day:"numeric", month:"short", year:"numeric"})}</p>
+                      <p className="text-xs font-bold text-slate-400">{new Date(post.resolvedAt).toLocaleDateString("en-GB", {day:"numeric", month:"short", year:"numeric"})}</p>
                   </div>
                 </article>
               );
@@ -534,10 +547,10 @@ export default function CommunityHubPage() {
         <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-8 gap-4">
             <div>
-              <h2 className="text-2xl font-black text-slate-900 mb-1">Live Drives</h2>
-              <p className="text-sm font-medium text-slate-500">Join ongoing community drives and make a real impact.</p>
+              <h2 className="text-2xl font-black text-slate-900 mb-1">{t("community.liveDrives.title")}</h2>
+              <p className="text-sm font-medium text-slate-500">{t("community.liveDrives.subtitle")}</p>
             </div>
-            <button className="text-green-700 font-bold text-sm flex items-center gap-1 hover:underline">View All Drives <ChevronRight className="w-4 h-4"/></button>
+            <button className="text-green-700 font-bold text-sm flex items-center gap-1 hover:underline">{t("community.liveDrives.viewAll")} <ChevronRight className="w-4 h-4"/></button>
           </div>
 
           <motion.div
@@ -562,7 +575,7 @@ export default function CommunityHubPage() {
                   className="min-w-[320px] w-[320px] bg-white border border-slate-200 rounded-2xl shrink-0 snap-start shadow-sm overflow-hidden flex flex-col">
                   {/* Image Header */}
                   <div className="h-[160px] w-full relative bg-slate-100">
-                    <div className="absolute top-3 left-3 bg-green-600 text-white text-[10px] font-black uppercase tracking-wider px-2 py-1 rounded shadow-sm z-10">Live</div>
+                    <div className="absolute top-3 left-3 bg-green-600 text-white text-[10px] font-black uppercase tracking-wider px-2 py-1 rounded shadow-sm z-10">{t("community.liveDrives.live")}</div>
                     <img src={"https://images.unsplash.com/photo-1532996122724-e3c354a0b15b?auto=format&fit=crop&q=80&w=600"} alt="Drive" className="w-full h-full object-cover" />
                   </div>
                   
@@ -573,13 +586,13 @@ export default function CommunityHubPage() {
                     
                     <div className="space-y-2 mb-5">
                       <p className="text-[11px] font-bold text-slate-600 flex items-center gap-2"><MapPin className="w-3.5 h-3.5 text-slate-400" /> {drive.city}, {drive.state}</p>
-                      <p className="text-[11px] font-bold text-slate-600 flex items-center gap-2"><Users className="w-3.5 h-3.5 text-slate-400" /> {actualJoined} Volunteers</p>
+                      <p className="text-[11px] font-bold text-slate-600 flex items-center gap-2"><Users className="w-3.5 h-3.5 text-slate-400" /> {actualJoined} {t("community.liveDrives.volunteers")}</p>
                     </div>
 
                     <div className="mt-auto">
                       <div className="flex justify-between items-center text-[10px] font-bold mb-1">
                         <span className="text-slate-900 text-base">{progressPercent}%</span>
-                        <span className="text-slate-500">Goal: {maxVols} Volunteers</span>
+                        <span className="text-slate-500">{t("community.liveDrives.goal")}: {maxVols} {t("community.liveDrives.volunteers")}</span>
                       </div>
                       <div className="w-full bg-slate-100 h-1.5 rounded-full mb-4">
                         <div className="bg-green-600 h-1.5 rounded-full" style={{width: `${progressPercent}%`}}></div>
@@ -594,7 +607,7 @@ export default function CommunityHubPage() {
                         }}
                         className={`w-full border border-green-600 font-bold py-2.5 rounded-lg text-sm flex items-center justify-center gap-2 transition-colors ${isRegistered ? "bg-emerald-100 text-emerald-800 cursor-not-allowed" : "text-green-700 hover:bg-green-50"}`}
                       >
-                        <User className="w-4 h-4"/> {isRegistered ? "Registered" : isFull ? "View Details" : "Join Drive"}
+                        <User className="w-4 h-4"/> {isRegistered ? t("community.liveDrives.registered") : isFull ? t("community.liveDrives.viewDetails") : t("community.liveDrives.joinDrive")}
                       </button>
                     </div>
                   </div>
@@ -609,8 +622,8 @@ export default function CommunityHubPage() {
       <section id="organizations" className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 mt-16">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-8 gap-4">
           <div>
-            <h2 className="text-2xl font-black text-slate-900 mb-1">Featured Organizations</h2>
-            <p className="text-sm font-medium text-slate-500">Organizations making a difference in your city.</p>
+            <h2 className="text-2xl font-black text-slate-900 mb-1">{t("community.organizations.title")}</h2>
+            <p className="text-sm font-medium text-slate-500">{t("community.organizations.subtitle")}</p>
           </div>
         </div>
 
@@ -647,12 +660,12 @@ export default function CommunityHubPage() {
               <div className="w-full flex items-center justify-center pb-4 mb-4">
                 <div className="flex-1 text-center">
                   <p className="text-[22px] font-bold text-green-800 leading-none mb-1">{org.completedDrivesCount || 0}</p>
-                  <p className="text-[13px] font-medium text-slate-600">Active Drives</p>
+                  <p className="text-[13px] font-medium text-slate-600">{t("community.organizations.activeDrives")}</p>
                 </div>
                 <div className="w-px h-10 bg-slate-200 mx-2"></div>
                 <div className="flex-1 text-center">
                   <p className="text-[22px] font-bold text-green-800 leading-none mb-1">{org.activeMembers || 0}</p>
-                  <p className="text-[13px] font-medium text-slate-600">Total Members</p>
+                  <p className="text-[13px] font-medium text-slate-600">{t("community.organizations.totalMembers")}</p>
                 </div>
               </div>
               
@@ -666,7 +679,7 @@ export default function CommunityHubPage() {
                   ][(org.name.length || 0) % 4]}
                 </p>
                 <p className="text-[13px] text-slate-500 italic mt-auto">
-                  Registered with District Administration
+                  {t("community.organizations.registeredWithAdmin")}
                 </p>
               </div>
               
@@ -678,7 +691,7 @@ export default function CommunityHubPage() {
                 }}
                 className="w-full bg-white border border-green-700 text-green-800 font-bold py-2.5 rounded text-[15px] hover:bg-green-50 transition-colors"
               >
-                 Request to Join
+                 {t("community.organizations.requestToJoin")}
               </button>
             </motion.div>
           ))}
@@ -693,23 +706,21 @@ export default function CommunityHubPage() {
                <HeartHandshake className="w-7 h-7" />
             </div>
             <div>
-              <h2 className="text-2xl font-bold text-slate-900 mb-1">Be a Part of the Change</h2>
-              <p className="text-sm text-slate-600 font-medium">Join drives, follow organizations, and inspire your community.</p>
+              <h2 className="text-2xl font-bold text-slate-900 mb-1">{t("community.cta.title")}</h2>
+              <p className="text-sm text-slate-600 font-medium">{t("community.cta.subtitle")}</p>
             </div>
           </div>
           
           <div className="flex items-center gap-4 shrink-0 w-full md:w-auto">
             <button className="flex-1 md:flex-none px-6 py-2.5 bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 font-bold rounded-md text-sm transition-colors shadow-sm">
-              Follow Organizations
+              {t("community.cta.followButton")}
             </button>
             <button className="flex-1 md:flex-none px-6 py-2.5 bg-green-700 hover:bg-green-800 text-white font-bold rounded-md text-sm transition-colors shadow-sm">
-              Explore Drives
+              {t("community.cta.exploreButton")}
             </button>
           </div>
         </div>
       </section>
-
-
 
       {/* ─── INSTAGRAM-STYLE COMMENTS MODAL ─── */}
       {activePostForComments && (
@@ -734,7 +745,7 @@ export default function CommunityHubPage() {
                  <div className="flex gap-3 mb-6 pb-4 border-b border-slate-100">
                    <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center shrink-0"><User className="w-4 h-4 text-slate-500" /></div>
                    <div>
-                     <p className="text-sm"><span className="font-bold text-slate-900 mr-2">{activePostForComments.reportedByName || "Citizen"}</span>{activePostForComments.title} — {activePostForComments.resolutionSummary}</p>
+                     <p className="text-sm"><span className="font-bold text-slate-900 mr-2">{activePostForComments.reportedByName || t("common.citizen")}</span>{activePostForComments.title} — {activePostForComments.resolutionSummary}</p>
                      <p className="text-xs text-slate-400 mt-1">{new Date(activePostForComments.resolvedAt).toLocaleDateString()}</p>
                    </div>
                  </div>
@@ -745,7 +756,7 @@ export default function CommunityHubPage() {
                        <p className="text-sm"><span className="font-bold text-slate-900 mr-2">{c.userName}</span>{c.text}</p>
                        <div className="flex items-center gap-4 mt-1">
                          <p className="text-xs text-slate-400">{new Date(c.createdAt).toLocaleDateString()}</p>
-                         <button onClick={() => handleReportComment(activePostForComments._id, c._id)} className="text-[10px] font-bold text-slate-400 hover:text-red-600 transition-colors">Report</button>
+                         <button onClick={() => handleReportComment(activePostForComments._id, c._id)} className="text-[10px] font-bold text-slate-400 hover:text-red-600 transition-colors">{t("community.modals.comments.reportButton")}</button>
                        </div>
                      </div>
                      <button className="self-center p-2"><Heart className="w-3 h-3 text-slate-300 hover:text-red-500" /></button>
@@ -759,24 +770,89 @@ export default function CommunityHubPage() {
                   <button className="transition-transform active:scale-90 hover:opacity-70"><MessageCircle className="w-6 h-6 text-slate-800" /></button>
                   <button onClick={() => handleShare(activePostForComments)} className="transition-transform active:scale-90 hover:opacity-70"><Share2 className="w-6 h-6 text-slate-800" /></button>
                 </div>
-                <p className="font-bold text-slate-900 text-sm mb-1">{activePostForComments.likes.length.toLocaleString()} likes</p>
+                <p className="font-bold text-slate-900 text-sm mb-1">{activePostForComments.likes.length.toLocaleString()} {t("community.modals.comments.likesCount")}</p>
                 <p className="text-[10px] text-slate-400 uppercase tracking-wide">{new Date(activePostForComments.resolvedAt).toLocaleDateString()}</p>
               </div>
               <div className="h-16 border-t border-slate-200 flex items-center px-4 shrink-0 bg-slate-50">
-                 <input type="text" placeholder="Add a comment..." className="flex-1 bg-transparent border-none focus:ring-0 text-sm" value={commentText} onChange={e => setCommentText(e.target.value)} onKeyDown={e => { if (e.key === "Enter") handleComment(); }} />
-                 <button onClick={handleComment} disabled={!commentText.trim() || isSubmitting} className="text-green-600 font-bold text-sm px-2 disabled:opacity-50 transition-opacity">Post</button>
+                 <input type="text" placeholder={t("community.modals.comments.placeholder")} className="flex-1 bg-transparent border-none focus:ring-0 text-sm" value={commentText} onChange={e => setCommentText(e.target.value)} onKeyDown={e => { if (e.key === "Enter") handleComment(); }} />
+                 <button onClick={handleComment} disabled={!commentText.trim() || isSubmitting} className="text-green-600 font-bold text-sm px-2 disabled:opacity-50 transition-opacity">{t("community.modals.comments.postButton")}</button>
               </div>
             </div>
           </div>
         </div>
       )}
+
+      {/* ─── JOIN COMMUNITY DRIVE MODAL ─── */}
+      {selectedDriveForRegistration && (
+        <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setSelectedDriveForRegistration(null)}></div>
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg relative z-10 max-h-[90vh] flex flex-col overflow-hidden animate-in fade-in zoom-in-95">
+            <div className="px-6 py-5 border-b border-slate-100 flex items-center justify-between bg-slate-50">
+              <h2 className="font-black text-xl text-slate-900">{t("community.modals.joinDrive.title")}</h2>
+              <button onClick={() => setSelectedDriveForRegistration(null)} className="p-2 hover:bg-slate-200 rounded-full transition-colors">
+                <X className="w-5 h-5 text-slate-500" />
+              </button>
+            </div>
+            
+            <form onSubmit={handleJoin} className="p-6 overflow-y-auto flex-1 custom-scrollbar space-y-4">
+              <div className="mb-6 pb-6 border-b border-slate-100">
+                <h3 className="font-bold text-slate-900 mb-1">{selectedDriveForRegistration.title}</h3>
+                <p className="text-sm text-slate-500">{t("community.modals.joinDrive.subtitle")}</p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-bold text-slate-700 mb-1">{t("community.modals.joinDrive.nameLabel")} *</label>
+                <input required type="text" value={joinName} onChange={(e) => setJoinName(e.target.value)} className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-green-500 focus:ring-1 focus:ring-green-500" />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-bold text-slate-700 mb-1">{t("community.modals.joinDrive.emailLabel")} *</label>
+                <input required type="email" value={joinEmail} onChange={(e) => setJoinEmail(e.target.value)} className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-green-500 focus:ring-1 focus:ring-green-500" />
+              </div>
+              
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-bold text-slate-700 mb-1">{t("community.modals.joinDrive.phoneLabel")} *</label>
+                  <input required type="tel" value={joinPhone} onChange={(e) => setJoinPhone(e.target.value)} className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-green-500 focus:ring-1 focus:ring-green-500" />
+                </div>
+                <div>
+                  <label className="block text-sm font-bold text-slate-700 mb-1">{t("community.modals.joinDrive.ageLabel")} *</label>
+                  <input required type="number" min="16" value={joinAge} onChange={(e) => setJoinAge(e.target.value)} className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-green-500 focus:ring-1 focus:ring-green-500" placeholder="18" />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-bold text-slate-700 mb-1">{t("community.modals.joinDrive.reasonLabel")} *</label>
+                <textarea required value={reasonForJoining} onChange={(e) => setReasonForJoining(e.target.value)} className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-green-500 focus:ring-1 focus:ring-green-500 h-20 resize-none" placeholder="Reason for volunteering" />
+              </div>
+
+              <div>
+                <label className="block text-sm font-bold text-slate-700 mb-1">{t("community.modals.joinDrive.emergencyLabel")} *</label>
+                <input required type="tel" value={emergencyContact} onChange={(e) => setEmergencyContact(e.target.value)} className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-green-500 focus:ring-1 focus:ring-green-500" />
+              </div>
+
+              <label className="flex items-start gap-3 mt-6 p-4 bg-slate-50 rounded-xl cursor-pointer border border-slate-100">
+                <input type="checkbox" checked={agreeGuidelines} onChange={(e) => setAgreeGuidelines(e.target.checked)} className="mt-1 w-4 h-4 text-green-600 rounded border-slate-300 focus:ring-green-500" />
+                <span className="text-xs text-slate-600 font-medium">{t("community.modals.joinDrive.guidelines")}</span>
+              </label>
+
+              <div className="mt-8">
+                <button type="submit" disabled={isJoining} className="w-full bg-green-700 hover:bg-green-800 text-white font-bold py-3 px-4 rounded-xl shadow-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+                  {isJoining ? t("community.modals.joinDrive.submitting") : t("community.modals.joinDrive.submit")}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
       {/* ─── JOIN ORGANIZATION MODAL ─── */}
       {selectedOrgForRegistration && (
         <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setSelectedOrgForRegistration(null)}></div>
           <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg relative z-10 max-h-[90vh] flex flex-col overflow-hidden animate-in fade-in zoom-in-95">
             <div className="px-6 py-5 border-b border-slate-100 flex items-center justify-between bg-slate-50">
-              <h2 className="font-black text-xl text-slate-900">Join Organization</h2>
+              <h2 className="font-black text-xl text-slate-900">{t("community.modals.joinOrg.title")}</h2>
               <button onClick={() => setSelectedOrgForRegistration(null)} className="p-2 hover:bg-slate-200 rounded-full transition-colors">
                 <X className="w-5 h-5 text-slate-500" />
               </button>
@@ -785,37 +861,41 @@ export default function CommunityHubPage() {
             <form onSubmit={handleJoinOrg} className="p-6 overflow-y-auto flex-1 custom-scrollbar">
               <div className="mb-6 pb-6 border-b border-slate-100">
                 <h3 className="font-bold text-slate-900 mb-1">{selectedOrgForRegistration.name}</h3>
-                <p className="text-sm text-slate-500">Apply to become a volunteer member.</p>
+                <p className="text-sm text-slate-500">{t("community.modals.joinOrg.subtitle")}</p>
               </div>
 
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-bold text-slate-700 mb-1">Full Name *</label>
+                  <label className="block text-sm font-bold text-slate-700 mb-1">{t("community.modals.joinDrive.nameLabel")} *</label>
                   <input required type="text" value={joinName} onChange={(e) => setJoinName(e.target.value)} className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-green-500 focus:ring-1 focus:ring-green-500" placeholder="John Doe" />
                 </div>
                 <div>
-                  <label className="block text-sm font-bold text-slate-700 mb-1">Email Address *</label>
+                  <label className="block text-sm font-bold text-slate-700 mb-1">{t("community.modals.joinDrive.emailLabel")} *</label>
                   <input required type="email" value={joinEmail} onChange={(e) => setJoinEmail(e.target.value)} className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-green-500 focus:ring-1 focus:ring-green-500" placeholder="john@example.com" />
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-bold text-slate-700 mb-1">Age *</label>
+                    <label className="block text-sm font-bold text-slate-700 mb-1">{t("community.modals.joinDrive.ageLabel")} *</label>
                     <input required type="number" min="16" value={joinAge} onChange={(e) => setJoinAge(e.target.value)} className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-green-500 focus:ring-1 focus:ring-green-500" placeholder="18" />
                   </div>
                   <div>
-                    <label className="block text-sm font-bold text-slate-700 mb-1">City *</label>
-                    <input required type="text" value={joinOrgCity} onChange={(e) => setJoinOrgCity(e.target.value)} className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-green-500 focus:ring-1 focus:ring-green-500" placeholder="Your City" />
+                    <label className="block text-sm font-bold text-slate-700 mb-1">{t("community.modals.joinOrg.skillsLabel")} *</label>
+                    <input required type="text" value={joinOrgCity} onChange={(e) => setJoinOrgCity(e.target.value)} className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-green-500 focus:ring-1 focus:ring-green-500" placeholder={t("community.modals.joinOrg.skillsPlaceholder")} />
                   </div>
+                </div>
+                <div>
+                  <label className="block text-sm font-bold text-slate-700 mb-1">{t("community.modals.joinOrg.motivationLabel")} *</label>
+                  <textarea required value={reasonForJoining} onChange={(e) => setReasonForJoining(e.target.value)} className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-green-500 focus:ring-1 focus:ring-green-500 h-20 resize-none" placeholder={t("community.modals.joinOrg.motivationPlaceholder")} />
                 </div>
                 <label className="flex items-start gap-3 mt-6 p-4 bg-slate-50 rounded-xl cursor-pointer border border-slate-100">
                   <input type="checkbox" checked={agreeGuidelines} onChange={(e) => setAgreeGuidelines(e.target.checked)} className="mt-1 w-4 h-4 text-green-600 rounded border-slate-300 focus:ring-green-500" />
-                  <span className="text-xs text-slate-600 font-medium">I agree to follow the guidelines and policies of this organization. My membership is subject to approval.</span>
+                  <span className="text-xs text-slate-600 font-medium">{t("community.modals.joinOrg.guidelines")}</span>
                 </label>
               </div>
 
               <div className="mt-8">
                 <button type="submit" disabled={isJoining} className="w-full bg-green-700 hover:bg-green-800 text-white font-bold py-3 px-4 rounded-xl shadow-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
-                  {isJoining ? "Submitting Application..." : "Submit Application"}
+                  {isJoining ? t("community.modals.joinOrg.submitting") : t("community.modals.joinOrg.submit")}
                 </button>
               </div>
             </form>

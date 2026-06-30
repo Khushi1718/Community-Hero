@@ -1,62 +1,75 @@
 "use client";
 
-import { UserCircle, Wrench, Shield, Globe, Building, Network, ArrowRight, Bell, Cloud } from "lucide-react";
+import { UserCircle, Wrench, Shield, Globe, Building, Network, ArrowRight, Bell, Cloud, HeartHandshake } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 export default function UserEcosystem() {
+  const { t } = useTranslation();
+
   const roles = [
     {
       icon: UserCircle,
-      title: "Citizen",
+      title: t("home.ecosystem.roles.citizen.title"),
       items: [
-        "Report civic issues instantly",
-        "Upload verified photos/videos",
-        "Track issue progress live",
-        "Earn civic trust scores"
+        t("home.ecosystem.roles.citizen.item1"),
+        t("home.ecosystem.roles.citizen.item2"),
+        t("home.ecosystem.roles.citizen.item3"),
+        t("home.ecosystem.roles.citizen.item4")
       ]
     },
     {
       icon: Wrench,
-      title: "Municipal Employee",
+      title: t("home.ecosystem.roles.employee.title"),
       items: [
-        "Receive assigned tasks",
-        "Navigate via GPS routing",
-        "Request field materials",
-        "Capture official evidence"
+        t("home.ecosystem.roles.employee.item1"),
+        t("home.ecosystem.roles.employee.item2"),
+        t("home.ecosystem.roles.employee.item3"),
+        t("home.ecosystem.roles.employee.item4")
       ]
     },
     {
       icon: Shield,
-      title: "City Admin",
+      title: t("home.ecosystem.roles.admin.title"),
       items: [
-        "Manage city jurisdiction",
-        "Review AI analytics",
-        "Approve task completions",
-        "Monitor live operations"
+        t("home.ecosystem.roles.admin.item1"),
+        t("home.ecosystem.roles.admin.item2"),
+        t("home.ecosystem.roles.admin.item3"),
+        t("home.ecosystem.roles.admin.item4")
       ]
     },
     {
       icon: Globe,
-      title: "Super Admin",
+      title: t("home.ecosystem.roles.superadmin.title"),
       items: [
-        "Oversee national network",
-        "Create city administrators",
-        "Analyze macro performance",
-        "Maintain platform governance"
+        t("home.ecosystem.roles.superadmin.item1"),
+        t("home.ecosystem.roles.superadmin.item2"),
+        t("home.ecosystem.roles.superadmin.item3"),
+        t("home.ecosystem.roles.superadmin.item4")
+      ]
+    },
+    {
+      icon: HeartHandshake,
+      title: t("home.ecosystem.roles.partner.title"),
+      items: [
+        t("home.ecosystem.roles.partner.item1"),
+        t("home.ecosystem.roles.partner.item2"),
+        t("home.ecosystem.roles.partner.item3"),
+        t("home.ecosystem.roles.partner.item4")
       ]
     }
   ];
 
   return (
-    <section className="py-12 bg-slate-50 border-b border-slate-200 relative">
+    <section className="py-12 bg-slate-50 border-b border-slate-200 relative animate-fade-in">
       <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-16 max-w-3xl mx-auto">
-          <h2 className="text-sm font-black text-slate-500 uppercase tracking-widest mb-4">Four User Ecosystem</h2>
+          <h2 className="text-sm font-black text-slate-500 uppercase tracking-widest mb-4">{t("home.ecosystem.tag")}</h2>
           <h3 className="text-3xl md:text-5xl font-black text-slate-900 leading-tight">
-            A united front for better cities.
+            {t("home.ecosystem.title")}
           </h3>
         </div>
 
-        <div className="flex overflow-x-auto snap-x snap-mandatory pb-6 -mx-4 px-4 md:-mx-0 md:px-0 md:pb-0 md:grid md:grid-cols-2 lg:grid-cols-4 gap-6 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+        <div className="flex overflow-x-auto snap-x snap-mandatory pb-6 -mx-4 px-4 md:-mx-0 md:px-0 md:pb-0 md:grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
           {roles.map((role, idx) => (
             <div key={idx} className="w-[85vw] shrink-0 snap-center md:w-auto rounded-xl p-7 border border-green-200 bg-white shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all duration-300 shadow-green-500/5">
               <div className="flex items-center gap-4 mb-5">
@@ -83,9 +96,9 @@ export default function UserEcosystem() {
         {/* Integrations Banner */}
         <div className="mt-16 bg-white border border-slate-200 rounded-xl p-8 shadow-sm flex flex-col lg:flex-row items-center justify-between gap-10">
           <div className="lg:w-1/3">
-            <h4 className="text-xl font-bold text-slate-900 mb-3">Seamless Government Integrations</h4>
+            <h4 className="text-xl font-bold text-slate-900 mb-3">{t("home.ecosystem.integration.title")}</h4>
             <p className="text-sm text-slate-600 leading-relaxed">
-              Already have an existing municipal CRM? No need to shift platforms. Community Hero integrates directly with your legacy systems to seamlessly push and pull issue reports. Powered by <strong className="text-blue-600">Google Cloud Pub/Sub</strong>, we guarantee real-time, secure, and scalable data exchange without interrupting your current workflow.
+              {t("home.ecosystem.integration.desc")}
             </p>
           </div>
           
@@ -95,7 +108,7 @@ export default function UserEcosystem() {
               <div className="w-16 h-16 rounded-full bg-slate-50 border border-slate-200 flex items-center justify-center text-slate-600 shadow-sm">
                 <Building className="w-7 h-7" />
               </div>
-              <span className="text-xs font-bold text-slate-700 text-center">External<br/>Gov. CRM</span>
+              <span className="text-xs font-bold text-slate-700 text-center">{t("home.ecosystem.integration.crm")}</span>
             </div>
             
             <ArrowRight className="w-5 h-5 text-slate-300 shrink-0" />
@@ -105,7 +118,7 @@ export default function UserEcosystem() {
               <div className="w-16 h-16 rounded-full bg-blue-50 border border-blue-100 flex items-center justify-center text-blue-600 shadow-sm">
                 <Cloud className="w-7 h-7" />
               </div>
-              <span className="text-xs font-bold text-slate-700 text-center">Google Cloud<br/>Pub/Sub</span>
+              <span className="text-xs font-bold text-slate-700 text-center">{t("home.ecosystem.integration.pubsub")}</span>
             </div>
 
             <ArrowRight className="w-5 h-5 text-slate-300 shrink-0" />
@@ -114,7 +127,7 @@ export default function UserEcosystem() {
               <div className="w-16 h-16 rounded-full bg-green-50 border border-green-100 flex items-center justify-center text-green-600 shadow-sm">
                 <Shield className="w-7 h-7" />
               </div>
-              <span className="text-xs font-bold text-slate-700 text-center">Community<br/>Hero Platform</span>
+              <span className="text-xs font-bold text-slate-700 text-center">{t("home.ecosystem.integration.platform")}</span>
             </div>
 
             <ArrowRight className="w-5 h-5 text-slate-300 shrink-0" />
@@ -123,7 +136,7 @@ export default function UserEcosystem() {
               <div className="w-16 h-16 rounded-full bg-purple-50 border border-purple-100 flex items-center justify-center text-purple-600 shadow-sm">
                 <Bell className="w-7 h-7" />
               </div>
-              <span className="text-xs font-bold text-slate-700 text-center">Real-time Sync<br/>& Notifications</span>
+              <span className="text-xs font-bold text-slate-700 text-center">{t("home.ecosystem.integration.sync")}</span>
             </div>
           </div>
         </div>

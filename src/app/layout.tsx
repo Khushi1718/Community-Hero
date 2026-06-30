@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/lib/auth-context";
+import { I18nProvider } from "@/lib/i18n-provider";
 import { Navbar } from "@/components/Navbar";
 import { BottomNav } from "@/components/BottomNav";
 
@@ -52,13 +53,15 @@ export default function RootLayout({
       <body className="min-h-[100dvh] flex flex-col bg-surface-50 text-surface-900 selection:bg-primary-200 selection:text-primary-900" suppressHydrationWarning>
         <ClerkProvider>
           <AuthProvider>
-            <div className="flex-1 flex flex-col pb-20 md:pb-0 relative">
-              <Navbar />
-              <div className="flex-1">
-                {children}
+            <I18nProvider>
+              <div className="flex-1 flex flex-col pb-20 md:pb-0 relative">
+                <Navbar />
+                <div className="flex-1">
+                  {children}
+                </div>
               </div>
-            </div>
-            <BottomNav />
+              <BottomNav />
+            </I18nProvider>
           </AuthProvider>
         </ClerkProvider>
       </body>

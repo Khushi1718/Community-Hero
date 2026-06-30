@@ -1,28 +1,31 @@
 "use client";
 
 import { Smartphone, Brain, AlertTriangle, UserCog, Wrench, UploadCloud, CheckCircle, Rss } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 export default function WorkflowTimeline() {
+  const { t } = useTranslation();
+
   const steps = [
-    { icon: Smartphone, title: "Report Live", desc: "Citizen submits issue live via app." },
-    { icon: Brain, title: "AI Analysis", desc: "Duplicate detection & image check." },
-    { icon: AlertTriangle, title: "AI Reasoning", desc: "Severity scoring & impact assessment." },
-    { icon: UserCog, title: "Auto-Assignment", desc: "Task routed to relevant department." },
-    { icon: Wrench, title: "Field Action", desc: "Employee executes related work." },
-    { icon: UploadCloud, title: "Publish Proof", desc: "Employee uploads timelines & proof." },
-    { icon: CheckCircle, title: "Verification", desc: "AI tests completion & Admin review." },
-    { icon: Rss, title: "Community Feed", desc: "Issue published to public feed." },
+    { icon: Smartphone, title: t("home.workflow.steps.step1.title"), desc: t("home.workflow.steps.step1.desc") },
+    { icon: Brain, title: t("home.workflow.steps.step2.title"), desc: t("home.workflow.steps.step2.desc") },
+    { icon: AlertTriangle, title: t("home.workflow.steps.step3.title"), desc: t("home.workflow.steps.step3.desc") },
+    { icon: UserCog, title: t("home.workflow.steps.step4.title"), desc: t("home.workflow.steps.step4.desc") },
+    { icon: Wrench, title: t("home.workflow.steps.step5.title"), desc: t("home.workflow.steps.step5.desc") },
+    { icon: UploadCloud, title: t("home.workflow.steps.step6.title"), desc: t("home.workflow.steps.step6.desc") },
+    { icon: CheckCircle, title: t("home.workflow.steps.step7.title"), desc: t("home.workflow.steps.step7.desc") },
+    { icon: Rss, title: t("home.workflow.steps.step8.title"), desc: t("home.workflow.steps.step8.desc") },
   ];
 
   return (
-    <section className="py-24 bg-slate-900 text-white overflow-hidden relative">
+    <section className="py-24 bg-slate-900 text-white overflow-hidden relative animate-fade-in">
       <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-green-500 to-transparent opacity-50"></div>
       
       <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-20 max-w-3xl mx-auto">
-          <h2 className="text-sm font-black text-green-400 uppercase tracking-widest mb-4">How Reporting Works</h2>
+          <h2 className="text-sm font-black text-green-400 uppercase tracking-widest mb-4">{t("home.workflow.tag")}</h2>
           <h3 className="text-3xl md:text-5xl font-black text-white leading-tight">
-            The Lifecycle of Accountability
+            {t("home.workflow.title")}
           </h3>
         </div>
 

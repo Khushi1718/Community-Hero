@@ -5,11 +5,13 @@ import { useRouter, useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { getIssues, Issue } from "@/lib/storage";
 import { ArrowLeft, CheckCircle2, Clock, MapPin, AlertTriangle, ShieldCheck, Send } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 export default function ReportDetailPage() {
   const { user, role, loading } = useAuth();
   const router = useRouter();
   const params = useParams();
+  const { t } = useTranslation();
   const [issue, setIssue] = useState<Issue | null>(null);
 
   useEffect(() => {
@@ -56,7 +58,7 @@ export default function ReportDetailPage() {
           onClick={() => router.push("/my-reports")}
           className="flex items-center gap-2 text-slate-500 hover:text-slate-900 font-medium mb-6 transition-colors"
         >
-          <ArrowLeft className="w-4 h-4" /> Back to My Reports
+          <ArrowLeft className="w-4 h-4" /> {t("myReports.detail.back")}
         </button>
 
         <div className="bg-white border border-slate-200 rounded-[2rem] p-6 sm:p-10 shadow-sm mb-8">
@@ -75,7 +77,7 @@ export default function ReportDetailPage() {
                 </span>
                 {isEscalated && (
                   <span className="bg-red-600 text-white text-[10px] uppercase font-black px-2 py-0.5 rounded-full flex items-center gap-1 shadow-sm">
-                    <AlertTriangle className="w-3 h-3" /> Escalated
+                    <AlertTriangle className="w-3 h-3" /> {t("myReports.detail.escalated")}
                   </span>
                 )}
               </div>
@@ -89,34 +91,34 @@ export default function ReportDetailPage() {
             {issue.assignedTo && (
               <div className="bg-indigo-50 border border-indigo-100 text-indigo-700 px-4 py-2 rounded-xl flex items-center gap-2 font-medium">
                 <Send className="w-4 h-4" />
-                Assigned: {issue.assignedTo}
+                {t("myReports.detail.assigned")}: {issue.assignedTo}
               </div>
             )}
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
             <div>
-              <h3 className="text-sm font-bold text-slate-500 uppercase tracking-wider mb-3">Reported Image</h3>
+              <h3 className="text-sm font-bold text-slate-500 uppercase tracking-wider mb-3">{t("myReports.detail.reportedImage")}</h3>
               <img src={issue.imageBase64} alt="Reported Issue" className="w-full h-64 object-cover rounded-2xl border border-slate-200 shadow-sm" />
             </div>
             <div className="space-y-6">
               <div>
-                <h3 className="text-sm font-bold text-slate-500 uppercase tracking-wider mb-2">Description</h3>
+                <h3 className="text-sm font-bold text-slate-500 uppercase tracking-wider mb-2">{t("myReports.detail.description")}</h3>
                 <p className="text-slate-700 bg-slate-50 p-4 rounded-xl border border-slate-100">{issue.description}</p>
               </div>
               {issue.aiAnalysis?.severityReason && (
                 <div>
                   <h3 className="text-sm font-bold text-red-500 uppercase tracking-wider mb-2 flex items-center gap-1">
-                    <AlertTriangle className="w-4 h-4" /> AI Severity Analysis
+                    <AlertTriangle className="w-4 h-4" /> {t("myReports.detail.aiSeverity")}
                   </h3>
                   <div className="text-red-900 bg-red-50 p-4 rounded-xl border border-red-100 text-sm font-medium">
-                    <span className="font-bold text-red-700 block mb-1">Reason:</span>
+                    <span className="font-bold text-red-700 block mb-1">{t("myReports.detail.reason")}:</span>
                     {issue.aiAnalysis.severityReason}
                   </div>
                 </div>
               )}
               <div>
-                <h3 className="text-sm font-bold text-slate-500 uppercase tracking-wider mb-2">Location</h3>
+                <h3 className="text-sm font-bold text-slate-500 uppercase tracking-wider mb-2">{t("myReports.detail.location")}</h3>
                 <div className="flex items-center gap-2 text-slate-700 bg-slate-50 p-4 rounded-xl border border-slate-100">
                   <MapPin className="w-5 h-5 text-blue-500" /> {issue.location}
                 </div>
@@ -130,20 +132,20 @@ export default function ReportDetailPage() {
               <div className="absolute top-0 right-0 w-32 h-32 bg-green-200 rounded-bl-full -z-10 opacity-50"></div>
               <h4 className="text-xl font-bold text-green-800 flex items-center gap-2 mb-6">
                 <CheckCircle2 className="w-6 h-6" />
-                Issue Resolved Successfully
+                {t("community.resolvedIssues.resolved")}
               </h4>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                 <div>
-                  <p className="text-xs font-bold text-slate-500 uppercase mb-2">Before</p>
+                  <p className="text-xs font-bold text-slate-500 uppercase mb-2">{t("myReports.detail.before")}</p>
                   <img src={issue.imageBase64} alt="Before" className="w-full h-48 object-cover rounded-xl border border-slate-200 shadow-sm" />
                 </div>
                 <div>
-                  <p className="text-xs font-bold text-green-600 uppercase mb-2">After</p>
+                  <p className="text-xs font-bold text-green-600 uppercase mb-2">{t("myReports.detail.after")}</p>
                   <img src={issue.resolutionProof.imageBase64} alt="After" className="w-full h-48 object-cover rounded-xl border border-green-300 shadow-md ring-4 ring-green-100" />
                 </div>
               </div>
               <div className="bg-white p-4 rounded-xl border border-green-100 text-sm text-slate-700 shadow-sm">
-                <span className="font-bold text-green-800 block mb-1">Resolution Notes:</span>
+                <span className="font-bold text-green-800 block mb-1">{t("myReports.detail.notes")}:</span>
                 {issue.resolutionProof.notes}
               </div>
             </div>
@@ -153,9 +155,9 @@ export default function ReportDetailPage() {
           {issue.status === 'Awaiting Citizen Review' && (
             <div className="bg-white border-2 border-indigo-200 rounded-2xl p-6 mb-8 shadow-sm">
               <h3 className="text-xl font-bold text-indigo-900 mb-2 flex items-center gap-2">
-                <CheckCircle2 className="w-6 h-6" /> Review Resolution
+                <CheckCircle2 className="w-6 h-6" /> {t("myReports.detail.reviewTitle")}
               </h3>
-              <p className="text-slate-600 mb-6">The assigned team has marked this issue as resolved. Please review the completion details below and confirm if the issue is fully fixed.</p>
+              <p className="text-slate-600 mb-6">{t("myReports.detail.reviewDesc")}</p>
               
               <div className="flex flex-col sm:flex-row gap-4">
                 <button 
@@ -168,13 +170,13 @@ export default function ReportDetailPage() {
                        });
                        alert("Resolution Accepted! The issue is now closed.");
                        router.push("/community");
-                     } catch (err) {
-                       console.error(err);
-                     }
+                      } catch (err) {
+                        console.error(err);
+                      }
                   }}
                   className="flex-1 bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-4 rounded-xl transition-colors shadow-sm"
                 >
-                  ✓ Accept Resolution
+                  ✓ {t("myReports.detail.accept")}
                 </button>
                 <button 
                   onClick={async () => {
@@ -191,7 +193,7 @@ export default function ReportDetailPage() {
                   }}
                   className="flex-1 bg-white border border-red-200 hover:bg-red-50 text-red-600 font-bold py-3 px-4 rounded-xl transition-colors shadow-sm"
                 >
-                  ✗ Reopen Issue
+                  ✗ {t("myReports.detail.reopen")}
                 </button>
               </div>
             </div>
@@ -200,10 +202,9 @@ export default function ReportDetailPage() {
           <div>
             <h3 className="text-xl font-bold text-slate-900 mb-6 flex items-center gap-2">
               <Clock className="w-6 h-6 text-indigo-500" />
-              Live Issue Timeline
+              {t("myReports.detail.timelineTitle")}
             </h3>
             <div className="relative border-l-2 border-slate-200 ml-4 space-y-8">
-              {/* Combine timeline events and progress updates, sort by time */}
               {[...issue.timeline.map(e => ({ type: 'event', ...e })), ...(issue.progressUpdates || []).map(p => ({ type: 'update', ...p }))]
                 .sort((a, b) => a.timestamp - b.timestamp)
                 .map((item: any, idx, arr) => (
@@ -224,7 +225,7 @@ export default function ReportDetailPage() {
                       <div className="flex justify-between items-start mb-2">
                         <p className="font-bold text-slate-800 flex items-center gap-2">
                           <span className="w-6 h-6 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center text-xs">🛠️</span>
-                          Update from {item.author}
+                          {t("myReports.detail.updateFrom")} {item.author}
                         </p>
                         <p className="text-xs text-slate-500">{new Date(item.timestamp).toLocaleString()}</p>
                       </div>
@@ -233,7 +234,7 @@ export default function ReportDetailPage() {
                       {item.progressPercentage !== undefined && (
                         <div className="mb-3">
                            <div className="flex justify-between text-xs font-bold mb-1">
-                             <span className="text-slate-500">Progress</span>
+                             <span className="text-slate-500">{t("myReports.detail.progress")}</span>
                              <span className="text-indigo-600">{item.progressPercentage}%</span>
                            </div>
                            <div className="w-full bg-slate-200 rounded-full h-1.5">
@@ -253,10 +254,10 @@ export default function ReportDetailPage() {
                   )}
                 </div>
               ))}
-            </div>
           </div>
         </div>
-      </main>
-    </div>
+      </div>
+    </main>
+  </div>
   );
 }

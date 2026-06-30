@@ -1,0 +1,612 @@
+{
+  "common": {
+    "title": "Community Hero",
+    "loading": "Loading...",
+    "citizen": "Citizen",
+    "points": "Points",
+    "hours": "Hours",
+    "drives": "Drives",
+    "required": "Required",
+    "optional": "Optional",
+    "back": "Back",
+    "cancel": "Cancel",
+    "submit": "Submit",
+    "save": "Save",
+    "status": "Status",
+    "date": "Date",
+    "time": "Time",
+    "location": "Location",
+    "category": "Category",
+    "description": "Description",
+    "severity": "Severity",
+    "department": "Department",
+    "reasoning": "AI Reasoning",
+    "priority": "Priority"
+  },
+  "navbar": {
+    "home": "Home",
+    "report": "Report",
+    "myReports": "My Reports",
+    "community": "Community",
+    "profile": "Profile",
+    "login": "Login",
+    "dashboard": "Dashboard",
+    "logout": "Logout",
+    "notifications": "Notifications",
+    "markAllRead": "Mark all read",
+    "noNotifications": "No notifications",
+    "reportAnIssue": "Report an Issue"
+  },
+  "home": {
+    "hero": {
+      "title": "Empowering Citizens. Equipping Municipalities.",
+      "subtitle": "A unified civic governance platform where citizens report issues, officials resolve them, and volunteers drive local action.",
+      "reportButton": "Report an Issue",
+      "joinDriveButton": "Join a Drive"
+    },
+    "announcement": {
+      "label": "Latest Announcement",
+      "text": "Join the 'Clean Surroundings Drive' in your area this weekend.",
+      "knowMore": "Know More"
+    },
+    "about": {
+      "title": "About Community Hero",
+      "subtitle": "Empowering Citizens. Strengthening Communities. Transforming Cities.",
+      "desc1": "Community Hero is an AI-powered civic engagement platform designed to bridge the gap between citizens, government authorities, NGOs, and volunteers. We believe that creating better cities requires more than just reporting problems—it requires collaboration, transparency, and active community participation.",
+      "desc2": "Traditional complaint systems often leave citizens without updates, while many community-driven initiatives struggle to reach volunteers and measure their impact. Community Hero brings everything together on a single intelligent platform where civic issues can be reported, analyzed, tracked, and resolved while encouraging people to become part of the solution.",
+      "roles": {
+        "citizen": {
+          "title": "Citizen Reporters",
+          "desc": "Citizens easily report local issues like potholes or broken streetlights with GPS evidence. AI triage categorizes these reports, ensuring they are routed to the right departments instantly for rapid, transparent resolution."
+        },
+        "community": {
+          "title": "Community Drives",
+          "desc": "Verified organizations can launch local community drives and recruit enthusiastic volunteers directly through the platform. Participants collaborate to address challenges collectively, building stronger, resilient neighborhoods through structured civic participation."
+        },
+        "employee": {
+          "title": "Municipal Employees",
+          "desc": "Field workers receive verified tasks with exact coordinates. Once repairs are completed, employees must upload timestamped, geofenced 'After' photos via the app to securely close out the issue and maintain public accountability."
+        },
+        "admin": {
+          "title": "City Administrators",
+          "desc": "Local admins manage municipal operations through dynamic dashboards. They can seamlessly allocate resources, monitor field employee performance, and track city-wide resolution metrics in real-time, ensuring optimal efficiency and maximizing public satisfaction."
+        },
+        "superadmin": {
+          "title": "Superadmin Oversight",
+          "desc": "Superadmins maintain platform integrity by verifying NGOs and overseeing multi-city operations. They ensure the ecosystem remains secure and scalable, acting as the ultimate authority for system configurations and high-level trust verification."
+        }
+      },
+      "cta": {
+        "title": "Together, we don't just report problems—we solve them.",
+        "subtitle": "Let's build cleaner, safer, smarter, and more sustainable communities."
+      }
+    },
+    "workflow": {
+      "tag": "How Reporting Works",
+      "title": "The Lifecycle of Accountability",
+      "steps": {
+        "step1": { "title": "Report Live", "desc": "Citizen submits issue live via app." },
+        "step2": { "title": "AI Analysis", "desc": "Duplicate detection & image check." },
+        "step3": { "title": "AI Reasoning", "desc": "Severity scoring & impact assessment." },
+        "step4": { "title": "Auto-Assignment", "desc": "Task routed to relevant department." },
+        "step5": { "title": "Field Action", "desc": "Employee executes related work." },
+        "step6": { "title": "Publish Proof", "desc": "Employee uploads timelines & proof." },
+        "step7": { "title": "Verification", "desc": "AI tests completion & Admin review." },
+        "step8": { "title": "Community Feed", "desc": "Issue published to public feed." }
+      }
+    },
+    "ecosystem": {
+      "tag": "Five User Ecosystem",
+      "title": "A united front for better cities.",
+      "roles": {
+        "citizen": {
+          "title": "Citizen",
+          "item1": "Report civic issues instantly",
+          "item2": "Upload verified photos/videos",
+          "item3": "Track issue progress live",
+          "item4": "Earn civic trust scores"
+        },
+        "employee": {
+          "title": "Municipal Employee",
+          "item1": "Receive assigned tasks",
+          "item2": "Navigate via GPS routing",
+          "item3": "Request field materials",
+          "item4": "Capture official evidence"
+        },
+        "admin": {
+          "title": "City Admin",
+          "item1": "Manage city jurisdiction",
+          "item2": "Review AI analytics",
+          "item3": "Approve task completions",
+          "item4": "Monitor live operations"
+        },
+        "superadmin": {
+          "title": "Super Admin",
+          "item1": "Oversee national network",
+          "item2": "Create city administrators",
+          "item3": "Analyze macro performance",
+          "item4": "Maintain platform governance"
+        },
+        "partner": {
+          "title": "Partner Organizations",
+          "item1": "Launch community drives",
+          "item2": "Recruit local volunteers",
+          "item3": "Build dynamic Trust Scores",
+          "item4": "Issue verified certificates"
+        }
+      },
+      "integration": {
+        "title": "Seamless Government Integrations",
+        "desc": "Already have an existing municipal CRM? No need to shift platforms. Community Hero integrates directly with your legacy systems to seamlessly push and pull issue reports. Powered by Google Cloud Pub/Sub, we guarantee real-time, secure, and scalable data exchange without interrupting your current workflow.",
+        "crm": "External Gov. CRM",
+        "pubsub": "Google Cloud Pub/Sub",
+        "platform": "Community Hero Platform",
+        "sync": "Real-time Sync & Notifications"
+      }
+    },
+    "coverage": {
+      "tag": "National Scale",
+      "title": "Live Network Coverage.",
+      "desc": "Our ecosystem scales organically. Below is the live footprint of active municipal administrators operating on Community Hero."
+    },
+    "cta": {
+      "tag": "For NGOs & Volunteer Groups",
+      "title": "Partner with municipalities. Amplify your impact.",
+      "desc": "Join the official network to host independent drives, accept civic requests, and mobilize local volunteers directly alongside city officials.",
+      "registerButton": "Register Organization",
+      "step1Title": "Organize Independent Drives",
+      "step1Desc": "Publish public drives directly to the community feed. Invite local citizens to participate, track RSVP lists, and manage events efficiently.",
+      "step2Title": "Admin Collaboration Requests",
+      "step2Desc": "City administrators can officially request your organization to assist with verified civic issues, routing targeted tasks directly to your volunteers.",
+      "step3Title": "Automated Digital Certificates",
+      "step3Desc": "Upon successful completion of drives, volunteers receive verifiable digital certificates, securely backed by Google Cloud infrastructure."
+    },
+    "infrastructure": {
+      "tag": "Core Platform Infrastructure",
+      "title": "Secure, Scalable, and Smart.",
+      "desc": "Our platform leverages industry-leading technologies to ensure high reliability, data integrity, and automated efficiency for municipal governance.",
+      "features": {
+        "vision": { "title": "AI Computer Vision", "desc": "Extracts deep insights from citizen-uploaded imagery using Gemini Vision." },
+        "pubsub": { "title": "Google Cloud Pub/Sub", "desc": "Real-time, secure data exchange with external municipal legacy systems." },
+        "mapping": { "title": "Geospatial Mapping", "desc": "Live tracking and precise GPS coordination for all field operations." },
+        "smtp": { "title": "Automated SMTP Mail", "desc": "Reliable email sending and real-time notifications for citizens and staff." },
+        "duplicate": { "title": "Duplicate Detection", "desc": "Prevents spam by spatially matching incoming issues with active reports." },
+        "verification": { "title": "AI Proof Verification", "desc": "Compares Before and After photos to automatically verify field employee repairs." },
+        "assignment": { "title": "Smart Task Assignment", "desc": "Automatically routes validated tasks to the correct municipal department." },
+        "certificates": { "title": "Cryptographic Certificates", "desc": "Generates verifiable digital certificates for civic volunteers and NGOs." }
+      }
+    },
+    "why": {
+      "tag": "Security & Transparency",
+      "title": "Accountability built into every step.",
+      "desc": "Community Hero is designed with bank-grade security to prevent spam, improve verification accuracy, and foster public trust through a cryptographically auditable workflow.",
+      "features": {
+        "ai": { "title": "AI Triage & Anti-Spoofing", "desc": "To combat duplicate complaints, our models cross-reference geospatial data. Hardcoded EXIF analysis and temporal validation prevent image spoofing and filter out manipulated media before it reaches city admins." },
+        "accountability": { "title": "Verified Accountability", "desc": "Tickets cannot be closed arbitrarily. Municipal employees must use in-app live camera capture to upload geofenced, timestamped 'After' photos from the exact location, proving the repair was genuinely completed." },
+        "audit": { "title": "Immutable Audit Logs", "desc": "Every major state transition is securely tracked in immutable admin audit logs. This establishes a clear, auditable, public-facing timeline that helps bridge the trust gap between citizens and local government." },
+        "privacy": { "title": "Encrypted Privacy & Routing", "desc": "Citizen privacy is protected through end-to-end encrypted data transmission. Meanwhile, the platform leverages AI to securely assess and prioritize high-risk reports, escalating them to emergency teams." },
+        "bilingual": { "title": "Bilingual Accessibility", "desc": "Supporting full bilingual localization (English & हिन्दी) with dynamic dynamic translations. Citizens can switch languages instantly, while AI-generated outputs localize dynamically." }
+      }
+    },
+    "analytics": {
+      "title": "Want to make a difference?",
+      "subtitle": "Join the community or report a local issue today.",
+      "joinButton": "Join Community",
+      "reportButton": "Report Issue"
+    }
+  },
+  "community": {
+    "hero": {
+      "tag": "Civic Action Hub",
+      "title": "Community Impact & Initiatives",
+      "subtitle": "Discover active community drives, connect with verified local organizations, and track our collective progress towards building better cities.",
+      "issuesResolved": "Issues Resolved",
+      "partnerNgos": "Partner NGOs",
+      "activeDrives": "Active Drives"
+    },
+    "nav": {
+      "resolved": "Resolved Issues",
+      "explore": "Explore Drives",
+      "organizations": "View Organizations"
+    },
+    "resolvedIssues": {
+      "title": "Resolved Issues",
+      "subtitle": "See real issues reported by citizens and resolved by our heroes.",
+      "viewAll": "View All",
+      "allPosts": "All Posts",
+      "recentlyResolved": "Recently Resolved",
+      "mostLiked": "Most Liked",
+      "following": "Following",
+      "noIssues": "No resolved issues found",
+      "resolved": "Resolved",
+      "reportedBy": "Reported by",
+      "resolvedBy": "Resolved by",
+      "before": "Before",
+      "after": "After",
+      "unknownLocation": "Unknown Location"
+    },
+    "liveDrives": {
+      "title": "Live Drives",
+      "subtitle": "Join ongoing community drives and make a real impact.",
+      "viewAll": "View All Drives",
+      "live": "Live",
+      "volunteers": "Volunteers",
+      "goal": "Goal",
+      "registered": "Registered",
+      "viewDetails": "View Details",
+      "joinDrive": "Join Drive"
+    },
+    "organizations": {
+      "title": "Featured Organizations",
+      "subtitle": "Organizations making a difference in your city.",
+      "activeDrives": "Active Drives",
+      "totalMembers": "Total Members",
+      "registeredWithAdmin": "Registered with District Administration",
+      "requestToJoin": "Request to Join"
+    },
+    "cta": {
+      "title": "Be a Part of the Change",
+      "subtitle": "Join drives, follow organizations, and inspire your community.",
+      "followButton": "Follow Organizations",
+      "exploreButton": "Explore Drives"
+    },
+    "modals": {
+      "comments": {
+        "title": "Comments",
+        "likesCount": "likes",
+        "placeholder": "Add a comment...",
+        "postButton": "Post",
+        "reportButton": "Report"
+      },
+      "joinOrg": {
+        "title": "Join Organization",
+        "subtitle": "Apply to become a volunteer member.",
+        "skillsLabel": "Skills / City",
+        "skillsPlaceholder": "e.g., Waste Management, Rohtak",
+        "motivationLabel": "Why do you want to join?",
+        "motivationPlaceholder": "Describe your motivation to volunteer",
+        "guidelines": "I agree to volunteer guidelines and community rules.",
+        "submitting": "Submitting...",
+        "submit": "Submit Request"
+      },
+      "joinDrive": {
+        "title": "Join Community Drive",
+        "subtitle": "Register as a volunteer for this drive.",
+        "nameLabel": "Full Name",
+        "phoneLabel": "Phone Number",
+        "emailLabel": "Email Address",
+        "ageLabel": "Age",
+        "reasonLabel": "Reason for Joining",
+        "emergencyLabel": "Emergency Contact Number",
+        "guidelines": "I agree to follow the safety guidelines and community rules during the drive.",
+        "submitting": "Submitting...",
+        "submit": "Confirm Registration"
+      }
+    }
+  },
+  "report": {
+    "title": "Report an Issue",
+    "subtitle": "AI-powered hyperlocal civic issue reporting",
+    "form": {
+      "title": "Raise an Issue",
+      "subtitle": "Help improve your neighborhood",
+      "image": "Evidence Upload (Photo/Video)",
+      "takePhoto": "Take Photo",
+      "recordVideo": "Record Video",
+      "evidenceCaptured": "Evidence Captured",
+      "changeEvidence": "Retake Photo/Video",
+      "detected": "detected",
+      "dragDrop": "or drag and drop files here",
+      "gpsAttached": "GPS & timestamp auto attached",
+      "aiAnalyzes": "AI analyzes every frame",
+      "supportsFormat": "Supports JPG, PNG, MP4 (Max 50MB)",
+      "description": "Issue Description",
+      "descriptionPlaceholder": "Describe the issue in detail (e.g., 'There is a deep pothole in the middle of the road causing traffic congestion...')",
+      "location": "Location (GPS Coordinates)",
+      "state": "State",
+      "statePlaceholder": "State name",
+      "city": "City/District",
+      "cityPlaceholder": "City or District name",
+      "address": "Nearest Landmark / Full Address",
+      "addressPlaceholder": "Enter nearest landmark or address",
+      "submit": "Submit & Analyze with Gemini",
+      "submitHelp": "AI will review your report and route it to the right authorities",
+      "submitting": "Analyzing with Gemini Vision...",
+      "visionConfidenceCheck": "Vision Confidence > 80%",
+      "skeletonTitle": "AI Agent is Analyzing...",
+      "skeletonSub": "Running Trust Engine and routing logic"
+    },
+    "gpsError": {
+      "title": "GPS is Required",
+      "desc": "To prevent false reports, GPS must be captured when you take the photo/video. Please enable your location services."
+    },
+    "rejection": {
+      "title": "Submission Rejected",
+      "subtitle": "Our AI detected that this is likely a non-civic issue or spam.",
+      "reasoningTitle": "Agent Reasoning",
+      "spamScore": "Spam Likelihood",
+      "tryAgain": "Try Again with a Different Image"
+    },
+    "review": {
+      "title": "Review AI Prediction",
+      "lowConfidence": "The AI has low confidence ({{score}}%) in this prediction. Please carefully verify and correct the category if needed.",
+      "reasoningTitle": "AI Reasoning",
+      "predictedCategory": "Predicted Category",
+      "routeDepartment": "Route to Department",
+      "confidence": "AI Confidence:",
+      "cancel": "Cancel",
+      "confirm": "Confirm & Submit"
+    },
+    "duplicate": {
+      "title": "Possible Duplicate Detected",
+      "subtitle": "A similar {{category}} was reported near your location within the last 30 days (Issue ID: {{id}}).",
+      "warning": "To save municipal resources, we group duplicates together. If this is the exact same issue, please confirm it. If this is a completely different issue that just happens to be nearby, you can override this warning.",
+      "confirm": "Yes, Group as Duplicate",
+      "override": "No, This is Different"
+    },
+    "success": {
+      "title": "Issue Successfully Reported",
+      "findingDepartment": "Finding Responsible Department...",
+      "findingSub": "AI is matching priority and jurisdiction.",
+      "status": "Current Status:",
+      "assigned": "Assigned",
+      "unassigned": "Unassigned",
+      "severity": "Priority",
+      "assignedDept": "Assigned Department",
+      "assignedEmp": "Assigned Employee",
+      "noAdmins": "No Admins Available",
+      "eta": "Expected Resolution Time",
+      "etaVal": "24 Hours (ETA)",
+      "sla": "SLA Countdown",
+      "visionTitle": "Gemini Vision Agent Analysis",
+      "category": "Category",
+      "severityLabel": "Severity",
+      "reasoning": "Agent Reasoning",
+      "trustTitle": "Trust Engine Verification",
+      "trustStatus": "Trust Status",
+      "gpsCheck": "GPS Verification",
+      "timeCheck": "Timestamp Freshness Check",
+      "verScore": "Verification Score",
+      "gpsCoords": "GPS Coordinates",
+      "acc": "Accuracy",
+      "dev": "Capture Device",
+      "browser": "Browser Client",
+      "reportAnother": "Report Another Issue",
+      "viewReports": "View My Reports"
+    },
+    "tips": {
+      "whyTitle": "Why Your Report Matters",
+      "whyDesc": "Your report directly helps create a cleaner, safer, and more vibrant community for everyone. Local authorities rely on these inputs to allocate resources efficiently.",
+      "stat1Title": "40% Faster Resolution",
+      "stat1Desc": "Issues reported with photo evidence are resolved significantly faster.",
+      "stat2Title": "Community Driven",
+      "stat2Desc": "Join thousands of verified citizens actively contributing to community upkeep.",
+      "tipsTitle": "Tips for a Good Report",
+      "tip1": "Capture clear photos or videos",
+      "tip2": "Ensure GPS is enabled",
+      "tip3": "Provide accurate location",
+      "tip4": "Add a detailed description",
+      "trustTitle": "We Ensure Trust & Transparency",
+      "trust1": "AI verification to prevent fake reports",
+      "trust2": "Auto-routing to the right department",
+      "trust3": "Status updates at every step",
+      "trust4": "100% Transparent process"
+    }
+  },
+  "myReports": {
+    "title": "My Reports",
+    "subtitle": "Track and manage your submitted issues",
+    "filterTabs": {
+      "all": "All",
+      "active": "Active",
+      "inprogress": "In Progress",
+      "awaiting": "Awaiting Review",
+      "closed": "Closed"
+    },
+    "noReports": {
+      "title": "No Reports Found",
+      "subtitle": "You haven't reported any issues matching these filters.",
+      "button": "Report an Issue"
+    },
+    "progress": "Resolution Progress",
+    "refreshBanner": {
+      "title": "Can't find your report?",
+      "subtitle": "Pull down to refresh or check your filters.",
+      "button": "Refresh"
+    },
+    "modal": {
+      "timeline": "Activity Timeline",
+      "status": "Status",
+      "id": "Issue ID",
+      "feedback": {
+        "title": "Provide Feedback",
+        "rating": "Rate Resolution",
+        "comment": "Comments (Optional)",
+        "placeholder": "Help us improve by leaving a comment...",
+        "submit": "Submit Feedback",
+        "submitting": "Submitting...",
+        "thankYou": "Thank you for your feedback!"
+      }
+    },
+    "detail": {
+      "back": "Back to My Reports",
+      "escalated": "Escalated",
+      "assigned": "Assigned",
+      "reportedImage": "Reported Image",
+      "description": "Description",
+      "aiSeverity": "AI Severity Analysis",
+      "reason": "Reason",
+      "location": "Location",
+      "before": "Before",
+      "after": "After",
+      "notes": "Resolution Notes",
+      "reviewTitle": "Review Resolution",
+      "reviewDesc": "The assigned team has marked this issue as resolved. Please review the completion details below and confirm if the issue is fully fixed.",
+      "accept": "Accept Resolution",
+      "reopen": "Reopen Issue",
+      "timelineTitle": "Live Issue Timeline",
+      "updateFrom": "Update from",
+      "progress": "Progress"
+    }
+  },
+  "profile": {
+    "hero": {
+      "badge": "Citizen",
+      "level": "Level {{level}} Member",
+      "points": "Points",
+      "hours": "Hours",
+      "drives": "Drives"
+    },
+    "tabs": {
+      "reports": "My Reports",
+      "drives": "My Drives",
+      "orgs": "Organizations",
+      "settings": "Settings"
+    },
+    "reports": {
+      "total": "Total Posted",
+      "resolved": "Resolved",
+      "pending": "Pending",
+      "recentTitle": "Recent Reports",
+      "noReports": "No reports found.",
+      "button": "Report an Issue"
+    },
+    "drives": {
+      "title": "My Drives",
+      "findDrives": "Find Drives",
+      "noDrives": "No drives found."
+    },
+    "orgs": {
+      "title": "Organizations",
+      "findOrgs": "Find Organizations",
+      "noOrgs": "No organizations joined."
+    },
+    "settings": {
+      "title": "Account Settings",
+      "notifTitle": "Email Notifications",
+      "notifDesc": "Get updates on your reported issues and volunteering drives",
+      "locTitle": "Location Services",
+      "locDesc": "Allow auto-fetching location for community reports"
+    }
+  },
+  "login": {
+    "title": "Citizen Portal",
+    "subtitle": "Authenticate to report issues and view your impact.",
+    "loading": "Loading citizen portal...",
+    "judgeWarning": "Hackathon Judges: Please use the Continue with Google button above to instantly access the citizen view.",
+    "partner": {
+      "title": "Partner Portal",
+      "subtitle": "Secure access for administrators and verified organizations.",
+      "emailLabel": "Email Address",
+      "emailPlaceholder": "Enter your email",
+      "passwordLabel": "Password",
+      "passwordPlaceholder": "••••••••",
+      "submit": "Sign In Securely",
+      "demoCreds": "Auto-Fill Demo Credentials",
+      "superAdmin": "Super Admin",
+      "cityAdmin": "City Admin",
+      "org": "Organization",
+      "employee": "City Employee"
+    }
+  },
+  "footer": {
+    "desc": "An AI-powered civic governance platform built for civic excellence. Connecting citizens and municipalities through transparent, actionable data.",
+    "platform": "Platform",
+    "liveFeed": "Live Feed",
+    "reportIssue": "Report Issue",
+    "dashboards": "Dashboards",
+    "ecosystem": "Ecosystem",
+    "citizens": "Citizens",
+    "workers": "Municipal Workers",
+    "admins": "City Admins",
+    "superAdmins": "Super Admins",
+    "hackathon": "Hackathon",
+    "github": "GitHub Repo",
+    "docs": "Documentation",
+    "team": "Developer Team",
+    "copy": "© {{year}} Community Hero Ecosystem. Open Innovation.",
+    "badges": "AI-POWERED • GPS-VERIFIED • PUBLICLY-ACCOUNTABLE"
+  },
+  "categories": {
+    "Pothole": "Pothole",
+    "Road Damage": "Road Damage",
+    "Water Leakage": "Water Leakage",
+    "Waterlogging": "Waterlogging",
+    "Garbage Dump": "Garbage Dump",
+    "Overflowing Dustbin": "Overflowing Dustbin",
+    "Broken Streetlight": "Broken Streetlight",
+    "Damaged Footpath": "Damaged Footpath",
+    "Open Manhole": "Open Manhole",
+    "Sewage Overflow": "Sewage Overflow",
+    "Blocked Drain": "Blocked Drain",
+    "Traffic Signal Damage": "Traffic Signal Damage",
+    "Fallen Tree": "Fallen Tree",
+    "Stray Animal": "Stray Animal",
+    "Park Maintenance Issue": "Park Maintenance Issue",
+    "Broken Public Property": "Broken Public Property",
+    "Electrical Hazard": "Electrical Hazard",
+    "Illegal Dumping": "Illegal Dumping",
+    "Encroachment": "Encroachment",
+    "Public Toilet Issue": "Public Toilet Issue",
+    "No Significant Civic Issue": "No Significant Civic Issue",
+    "Unverified - AI Unavailable": "Unverified - AI Unavailable",
+    "Other": "Other",
+    "issueSuffix": "Issue",
+    "गड्ढा": "Pothole",
+    "सड़क का गड्ढा": "Pothole",
+    "सड़क की क्षति": "Road Damage",
+    "सड़क का नुकसान": "Road Damage",
+    "पानी का रिसाव": "Water Leakage",
+    "जल रिसाव": "Water Leakage",
+    "जलभराव": "Waterlogging",
+    "जलजमाव": "Waterlogging",
+    "कचरे का ढेर": "Garbage Dump",
+    "कूड़े का ढेर": "Garbage Dump",
+    "कूड़ेदान का भरना": "Overflowing Dustbin",
+    "उफनता हुआ कूड़ेदान": "Overflowing Dustbin",
+    "टूटी स्ट्रीटलाइट": "Broken Streetlight",
+    "खराब स्ट्रीटलाइट": "Broken Streetlight",
+    "क्षतिग्रस्त फुटपाथ": "Damaged Footpath",
+    "टूटा फुटपाथ": "Damaged Footpath",
+    "खुला मैनहोल": "Open Manhole",
+    "सीवेज ओवरफ्लो": "Sewage Overflow",
+    "गंदे पानी का बहना": "Sewage Overflow",
+    "बंद नाली": "Blocked Drain",
+    "अवरुद्ध नाली": "Blocked Drain",
+    "यातायात संकेत क्षति": "Traffic Signal Damage",
+    "गिरा पेड़": "Fallen Tree",
+    "गिरा हुआ पेड़": "Fallen Tree",
+    "आवारा पशु": "Stray Animal",
+    "आवारा जानवर": "Stray Animal",
+    "पार्क रखरखाव": "Park Maintenance Issue",
+    "टूटी सार्वजनिक संपत्ति": "Broken Public Property",
+    "बिजली का खतरा": "Electrical Hazard",
+    "अवैध डंपिंग": "Illegal Dumping",
+    "अतिक्रमण": "Encroachment",
+    "सार्वजनिक शौचालय": "Public Toilet Issue",
+    "कोई महत्वपूर्ण नागरिक समस्या नहीं": "No Significant Civic Issue",
+    "असत्यापित - एआई अनुपलब्ध": "Unverified - AI Unavailable",
+    "अन्य": "Other"
+  },
+  "departments": {
+    "Roads Department": "Roads Department",
+    "Electricity Department": "Electricity Department",
+    "Water Department": "Water Department",
+    "Municipal Committee": "Municipal Committee",
+    "Animal Control": "Animal Control",
+    "Traffic Police": "Traffic Police",
+    "Parks Department": "Parks Department",
+    "Miscellaneous": "Miscellaneous"
+  },
+  "status": {
+    "Open": "Open",
+    "Resolved": "Resolved",
+    "Closed": "Closed",
+    "In Progress": "In Progress",
+    "Community Drive Active": "Community Drive Active",
+    "Awaiting Citizen Review": "Awaiting Citizen Review",
+    "Reported": "Reported",
+    "Assigned": "Assigned",
+    "Completed": "Completed"
+  }
+}

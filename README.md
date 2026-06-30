@@ -8,7 +8,41 @@ The platform bridges the gap between citizens, city administrators, on-ground mu
 
 ## The Perfect System Architecture
 
-The Community Hero system is built on a highly scalable, multi-tenant architecture designed to handle thousands of concurrent users, complex AI vision processing, and secure civic data management.
+The Community Hero system is built on a highly scalable, Every city operates as an isolated tenant with dedicated administrators, employees, organizations, analytics, and audit logs while sharing a common cloud infrastructure ,designed to handle thousands of concurrent users, complex AI vision processing, and secure civic data management.
+```mermaid
+flowchart TD
+
+A[Citizen Web App] --> B[Next.js Frontend]
+
+B --> C[Next.js API Layer]
+
+C --> D[Google Gemini 2.5 Flash]
+C --> E[MongoDB Atlas]
+C --> F[Cloudinary]
+C --> G[Google Maps Platform]
+C --> H[Google Cloud Pub/Sub]
+C --> I[Google SMTP]
+
+D --> J[AI Vision Analysis]
+D --> K[Severity & Categorization]
+D --> L[Resolution Verification]
+D --> M[Smart Routing]
+D --> N[Dynamic Escalation]
+
+E --> O[Issues]
+E --> P[Users]
+E --> Q[Organizations]
+E --> R[Audit Logs]
+
+H --> S[Government CRM]
+H --> T[Notifications]
+
+C --> U[Citizen Portal]
+C --> V[Employee Portal]
+C --> W[Admin Portal]
+C --> X[Super Admin Portal]
+C --> Y[Organization Portal]
+```
 
 ### Technologies Used
 
@@ -19,21 +53,32 @@ The Community Hero system is built on a highly scalable, multi-tenant architectu
 * Tailwind CSS
 * Shadcn/UI & Framer Motion
 
-**Backend & Database**
-* Node.js & Next.js API Routes
-* REST APIs
-* MongoDB Atlas & Mongoose ODM (with Geospatial indexing)
+Backend
+- Node.js
+- Next.js API Routes
+- REST APIs
+
+Database
+- MongoDB Atlas
+- Mongoose ODM
+- Geospatial Indexing
+
+Storage
+- Cloudinary
+
+**Responsive Experience**
+The citizen portal is fully responsive and optimized for mobile phones, tablets, and desktops, allowing users to report, track, and review civic issues seamlessly from any device.
 
 **Authentication & Security**
 * Clerk Authentication (Role-Based Access Control - RBAC)
 * Audit Logging
 * SHA-256 Image Hashing & Image Compression
 
-**AI & Machine Learning (Google Gemini)**
+**AI & Agentic Intelligence(Google Gemini)**
 * Google Gemini 2.5 Flash (Multimodal) via Google AI Studio
 * Prompt Engineering & Structured JSON Generation
 * Computer Vision & AI-assisted Decision Support
-* **Dynamic Escalation Agent:** Intelligently evaluates issue severity, employee workload, and historical patterns to decide whether to nudge employees, escalate to admins, or suggest volunteer orgs.
+* **Adaptive SLA Monitoring & Dynamic Escalation (Agent Logic):** Continuously monitors progress and autonomously reassigns delayed cases to lower-workload employees, escalates to city administrators, or re-routes to volunteer groups using Google Gemini.
 * **Self-Improving Routing Agent:** Continuously learns from past resolutions to automatically route new civic issues to the fastest-resolving departments/employees.
 * **Vision Agent:** Image/video understanding, issue detection, and categorization.
 * **Severity Agent:** Determines issue severity, generates reasoning, and assists in priority estimation.
@@ -49,15 +94,22 @@ The Community Hero system is built on a highly scalable, multi-tenant architectu
 * Google SMTP (Nodemailer) for real-time notifications & certificates
 * Puppeteer for headless PDF generation
 * Google Cloud Pub/Sub for asynchronous event streaming
--
 
-##  End-to-End Workflows: How Things Work on Different Ends
+**Deployment**
+
+* Google Cloud Run
+* Google Cloud Build
+* Google Secret Manager
+* Google Cloud Logging
+* Google Cloud Monitoring
+
+##  End-to-End Workflows: A Five-Tier User Ecosystem
 
 Community Hero features a strictly role-based architecture. Here is how the ecosystem interacts:
 
 ### 1. Citizen End (The Reporters)
 * **Reporting:** Citizens can report issues (potholes, broken streetlights, illegal dumping) using the mobile-friendly web app.
-* **GPS & Media:** They upload an image and use GPS. 
+* **GPS & Media:** They upload geo-verified images or videos along with live GPS coordinates.
 * **Tracking:** They can track the exact status of their issue in real-time (from "Reported" to "Employee Reached Site" to "Awaiting Citizen Review").
 * **Feedback:** Once a municipal worker completes the job, the citizen is notified and can give feedback/ratings.
 
@@ -85,9 +137,12 @@ Community Hero features a strictly role-based architecture. Here is how the ecos
 
 ---
 
-## 🧠Enterprise AI Architecture (Google Gemini)
+## Enterprise AI Architecture (Google Gemini)
 
 Unlike standard projects that rely on simple "magic prompts," Community Hero utilizes a production-grade ML architecture designed for 99%+ reliability and strict deterministic outputs.
+
+### Explainable AI
+Every prediction returned by Gemini includes structured reasoning so administrators understand why the recommendation was generated before taking action.
 
 ### 1. Gemini: Severity & Categorization Analysis
 When a citizen uploads an image, the Gemini Vision model is invoked with strict Native JSON Schema Validation.
@@ -100,8 +155,25 @@ When an employee claims they have fixed an issue, they upload a resolution photo
 * **Visual Diffing:** The Gemini Vision model takes *both* the original Citizen's photo (Before) and the Employee's photo (After).
 * **Contextual Analysis:** It analyzes if the specific damage (e.g., a pothole) in the exact same environment has actually been repaired. 
 * **Confidence Rating:** It outputs an `isResolved` boolean and a `confidence` percentage, allowing admins to instantly reject fake or poor-quality repairs without having to visit the site themselves.
+### 3. Human-in-the-Loop AI
+AI assists administrators rather than replacing them. Every recommendation remains subject to human approval.
 
 ---
+
+##  Production-Ready Bilingual Translation (English & हिन्दी)
+
+To promote inclusivity, the Citizen Panel includes full support for both English and Hindi.
+- **Instant Non-Refreshed Language Toggles**: Integrated a dynamic switcher inside the navbar allowing citizens to translate the platform instantly. Language choices persist across refreshes using `localStorage`.
+- **Bilingual AI Processing**: The backend Gemini analysis pipelines parse the active locale parameter. If Hindi is active, Gemini generates visual reasoning descriptions and severity reasons in Hindi.
+- **Dynamic Translation Normalization**: To prevent database corruption and preserve filtering on employee and admin dashboards, all issues, statuses, and departments are saved using standard English keys. The frontend dynamically translates them on-the-fly when Hindi is active.
+
+---
+Agent	             | Responsibility
+Vision Agent       |	Detects issue category
+Severity Agent     | Predicts urgency
+Routing Agent      |	Assigns department
+Escalation Agent   |	Monitors SLA
+Verification Agent | Compares before/after
 
 ##  Getting Started
 
@@ -123,3 +195,7 @@ When an employee claims they have fixed an issue, they upload a resolution photo
    ```
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the platform in action.
+
+##  Community Hero
+
+Community Hero transforms fragmented civic services into an AI-powered, transparent, multilingual, and community-driven governance platform where every complaint is trackable, every AI recommendation is explainable, and every resolution is verifiable.

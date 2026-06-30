@@ -40,28 +40,42 @@ interface VideoAnalysisResult {
 }
 
 // ─── Low-confidence user feedback ────────────────────────────────────────────
-const generateFeedback = (confidence: number, visibleFrames: number, totalFrames: number, category: string): string[] => {
+const generateFeedback = (confidence: number, visibleFrames: number, totalFrames: number, category: string, locale: string = "en"): string[] => {
   const tips: string[] = [];
   const ratio = visibleFrames / totalFrames;
 
-  if (confidence < 50) {
-    tips.push("The issue is not clearly visible. Please move closer to the problem area.");
-    tips.push("Lighting is insufficient. Try capturing in better lighting conditions.");
-  }
-  if (ratio < 0.5 && category !== "No Significant Civic Issue") {
-    tips.push(`The reported issue only appeared in ${visibleFrames} of ${totalFrames} frames. For higher confidence, record for a few more seconds while keeping the camera steady.`);
-  }
-  if (category === "No Significant Civic Issue") {
-    tips.push("Our AI could not detect any civic issue in the video. Please ensure you are recording the correct area.");
-    tips.push("Try recording from a different angle or moving closer to the issue.");
+  if (locale === "hi") {
+    if (confidence < 50) {
+      tips.push("मुद्दा स्पष्ट रूप से दिखाई नहीं दे रहा है। कृपया समस्या क्षेत्र के करीब जाएं।");
+      tips.push("प्रकाश अपर्याप्त है। बेहतर प्रकाश व्यवस्था में कैप्चर करने का प्रयास करें।");
+    }
+    if (ratio < 0.5 && category !== "No Significant Civic Issue" && category !== "कोई महत्वपूर्ण नागरिक समस्या नहीं") {
+      tips.push(`रिपोर्ट किया गया मुद्दा केवल ${totalFrames} में से ${visibleFrames} फ्रेम में दिखाई दिया। उच्च विश्वसनीयता के लिए, कैमरे को स्थिर रखते हुए कुछ और सेकंड के लिए रिकॉर्ड करें।`);
+    }
+    if (category === "No Significant Civic Issue" || category === "कोई महत्वपूर्ण नागरिक समस्या नहीं") {
+      tips.push("हमारे एआई को वीडियो में कोई नागरिक समस्या नहीं मिली। कृपया सुनिश्चित करें कि आप सही क्षेत्र रिकॉर्ड कर रहे हैं।");
+      tips.push("अलग कोण से रिकॉर्ड करने या समस्या के करीब जाने का प्रयास करें।");
+    }
+  } else {
+    if (confidence < 50) {
+      tips.push("The issue is not clearly visible. Please move closer to the problem area.");
+      tips.push("Lighting is insufficient. Try capturing in better lighting conditions.");
+    }
+    if (ratio < 0.5 && category !== "No Significant Civic Issue" && category !== "कोई महत्वपूर्ण नागरिक समस्या नहीं") {
+      tips.push(`The reported issue only appeared in ${visibleFrames} of ${totalFrames} frames. For higher confidence, record for a few more seconds while keeping the camera steady.`);
+    }
+    if (category === "No Significant Civic Issue" || category === "कोई महत्वपूर्ण नागरिक समस्या नहीं") {
+      tips.push("Our AI could not detect any civic issue in the video. Please ensure you are recording the correct area.");
+      tips.push("Try recording from a different angle or moving closer to the issue.");
+    }
   }
 
   return tips;
 };
 
 // ─── Aggregate frame results ──────────────────────────────────────────────────
-const aggregateResults = (frames: FrameResult[], totalFrames: number): Pick<VideoAnalysisResult, "issueType" | "confidence" | "severity" | "severityReason" | "visibleFrames" | "recommendation" | "department"> => {
-  const issueFrames = frames.filter(f => f.issueDetected && f.category !== "No Significant Civic Issue");
+const aggregateResults = (frames: FrameResult[], totalFrames: number, locale: string = "en"): Pick<VideoAnalysisResult, "issueType" | "confidence" | "severity" | "severityReason" | "visibleFrames" | "recommendation" | "department"> => {
+  const issueFrames = frames.filter(f => f.issueDetected && f.category !== "No Significant Civic Issue" && f.category !== "कोई महत्वपूर्ण नागरिक समस्या नहीं");
   const visibleFrames = issueFrames.length;
 
   if (visibleFrames === 0) {
@@ -69,9 +83,9 @@ const aggregateResults = (frames: FrameResult[], totalFrames: number): Pick<Vide
       issueType: "No Significant Civic Issue",
       confidence: Math.round(frames.reduce((s, f) => s + f.confidence, 0) / frames.length) || 50,
       severity: "Low",
-      severityReason: "No significant civic issue detected in the video.",
+      severityReason: locale === "hi" ? "वीडियो में कोई महत्वपूर्ण नागरिक समस्या नहीं पाई गई।" : "No significant civic issue detected in the video.",
       visibleFrames: 0,
-      recommendation: "Unable to detect a significant civic issue. Please record again from a different angle.",
+      recommendation: locale === "hi" ? "नागरिक समस्या का पता लगाने में असमर्थ। कृपया भिन्न कोण से दोबारा रिकॉर्ड करें।" : "Unable to detect a significant civic issue. Please record again from a different angle.",
       department: "Miscellaneous",
     };
   }
@@ -89,9 +103,58 @@ const aggregateResults = (frames: FrameResult[], totalFrames: number): Pick<Vide
   const finalConfidence = Math.min(98, avgFrameConfidence + consistencyBonus);
 
   // Severity: pick highest
-  const severityOrder: Record<string, number> = { Critical: 4, High: 3, Medium: 2, Low: 1 };
+  const severityOrder: Record<string, number> = { Critical: 4, High: 3, Medium: 2, Low: 1, "गंभीर": 4, "उच्च": 3, "मध्यम": 2, "निम्न": 1 };
   const topFrame = issueFrames
     .sort((a, b) => (severityOrder[b.severity] || 0) - (severityOrder[a.severity] || 0))[0];
+
+  // Helper to resolve English category from Hindi/English Gemini output
+  const resolveCategoryEnglish = (val: string): string => {
+    if (!val) return "Other";
+    const CATEGORY_MAP: Record<string, string[]> = {
+      "Pothole": ["pothole", "गड्ढा", "सड़क का गड्ढा"],
+      "Road Damage": ["road damage", "सड़क की क्षति", "सड़क का नुकसान"],
+      "Water Leakage": ["water leakage", "पानी का रिसाव", "जल रिसाव"],
+      "Waterlogging": ["waterlogging", "जलभराव", "जलजमाव"],
+      "Garbage Dump": ["garbage dump", "कचरे का ढेर", "कूड़े का ढेर"],
+      "Overflowing Dustbin": ["overflowing dustbin", "कूड़ेदान का भरना", "उफनता हुआ कूड़ेदान"],
+      "Broken Streetlight": ["broken streetlight", "टूटी स्ट्रीटलाइट", "खराब स्ट्रीटलाइट"],
+      "Damaged Footpath": ["damaged footpath", "क्षतिग्रस्त फुटपाथ", "टूटा फुटपाथ"],
+      "Open Manhole": ["open manhole", "खुला मैनहोल"],
+      "Sewage Overflow": ["sewage overflow", "सीवेज ओवरफ्लो", "गंदे पानी का बहना"],
+      "Blocked Drain": ["blocked drain", "बंद नाली", "अवरुद्ध नाली"],
+      "Traffic Signal Damage": ["traffic signal damage", "यातायात संकेत क्षति"],
+      "Fallen Tree": ["fallen tree", "गिरा पेड़", "गिरा हुआ पेड़"],
+      "Stray Animal": ["stray animal", "आवारा पशु", "आवारा जानवर"],
+      "Park Maintenance Issue": ["park maintenance", "पार्क रखरखाव"],
+      "Broken Public Property": ["broken public property", "टूटी सार्वजनिक संपत्ति"],
+      "Electrical Hazard": ["electrical hazard", "बिजली का खतरा"],
+      "Illegal Dumping": ["illegal dumping", "अवैध डंपिंग"],
+      "Encroachment": ["encroachment", "अतिक्रमण"],
+      "Public Toilet Issue": ["public toilet", "सार्वजनिक शौचालय"],
+    };
+
+    for (const [key, aliases] of Object.entries(CATEGORY_MAP)) {
+      if (key.toLowerCase() === val.toLowerCase()) return key;
+      for (const alias of aliases) {
+        if (val.toLowerCase().includes(alias.toLowerCase()) || alias.toLowerCase().includes(val.toLowerCase())) {
+          return key;
+        }
+      }
+    }
+    return "Other";
+  };
+
+  const resolveSeverityEnglish = (val: string): string => {
+    if (!val) return "Low";
+    const valLower = val.toLowerCase();
+    if (valLower.includes("critical") || valLower.includes("गंभीर")) return "Critical";
+    if (valLower.includes("high") || valLower.includes("उच्च")) return "High";
+    if (valLower.includes("medium") || valLower.includes("मध्यम")) return "Medium";
+    if (valLower.includes("low") || valLower.includes("निम्न")) return "Low";
+    return "Low";
+  };
+
+  const engCategory = resolveCategoryEnglish(dominantCategory);
 
   const deptMap: Record<string, string> = {
     "Pothole": "Roads Department",
@@ -116,14 +179,32 @@ const aggregateResults = (frames: FrameResult[], totalFrames: number): Pick<Vide
     "Public Toilet Issue": "Sanitation Department",
   };
 
+  const deptEng = deptMap[engCategory] || "Miscellaneous";
+  
+  let recommendation = `Assign to ${deptEng} — ${topFrame.severity} priority.`;
+  if (locale === "hi") {
+    const deptMapHi: Record<string, string> = {
+      "Roads Department": "सड़क विभाग",
+      "Electricity Department": "बिजली विभाग",
+      "Water Department": "जल विभाग",
+      "Municipal Committee": "नगर पालिका समिति",
+      "Animal Control": "पशु नियंत्रण",
+      "Traffic Police": "यातायात पुलिस",
+      "Parks Department": "पार्क विभाग",
+      "Miscellaneous": "विविध"
+    };
+    const departmentHi = deptMapHi[deptEng] || "विविध";
+    recommendation = `${departmentHi} को आवंटित करें — ${topFrame.severity} प्राथमिकता।`;
+  }
+
   return {
-    issueType: dominantCategory,
+    issueType: engCategory,
     confidence: finalConfidence,
-    severity: topFrame.severity,
+    severity: resolveSeverityEnglish(topFrame.severity),
     severityReason: topFrame.severityReason,
     visibleFrames,
-    recommendation: `Assign to ${deptMap[dominantCategory] || "Miscellaneous"} — ${topFrame.severity} priority.`,
-    department: deptMap[dominantCategory] || "Miscellaneous",
+    recommendation,
+    department: deptEng,
   };
 };
 
@@ -165,9 +246,11 @@ const evaluateVideoTrust = (
 
 // ─── Main POST handler ────────────────────────────────────────────────────────
 export async function POST(req: Request) {
+  let locale = "en";
   try {
     const body = await req.json();
     const { frames, description = "", latitude, longitude, timestamp, cameraSource = "Level 1 (In-App)" } = body;
+    if (body.locale) locale = body.locale;
 
     if (!frames || !Array.isArray(frames) || frames.length === 0) {
       return NextResponse.json({ error: "frames array is required" }, { status: 400 });
@@ -186,20 +269,20 @@ export async function POST(req: Request) {
       const mockFrames: FrameResult[] = frames.map((_, i) => ({
         frameIndex: i,
         issueDetected: isIssue,
-        category: isIssue ? "Road Damage" : "No Significant Civic Issue",
+        category: isIssue ? (locale === "hi" ? "सड़क की क्षति" : "Road Damage") : (locale === "hi" ? "कोई महत्वपूर्ण नागरिक समस्या नहीं" : "No Significant Civic Issue"),
         confidence: isIssue ? 80 : 0,
-        severity: isIssue ? "High" : "Low",
-        severityReason: isIssue ? "API Unavailable - Default High" : "No issue detected due to missing API key and description.",
-        description: isIssue ? "Fallback analysis due to API limit" : "No issue detected due to missing API key and description.",
+        severity: isIssue ? (locale === "hi" ? "उच्च" : "High") : (locale === "hi" ? "निम्न" : "Low"),
+        severityReason: isIssue ? (locale === "hi" ? "एपीआई अनुपलब्ध - डिफ़ॉल्ट उच्च" : "API Unavailable - Default High") : (locale === "hi" ? "एपीआई कुंजी और विवरण की कमी के कारण किसी समस्या का पता नहीं चला।" : "No issue detected due to missing API key and description."),
+        description: isIssue ? (locale === "hi" ? "एपीआई सीमा के कारण फ़ॉलबैक विश्लेषण" : "Fallback analysis due to API limit") : (locale === "hi" ? "एपीआई कुंजी और विवरण की कमी के कारण किसी समस्या का पता नहीं चला।" : "No issue detected due to missing API key and description."),
       }));
-      const agg = aggregateResults(mockFrames, totalFrames);
+      const agg = aggregateResults(mockFrames, totalFrames, locale);
       return NextResponse.json({
         ...agg,
-        summary: `Fallback Analysis: ${agg.issueType} detected based on description. Please configure Gemini API key.`,
+        summary: locale === "hi" ? `फ़ॉलबैक विश्लेषण: विवरण के आधार पर ${agg.issueType} का पता चला। कृपया जेमिनी एपीआई कुंजी कॉन्फ़िगर करें।` : `Fallback Analysis: ${agg.issueType} detected based on description. Please configure Gemini API key.`,
         totalFrames,
         frameResults: mockFrames,
         trust: evaluateVideoTrust(hasGPS, timestamp, agg.confidence, agg.visibleFrames, totalFrames, cameraSource),
-        userFeedback: ["Gemini API key missing. Used basic text analysis instead of vision."],
+        userFeedback: locale === "hi" ? ["जेमिनी एपीआई कुंजी गायब है। विज़न के बजाय बुनियादी पाठ विश्लेषण का उपयोग किया गया।"] : ["Gemini API key missing. Used basic text analysis instead of vision."],
       });
     }
 
@@ -216,6 +299,19 @@ export async function POST(req: Request) {
 
     const framesToAnalyze = frames.slice(0, 10);
     const frameResults: FrameResult[] = [];
+
+    let promptLocaleInstruction = "";
+    if (locale === "hi") {
+      promptLocaleInstruction = `
+IMPORTANT: The user's preferred language is Hindi.
+You MUST translate all string values in the JSON response to Hindi:
+- "issueType": Use Hindi equivalent (e.g., "गड्ढा" instead of "Pothole", "सड़क की क्षति" instead of "Road Damage", "कूड़े का ढेर" instead of "Garbage Dump", "उफनता हुआ कूड़ेदान" instead of "Overflowing Dustbin", "टूटी स्ट्रीटलाइट" instead of "Broken Streetlight")
+- "severity": Translate "Low | Medium | High | Critical" to Hindi equivalent ("निम्न" | "मध्यम" | "उच्च" | "गंभीर")
+- "severityReason": Write the explanation in Hindi
+- "description": Write the description/analysis of the issue in Hindi
+- "evidence": Write the evidence description in Hindi
+All JSON keys MUST remain in English as defined above.`;
+    }
 
     for (let i = 0; i < framesToAnalyze.length; i++) {
       const frameBase64 = framesToAnalyze[i];
@@ -280,10 +376,10 @@ Requirements:
 - Never output markdown.
 - Never output explanations.
 - Never invent information.
+${promptLocaleInstruction}
 
 === OPTIONAL USER NOTE (do not use for classification) ===
 User's description: "${description || "(no description provided)"}"`;
-
 
         const result = await model.generateContent([
           prompt,
@@ -305,7 +401,7 @@ User's description: "${description || "(no description provided)"}"`;
         }
 
         if (parsedData.confidence < 60) {
-          parsedData.category = "No Significant Civic Issue";
+          parsedData.category = locale === "hi" ? "कोई महत्वपूर्ण नागरिक समस्या नहीं" : "No Significant Civic Issue";
           parsedData.issueDetected = false;
         }
 
@@ -314,10 +410,10 @@ User's description: "${description || "(no description provided)"}"`;
         frameResults.push({
           frameIndex: i,
           issueDetected: parsedData.issueDetected,
-          category: parsedData.issueDetected ? parsedData.issueType : "No Significant Civic Issue",
+          category: parsedData.issueDetected ? parsedData.issueType : (locale === "hi" ? "कोई महत्वपूर्ण नागरिक समस्या नहीं" : "No Significant Civic Issue"),
           confidence: parsedData.confidence,
-          severity: parsedData.severity || "Low",
-          severityReason: parsedData.severityReason || "Not provided by AI",
+          severity: parsedData.severity || (locale === "hi" ? "निम्न" : "Low"),
+          severityReason: parsedData.severityReason || (locale === "hi" ? "एआई द्वारा प्रदान नहीं किया गया" : "Not provided by AI"),
           description: parsedData.description || "",
         });
       } catch (frameErr) {
@@ -329,30 +425,33 @@ User's description: "${description || "(no description provided)"}"`;
     if (frameResults.length === 0) {
       console.error("[AI Video Analyzer] All frames failed to analyze. Returning fallback.");
       return NextResponse.json({
-        issueType: "Unverified - AI Unavailable",
+        issueType: locale === "hi" ? "असत्यापित - एआई अनुपलब्ध" : "Unverified - AI Unavailable",
         confidence: 0,
-        severity: "Medium",
-        summary: "AI Vision is currently unavailable due to high server load or quota limits. Your video has been saved and will be reviewed manually.",
+        severity: locale === "hi" ? "मध्यम" : "Medium",
+        summary: locale === "hi" ? "उच्च सर्वर लोड या कोटा सीमा के कारण एआई विज़न वर्तमान में अनुपलब्ध है। आपका वीडियो सहेज लिया गया है और मैन्युअल रूप से समीक्षा की जाएगी।" : "AI Vision is currently unavailable due to high server load or quota limits. Your video has been saved and will be reviewed manually.",
         visibleFrames: 0,
         totalFrames,
-        recommendation: "Pending manual review by an administrator.",
-        department: "Miscellaneous",
+        recommendation: locale === "hi" ? "व्यवस्थापक द्वारा मैन्युअल समीक्षा लंबित।" : "Pending manual review by an administrator.",
+        department: locale === "hi" ? "विविध" : "Miscellaneous",
         frameResults: [],
         trust: evaluateVideoTrust(hasGPS, timestamp, 0, 0, totalFrames, cameraSource),
-        userFeedback: [
+        userFeedback: locale === "hi" ? [
+          "उच्च सर्वर लोड या कोटा सीमा के कारण एआई विज़न वर्तमान में अनुपलब्ध है।",
+          "आपकी रिपोर्ट सहेज ली गई है और मैन्युअल रूप से समीक्षा की जाएगी।"
+        ] : [
           "AI Vision is currently unavailable due to high server load or quota limits.",
           "Your report has been saved and will be reviewed manually."
         ]
       });
     }
 
-    const agg = aggregateResults(frameResults, totalFrames);
+    const agg = aggregateResults(frameResults, totalFrames, locale);
     const trust = evaluateVideoTrust(hasGPS, timestamp, agg.confidence, agg.visibleFrames, frameResults.length, cameraSource);
-    const userFeedback = generateFeedback(agg.confidence, agg.visibleFrames, frameResults.length, agg.issueType);
+    const userFeedback = generateFeedback(agg.confidence, agg.visibleFrames, frameResults.length, agg.issueType, locale);
 
     const result: VideoAnalysisResult = {
       ...agg,
-      summary: `${agg.issueType} detected in ${agg.visibleFrames} of ${frameResults.length} analyzed frames. ${agg.severity} severity.`,
+      summary: locale === "hi" ? `${agg.issueType} का ${frameResults.length} में से ${agg.visibleFrames} विश्लेषण किए गए फ्रेम में पता चला। ${agg.severity} गंभीरता।` : `${agg.issueType} detected in ${agg.visibleFrames} of ${frameResults.length} analyzed frames. ${agg.severity} severity.`,
       totalFrames,
       frameResults,
       trust,
@@ -364,14 +463,14 @@ User's description: "${description || "(no description provided)"}"`;
   } catch (error: any) {
     console.error("Video analysis error:", error);
     return NextResponse.json({
-        issueType: "Unverified - AI Unavailable",
+        issueType: locale === "hi" ? "असत्यापित - एआई अनुपलब्ध" : "Unverified - AI Unavailable",
         confidence: 0,
-        severity: "Medium",
-        summary: `Video analysis failed: ${error.message}. Your video has been saved and will be reviewed manually.`,
+        severity: locale === "hi" ? "मध्यम" : "Medium",
+        summary: locale === "hi" ? `वीडियो विश्लेषण विफल: ${error.message}। आपका वीडियो सहेज लिया गया है और मैन्युअल रूप से समीक्षा की जाएगी।` : `Video analysis failed: ${error.message}. Your video has been saved and will be reviewed manually.`,
         visibleFrames: 0,
         totalFrames: 1,
-        recommendation: "Pending manual review by an administrator.",
-        department: "Miscellaneous",
+        recommendation: locale === "hi" ? "व्यवस्थापक द्वारा मैन्युअल समीक्षा लंबित।" : "Pending manual review by an administrator.",
+        department: locale === "hi" ? "विविध" : "Miscellaneous",
         frameResults: [],
         trust: {
           status: "Needs Review",
@@ -385,7 +484,10 @@ User's description: "${description || "(no description provided)"}"`;
             cameraSource: "Level 1 (In-App)"
           }
         },
-        userFeedback: [
+        userFeedback: locale === "hi" ? [
+          "उच्च सर्वर लोड या कोटा सीमा के कारण एआई विज़न वर्तमान में अनुपलब्ध है।",
+          "आपकी रिपोर्ट सहेज ली गई है और मैन्युअल रूप से समीक्षा की जाएगी।"
+        ] : [
           "AI Vision is currently unavailable due to high server load or quota limits.",
           "Your report has been saved and will be reviewed manually."
         ]
