@@ -251,6 +251,29 @@ export default function SuperAdminPage() {
     }
   };
 
+  const handleAssignFromAudit = async (issueId: string, employeeEmail: string) => {
+    if (!employeeEmail) return;
+    try {
+      const res = await fetch(`/api/issues/${issueId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          assignedTo: employeeEmail,
+          actorName: appUser?.name || "Super Admin",
+          actorRole: "super_admin"
+        })
+      });
+      if (res.ok) {
+        alert("Issue successfully assigned to employee!");
+      } else {
+        const err = await res.json();
+        alert(err.error || "Failed to assign issue.");
+      }
+    } catch (e) {
+      alert("Error assigning issue.");
+    }
+  };
+
   if (loading || !appUser || role !== "super_admin") {
     return <div className="min-h-screen flex items-center justify-center"><div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div></div>;
   }
@@ -660,9 +683,29 @@ export default function SuperAdminPage() {
                         </div>
                       </td>
                       <td className="p-4">
-                        <span className={`px-2 py-1 rounded text-[10px] font-bold uppercase ${log.status === 'SUCCESS' ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'}`}>
-                          {log.status}
+                        <span className={`px-2 py-1 rounded text-[10px] font-bold uppercase ${log.actionType === 'MANUAL_ASSIGNMENT_REQUIRED' ? 'bg-amber-100 text-amber-700' : log.status === 'SUCCESS' ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'}`}>
+                          {log.actionType === 'MANUAL_ASSIGNMENT_REQUIRED' ? 'UNASSIGNED' : log.status}
                         </span>
+                        {log.actionType === 'MANUAL_ASSIGNMENT_REQUIRED' && (
+                          <div className="mt-3">
+                            <select 
+                              className="text-xs border border-emerald-200 rounded px-2 py-1.5 bg-white text-slate-700 focus:outline-none focus:ring-1 focus:ring-emerald-500 w-full max-w-[150px]"
+                              onChange={(e) => {
+                                if (e.target.value) {
+                                  if (confirm("Are you sure you want to assign this issue?")) {
+                                    handleAssignFromAudit(log.targetEntityId, e.target.value);
+                                  }
+                                  e.target.value = "";
+                                }
+                              }}
+                            >
+                              <option value="">Assign Employee...</option>
+                              {employees.map(emp => (
+                                <option key={emp.email} value={emp.email}>{emp.name} ({emp.department || "All"})</option>
+                              ))}
+                            </select>
+                          </div>
+                        )}
                       </td>
                     </tr>
                   ))}
