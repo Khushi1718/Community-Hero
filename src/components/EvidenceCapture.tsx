@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useRef, useState, useEffect, useCallback } from "react";
+import { createPortal } from "react-dom";
 import {
   Camera, Video, X, RefreshCw, Check, MapPin, Mic, AlertTriangle,
   Zap, ZapOff, Info, Navigation2
@@ -334,8 +335,8 @@ export function EvidenceCapture({ onCapture, onCancel, officialOnly = false }: E
   const hasMedia = isPreview;
 
   // ──────────────────────────────────────────────────────────────────────────
-  return (
-    <div className="fixed inset-0 z-[1001] bg-black flex flex-col select-none">
+  const content = (
+    <div className="fixed inset-0 z-[9999] bg-black flex flex-col select-none h-[100dvh] overflow-hidden">
 
       {/* ── TOP CHROME ─────────────────────────────────────────────────────── */}
       <div className="relative flex items-center justify-between px-4 pt-safe pt-3 pb-3 bg-black z-20">
@@ -396,7 +397,7 @@ export function EvidenceCapture({ onCapture, onCancel, officialOnly = false }: E
           mode === "photo" && capturedImage ? (
             <img src={capturedImage} alt="Captured" className="w-full h-full object-contain" />
           ) : capturedVideoUrl ? (
-            <video ref={previewVideoRef} src={capturedVideoUrl} controls playsInline className="w-full h-full object-contain" />
+            <video ref={previewVideoRef} src={capturedVideoUrl} controls autoPlay loop playsInline className="w-full h-full object-contain" />
           ) : null
         ) : (
           <>
@@ -564,4 +565,6 @@ export function EvidenceCapture({ onCapture, onCancel, officialOnly = false }: E
       <canvas ref={canvasRef} className="hidden" />
     </div>
   );
+
+  return initialized ? createPortal(content, document.body) : null;
 }

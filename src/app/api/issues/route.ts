@@ -7,7 +7,45 @@ import { Notification } from "@/models/Notification";
 import { IntegrationConfig } from "@/models/IntegrationConfig";
 import { pushToExternalCRM } from "@/lib/integrations/pushToExternalCRM";
 import { GoogleGenerativeAI } from "@google/generative-ai";
+import AuditLog from "@/models/AuditLog";
 
+// --- Hierarchical User Assignment Helper ---
+async function findUserWithFallback(role: "employee" | "admin", state: string, city: string, department: string) {
+  const deptPrefix = (department || "General").split(' ')[0].replace(/s$/i, ''); // e.g. "Roads" -> "Road"
+  const stateRegex = new RegExp(`^${(state || '').trim()}$`, 'i');
+  const cityRegex = new RegExp(`^${(city || '').trim()}$`, 'i');
+  const deptRegex = new RegExp(deptPrefix, 'i');
+
+  const baseQuery = { role, isAvailable: { $ne: false } };
+
+  // Level 1: Exact Match - State + City + Department
+  let candidates = await User.find({
+    ...baseQuery,
+    state: stateRegex,
+    city: cityRegex,
+    department: deptRegex
+  });
+  if (candidates.length > 0) return candidates;
+
+  // Level 2: State-level Admin/Employee for the specific Department
+  candidates = await User.find({
+    ...baseQuery,
+    state: stateRegex,
+    $or: [{ city: "ALL" }, { city: { $exists: false } }, { city: "" }],
+    department: deptRegex
+  });
+  if (candidates.length > 0) return candidates;
+
+  // Level 3: State-level Admin/Employee for ALL Departments
+  candidates = await User.find({
+    ...baseQuery,
+    state: stateRegex,
+    $or: [{ city: "ALL" }, { city: { $exists: false } }, { city: "" }],
+    $or: [{ department: "ALL" }, { department: { $exists: false } }, { department: "" }]
+  });
+  
+  return candidates;
+}
 // Helper to map V2 MongoDB Issue to V1 Frontend Issue format
 const mapToV1Format = async (issueDoc: any) => {
   const issue = issueDoc.toObject ? issueDoc.toObject() : issueDoc;
@@ -264,19 +302,8 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Attempt to auto-assign based on location and department with loose regex matching
-    const deptPrefix = assignedDepartment.split(' ')[0].replace(/s$/i, ''); // e.g. "Roads" -> "Road"
-    
-    // Find matching employees
-    const candidateStaff = await User.find({
-      role: "employee",
-      $or: [
-        { state: { $regex: new RegExp(`^${(body.state || '').trim()}$`, 'i') } },
-        { state: { $exists: false } }
-      ],
-      department: { $regex: new RegExp(deptPrefix, 'i') },
-      isAvailable: { $ne: false } // match true or missing (default true per schema)
-    });
+    // Find matching employees with hierarchical fallback
+    const candidateStaff = await findUserWithFallback("employee", body.state, body.city, assignedDepartment);
 
     const confidence = body.aiAnalysis?.confidence ?? 100;
     const CONFIDENCE_THRESHOLD = 75;
@@ -354,16 +381,9 @@ Respond ONLY with a valid JSON object:
       assignedToEmail = selectedStaff.email;
     }
 
-    // Find matching Admin — use $ne: false for isAvailable check as well
-    const matchingAdmin = await User.findOne({
-      role: "admin",
-      $or: [
-        { state: { $regex: new RegExp(`^${(body.state || '').trim()}$`, 'i') } },
-        { state: { $exists: false } }
-      ],
-      department: { $regex: new RegExp(deptPrefix, 'i') },
-      isAvailable: { $ne: false }
-    });
+    // Find matching Admin with hierarchical fallback
+    const candidateAdmins = await findUserWithFallback("admin", body.state, body.city, assignedDepartment);
+    const matchingAdmin = candidateAdmins.length > 0 ? candidateAdmins[0] : null;
 
     if (matchingAdmin) {
       assignedAdminId = matchingAdmin._id;
@@ -464,6 +484,29 @@ Respond ONLY with a valid JSON object:
         actorRole: "system",
         isPublic: true,
         comment: `AI Confidence score (${confidence}%) is below threshold (${CONFIDENCE_THRESHOLD}%). Routed to Administrator for manual verification.`
+      });
+    } else if (!routeToOrg) {
+      // Missing Assignment Fallback (Audit Log)
+      await AuditLog.create({
+        actionType: "MANUAL_ASSIGNMENT_REQUIRED",
+        actorEmail: "system",
+        actorRole: "system",
+        targetEntityId: newIssue._id.toString(),
+        targetEntityType: "Issue",
+        metadata: {
+            reason: "No admin or employee found for jurisdiction",
+            state: body.state,
+            city: body.city,
+            department: assignedDepartment
+        }
+      });
+      await TimelineEvent.create({
+        issueId: newIssue._id,
+        action: "Reported",
+        actorName: "System AI",
+        actorRole: "system",
+        isPublic: true,
+        comment: `No appropriate personnel found for this jurisdiction. Escalated to Superadmin for manual assignment.`
       });
     }
 

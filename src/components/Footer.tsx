@@ -47,11 +47,11 @@ export default function Footer() {
         </div>
         
         <div>
-          <h4 className="font-black text-white mb-6 text-sm tracking-widest uppercase">{t("footer.hackathon")}</h4>
+          <h4 className="font-black text-white mb-6 text-sm tracking-widest uppercase">Integrations</h4>
           <ul className="space-y-4">
-            <li><a href="https://github.com" target="_blank" rel="noreferrer" className="text-green-300 hover:text-white transition-colors text-sm font-medium">{t("footer.github")}</a></li>
-            <li className="text-green-300 text-sm font-medium">{t("footer.docs")}</li>
-            <li className="text-green-300 text-sm font-medium">{t("footer.team")}</li>
+            <li><button onClick={() => router.push("/super-admin/settings/integrations")} className="text-green-300 hover:text-white transition-colors text-sm font-medium">CRM Webhooks</button></li>
+            <li className="text-green-300 text-sm font-medium">Pub/Sub Events</li>
+            <li className="text-green-300 text-sm font-medium">API Documentation</li>
           </ul>
         </div>
       </div>

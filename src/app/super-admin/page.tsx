@@ -642,6 +642,7 @@ export default function SuperAdminPage() {
                   <label className="block text-sm font-bold text-slate-700 mb-1">Department</label>
                   <select required value={newDepartment} onChange={e => setNewDepartment(e.target.value)} className="w-full bg-slate-50 border border-emerald-100 rounded-sm px-4 py-3 text-slate-900">
                     <option value="">Select Department...</option>
+                    <option value="ALL">All Departments (State Admin)</option>
                     <option value="Roads Department">Roads Department</option>
                     <option value="Electricity Department">Electricity Department</option>
                     <option value="Water Department">Water Department</option>

@@ -79,14 +79,14 @@ export default function LandingHero() {
           >
             <motion.h1
               variants={itemLeftVariants}
-              className="text-5xl md:text-6xl lg:text-7xl font-bold text-white tracking-tight leading-tight mb-6"
+              className="text-5xl md:text-6xl lg:text-7xl font-bold text-white tracking-tight leading-[1.1] mb-4"
             >
               {t("home.hero.title")}
             </motion.h1>
             
             <motion.div
               variants={barVariants}
-              className="w-16 h-1 bg-[#2e7d32] mb-8 rounded-full origin-left"
+              className="w-full max-w-[640px] h-1 bg-[#2e7d32] mb-8 rounded-full origin-left"
             />
             
             <motion.p

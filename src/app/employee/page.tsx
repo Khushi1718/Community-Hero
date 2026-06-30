@@ -757,7 +757,7 @@ export default function EmployeePage() {
 
       {/* ── ISSUE WORKSPACE DRAWER ── */}
       {selectedIssue && (
-        <div className="fixed inset-0 z-[100] flex animate-fade-in">
+        <div className="fixed inset-0 z-[1050] flex animate-fade-in">
           <div className="flex-1 bg-emerald-900/60 backdrop-blur-sm transition-opacity" onClick={() => setSelectedIssue(null)} />
           <div className="w-full max-w-2xl bg-[#F4F9F5] h-full flex flex-col shadow-2xl overflow-hidden animate-slide-up sm:animate-fade-in">
             {/* Header */}
