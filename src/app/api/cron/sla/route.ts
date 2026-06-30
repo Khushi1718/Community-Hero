@@ -3,6 +3,7 @@ import connectToDatabase from "@/lib/mongoose";
 import { Issue } from "@/models/Issue";
 import { Notification } from "@/models/Notification";
 import { User } from "@/models/User";
+import AuditLog from "@/models/AuditLog";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 // This would typically be protected by a cron secret in production
 export async function GET() {
@@ -187,6 +188,22 @@ Respond ONLY with a valid JSON object:
               type: "System"
             });
           }
+        } else {
+          // Log to Super Admin if no admin is found
+          await AuditLog.create({
+            actionType: "SLA_BREACH_UNASSIGNED",
+            actorEmail: "system@communityhero.com",
+            actorRole: "system",
+            targetEntityId: issue.issueId,
+            targetEntityType: "Issue",
+            metadata: {
+              title: issue.title,
+              department: issue.assignedDepartment,
+              reason: "SLA breached but no admin was found. Manual assignment required by Super Admin.",
+              aiReasoning: reasoning
+            },
+            status: "FAILURE"
+          });
         }
         if (employeeEmail) {
            await Notification.create({

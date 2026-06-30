@@ -25,6 +25,7 @@ const isPublicRoute = createRouteMatcher([
   "/api/leaderboard(.*)",
   "/api/webhooks(.*)",      // External webhooks
   "/api/config(.*)",        // Public config endpoints
+  "/api/audit(.*)",         // Audit logs
 ]);
 
 // Staff routes — use our custom DB auth, NOT Clerk

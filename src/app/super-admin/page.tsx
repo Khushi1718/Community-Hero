@@ -617,6 +617,59 @@ export default function SuperAdminPage() {
               {/* List will go here if we fetched them. For now this is a placeholder panel for the dashboard. */}
             </div>
           )}
+          {activeTab === "audit_logs" && (
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="bg-slate-50 border-b border-emerald-100 text-slate-500 text-[11px] font-bold uppercase tracking-wider">
+                    <th className="p-4">Timestamp</th>
+                    <th className="p-4">Action</th>
+                    <th className="p-4">Actor</th>
+                    <th className="p-4">Target Entity</th>
+                    <th className="p-4">Details</th>
+                    <th className="p-4">Status</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {auditLogs.length === 0 ? (
+                    <tr>
+                      <td colSpan={6} className="p-8 text-center text-slate-500 text-sm">
+                        No audit logs found.
+                      </td>
+                    </tr>
+                  ) : auditLogs.map((log: any) => (
+                    <tr key={log._id} className="hover:bg-slate-50 transition-colors">
+                      <td className="p-4 whitespace-nowrap text-[11px] font-medium text-slate-700">
+                        {new Date(log.createdAt).toLocaleString()}
+                      </td>
+                      <td className="p-4">
+                        <span className="font-bold text-slate-800 text-xs">{log.actionType}</span>
+                      </td>
+                      <td className="p-4">
+                        <div className="text-xs font-bold text-slate-700 uppercase">{log.actorRole}</div>
+                        <div className="text-[10px] text-slate-500">{log.actorEmail}</div>
+                      </td>
+                      <td className="p-4">
+                        <span className="text-xs text-slate-600 font-mono bg-slate-100 px-2 py-1 rounded">{log.targetEntityType}: {log.targetEntityId}</span>
+                      </td>
+                      <td className="p-4">
+                        <div className="text-[11px] text-slate-600 space-y-1">
+                          {log.metadata?.reason && <div><strong className="text-slate-800">Reason:</strong> {log.metadata.reason}</div>}
+                          {log.metadata?.department && <div><strong className="text-slate-800">Dept:</strong> {log.metadata.department}</div>}
+                          {log.metadata?.aiReasoning && <div><strong className="text-indigo-600">AI:</strong> {log.metadata.aiReasoning}</div>}
+                        </div>
+                      </td>
+                      <td className="p-4">
+                        <span className={`px-2 py-1 rounded text-[10px] font-bold uppercase ${log.status === 'SUCCESS' ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'}`}>
+                          {log.status}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
 
         </div>
       </div>
@@ -769,11 +822,11 @@ export default function SuperAdminPage() {
                 </tr>
               </thead>
               <tbody>
-                {admins.filter(a => a.city === "ALL" && a.department === "ALL").length === 0 ? (
+                {admins.filter(a => (!a.city || a.city === "ALL") && (!a.department || a.department === "ALL")).length === 0 ? (
                   <tr>
                     <td colSpan={4} className="p-8 text-center text-slate-500 text-sm">No State Admins found. Click '+ Add State Admin' to create one.</td>
                   </tr>
-                ) : admins.filter(a => a.city === "ALL" && a.department === "ALL").map(admin => (
+                ) : admins.filter(a => (!a.city || a.city === "ALL") && (!a.department || a.department === "ALL")).map(admin => (
                   <tr key={admin.email} className="border-b border-emerald-100 hover:bg-emerald-50/30 transition-colors">
                     <td className="p-4">
                       <div className="font-bold text-slate-900 text-sm">{admin.name}</div>

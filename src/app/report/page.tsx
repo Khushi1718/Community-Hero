@@ -963,13 +963,13 @@ export default function ReportPage() {
                 <div>
                   <label className="block text-sm font-bold text-slate-700 mb-2">{t("report.form.state")} <span className="text-red-500">*</span></label>
                   <div className="relative">
-                    <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                    <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
                     <input
                       type="text"
                       value={stateName}
                       onChange={(e) => setStateName(e.target.value)}
                       placeholder={t("report.form.statePlaceholder")}
-                      className="w-full bg-slate-50 border border-slate-200 rounded-xl py-3 pl-10 pr-4 text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-green-500"
+                      className="w-full bg-slate-50 border border-slate-200 rounded-xl py-3 pl-12 pr-4 text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-green-500"
                       required
                     />
                   </div>
@@ -977,13 +977,13 @@ export default function ReportPage() {
                 <div>
                   <label className="block text-sm font-bold text-slate-700 mb-2">{t("report.form.city")} <span className="text-red-500">*</span></label>
                   <div className="relative">
-                    <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                    <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
                     <input
                       type="text"
                       value={cityName}
                       onChange={(e) => setCityName(e.target.value)}
                       placeholder={t("report.form.cityPlaceholder")}
-                      className="w-full bg-slate-50 border border-slate-200 rounded-xl py-3 pl-10 pr-4 text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-green-500"
+                      className="w-full bg-slate-50 border border-slate-200 rounded-xl py-3 pl-12 pr-4 text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-green-500"
                       required
                     />
                   </div>
@@ -993,13 +993,13 @@ export default function ReportPage() {
               <div>
                 <label className="block text-sm font-bold text-slate-700 mb-2">{t("report.form.address")} <span className="text-red-500">*</span></label>
                 <div className="relative">
-                  <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                  <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
                   <input
                     type="text"
                     value={address}
                     onChange={(e) => setAddress(e.target.value)}
                     placeholder={t("report.form.addressPlaceholder")}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl py-3 pl-10 pr-4 text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-green-500"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl py-3 pl-12 pr-4 text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-green-500"
                     required
                   />
                 </div>
