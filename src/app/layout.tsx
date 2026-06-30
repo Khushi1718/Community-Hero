@@ -7,6 +7,8 @@ import { I18nProvider } from "@/lib/i18n-provider";
 import { Navbar } from "@/components/Navbar";
 import { BottomNav } from "@/components/BottomNav";
 
+export const dynamic = 'force-dynamic';
+
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
@@ -51,7 +53,13 @@ export default function RootLayout({
       suppressHydrationWarning
     >
       <body className="min-h-[100dvh] flex flex-col bg-surface-50 text-surface-900 selection:bg-primary-200 selection:text-primary-900" suppressHydrationWarning>
-        <ClerkProvider>
+        <ClerkProvider 
+          publishableKey={process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY || process.env.CLERK_PUBLISHABLE_KEY}
+          signInUrl={process.env.NEXT_PUBLIC_CLERK_SIGN_IN_URL || process.env.CLERK_SIGN_IN_URL || "/sign-in"}
+          signUpUrl={process.env.NEXT_PUBLIC_CLERK_SIGN_UP_URL || process.env.CLERK_SIGN_UP_URL || "/sign-up"}
+          signInFallbackRedirectUrl={process.env.NEXT_PUBLIC_CLERK_SIGN_IN_FALLBACK_REDIRECT_URL || process.env.CLERK_SIGN_IN_FALLBACK_REDIRECT_URL || "/"}
+          signUpFallbackRedirectUrl={process.env.NEXT_PUBLIC_CLERK_SIGN_UP_FALLBACK_REDIRECT_URL || process.env.CLERK_SIGN_UP_FALLBACK_REDIRECT_URL || "/"}
+        >
           <AuthProvider>
             <I18nProvider>
               <div className="flex-1 flex flex-col pb-20 md:pb-0 relative">
