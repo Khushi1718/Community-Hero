@@ -112,13 +112,13 @@ export default function AboutUs() {
             initial="hidden"
             whileInView="visible"
             viewport={{ once: true, margin: "-50px" }}
-            className="flex overflow-x-auto snap-x snap-mandatory pb-6 -mx-4 px-4 md:-mx-0 md:px-0 md:pb-0 md:grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-8 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
+            className="flex items-stretch overflow-x-auto snap-x snap-mandatory pb-6 -mx-4 px-4 md:-mx-0 md:px-0 md:pb-0 md:grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-8 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
           >
             {/* Citizen */}
             <motion.div 
               variants={cardVariants}
               whileHover="hover"
-              className="flex flex-col h-full w-[85vw] shrink-0 snap-center md:w-auto p-6 rounded-2xl border border-slate-100 bg-slate-50/50 transition-all duration-300 hover:bg-white hover:shadow-xl hover:shadow-emerald-900/[0.03] hover:border-emerald-200"
+              className="flex flex-col w-[85vw] shrink-0 snap-center md:w-auto p-6 rounded-2xl border border-slate-100 bg-slate-50/50 transition-all duration-300 hover:bg-white hover:shadow-xl hover:shadow-emerald-900/[0.03] hover:border-emerald-200"
             >
               <motion.div 
                 variants={iconVariants}
@@ -136,7 +136,7 @@ export default function AboutUs() {
             <motion.div 
               variants={cardVariants}
               whileHover="hover"
-              className="flex flex-col h-full w-[85vw] shrink-0 snap-center md:w-auto p-6 rounded-2xl border border-slate-100 bg-slate-50/50 transition-all duration-300 hover:bg-white hover:shadow-xl hover:shadow-emerald-900/[0.03] hover:border-emerald-200"
+              className="flex flex-col w-[85vw] shrink-0 snap-center md:w-auto p-6 rounded-2xl border border-slate-100 bg-slate-50/50 transition-all duration-300 hover:bg-white hover:shadow-xl hover:shadow-emerald-900/[0.03] hover:border-emerald-200"
             >
               <motion.div 
                 variants={iconVariants}
@@ -154,7 +154,7 @@ export default function AboutUs() {
             <motion.div 
               variants={cardVariants}
               whileHover="hover"
-              className="flex flex-col h-full w-[85vw] shrink-0 snap-center md:w-auto p-6 rounded-2xl border border-slate-100 bg-slate-50/50 transition-all duration-300 hover:bg-white hover:shadow-xl hover:shadow-emerald-900/[0.03] hover:border-emerald-200"
+              className="flex flex-col w-[85vw] shrink-0 snap-center md:w-auto p-6 rounded-2xl border border-slate-100 bg-slate-50/50 transition-all duration-300 hover:bg-white hover:shadow-xl hover:shadow-emerald-900/[0.03] hover:border-emerald-200"
             >
               <motion.div 
                 variants={iconVariants}
@@ -172,7 +172,7 @@ export default function AboutUs() {
             <motion.div 
               variants={cardVariants}
               whileHover="hover"
-              className="flex flex-col h-full w-[85vw] shrink-0 snap-center md:w-auto p-6 rounded-2xl border border-slate-100 bg-slate-50/50 transition-all duration-300 hover:bg-white hover:shadow-xl hover:shadow-emerald-900/[0.03] hover:border-emerald-200"
+              className="flex flex-col w-[85vw] shrink-0 snap-center md:w-auto p-6 rounded-2xl border border-slate-100 bg-slate-50/50 transition-all duration-300 hover:bg-white hover:shadow-xl hover:shadow-emerald-900/[0.03] hover:border-emerald-200"
             >
               <motion.div 
                 variants={iconVariants}
@@ -190,7 +190,7 @@ export default function AboutUs() {
             <motion.div 
               variants={cardVariants}
               whileHover="hover"
-              className="flex flex-col h-full w-[85vw] shrink-0 snap-center md:w-auto p-6 rounded-2xl border border-slate-100 bg-slate-50/50 transition-all duration-300 hover:bg-white hover:shadow-xl hover:shadow-emerald-900/[0.03] hover:border-emerald-200"
+              className="flex flex-col w-[85vw] shrink-0 snap-center md:w-auto p-6 rounded-2xl border border-slate-100 bg-slate-50/50 transition-all duration-300 hover:bg-white hover:shadow-xl hover:shadow-emerald-900/[0.03] hover:border-emerald-200"
             >
               <motion.div 
                 variants={iconVariants}

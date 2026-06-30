@@ -100,6 +100,9 @@ export default function CoverageMap() {
   const [authError, setAuthError] = useState(false);
   const [useLeafletFallback, setUseLeafletFallback] = useState(false);
   const [leafletLoaded, setLeafletLoaded] = useState(false);
+  const [apiKey, setApiKey] = useState<string | undefined>(
+    process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY
+  );
 
   const allCoords = { ...CITY_COORDINATES, ...dynamicCoords };
 
@@ -142,6 +145,18 @@ export default function CoverageMap() {
           const cityArray = Array.from(citySet);
           setCities(cityArray);
           setIsLoading(false); // Stop loading early
+
+          // Fetch API key dynamically for Cloud Run deployments
+          if (!process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY) {
+            fetch("/api/config/maps")
+              .then(res => res.json())
+              .then(data => {
+                if (data.apiKey) {
+                  setApiKey(data.apiKey);
+                }
+              })
+              .catch(err => console.error("Error fetching maps config:", err));
+          }
 
           // Fetch real issue stats in parallel
           fetch("/api/issues").then(res => res.json()).then(issues => {
@@ -383,7 +398,7 @@ export default function CoverageMap() {
     return <div className="w-full h-[500px] flex items-center justify-center bg-slate-50 rounded-3xl animate-pulse text-green-600 font-bold">Loading Live Map...</div>;
   }
 
-  const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
+  // apiKey is now managed via state
 
   return (
     <div className="flex flex-col gap-6">
